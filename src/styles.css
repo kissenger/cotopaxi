@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+  --ts-brown: #523209;
+  --ts-green: #83964B;
+  --ts-dark-border: #DDD2AD;
+  --ts-light-border: #EEEBDB;
+  --ts-background: #E9E2CB;
+}
