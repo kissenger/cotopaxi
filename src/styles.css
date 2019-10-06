@@ -1,5 +1,11 @@
-/* You can add global styles to this file, and also import other style files */
+/* this is needed here to get bootstrap flex layout to work correctly - dont remove */
+html,
+body {
+  height: 100%;
+  margin: 0
+}
 
+/* define colour scheme */
 :root {
   --ts-brown: #523209;
   --ts-green: #83964B;
@@ -7,3 +13,5 @@
   --ts-light-border: #EEEBDB;
   --ts-background: #E9E2CB;
 }
+
+

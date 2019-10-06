@@ -1,5 +1,8 @@
-div {
-  /* color: red;
-  background-color: blue; */
-  border: 0px grey solid;
+
+.row { border: 0px purple dashed; }
+.container { border: 0px blue dotted; }
+
+.image {
+  height: 24px;
+  border: 1px black solid;
 }

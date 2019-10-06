@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+// import { faTwitter } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
   selector: 'app-root',

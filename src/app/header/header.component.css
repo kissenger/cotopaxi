@@ -3,6 +3,7 @@
 /* debugging only */
 div { border: 0px red solid;  }
 li  { border: 0px blue solid; }
+nav { border: 0px orange solid; }
 
 /* brand image */
 .image {
