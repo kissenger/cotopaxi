@@ -1,22 +1,17 @@
+
 <div class="container d-flex flex-column h-100 p-0">
 
-    <app-header></app-header>
+  <!-- Header -->
+  <app-header></app-header>
 
-    <div class="flex-grow-1 m-0 w-100">
-        <app-map></app-map>
-    </div>
-
-    <div class="mt-1 pt-1 border-top">
-
-        <a class="twitter-share-button"
-          href="https://twitter.com/intent/tweet?text=Check%20out%20thetrailproject.co.uk!!"
-          data-size="small">
-          Tweet</a>
-
-        <a href="https://github.com/kissenger/cotopaxi">
-          <img class="image" src="/src/GitHub_Logo.png" alt="">
-        </a>
-
-    </div>
-
+  <!-- Content -->
+  <div class="flex-grow-1 m-0 w-100">
+      <app-content></app-content>
   </div>
+
+  <!-- Footer -->
+  <div class="mt-1 pt-1 border-top">
+    <app-footer></app-footer>
+  </div>
+
+</div>

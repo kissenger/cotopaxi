@@ -1,8 +1,4 @@
 
+/* debugging */
 .row { border: 0px purple dashed; }
 .container { border: 0px blue dotted; }
-
-.image {
-  height: 24px;
-  border: 1px black solid;
-}
