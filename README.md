@@ -15,7 +15,6 @@ got into last time when trying to develop on a different computer.<br>
 <li>npm i jquery     <i> required for bootstrap</i></li>
 <li>npm i popper     <i> required for bootstrap</i></li>
 <li>npm i bootstrap  <i> bootstrap front-end component library https://getbootstrap.com/</i></li>
-<li>npm i @mapbox/mapbox-sdk <i> mapbox api <b>i think not needed?</b></i></li>
 <li>npm i mapbox-gl  <i> mapbox js lib https://www.npmjs.com/package/mapbox-gl</i></li>
 <li>npm i @types/mapbox-gl</li>
 <li>npm install @fortawesome/fontawesome-svg-core <i> social media btns https://github.com/FortAwesome/angular-fontawesome</i></li>
