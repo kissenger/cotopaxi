@@ -13,6 +13,7 @@ import { ContentComponent } from './content/content.component';
 //Services
 import { HttpService } from './http.service';
 import { MapService } from './map.service';
+import { InfoPanelComponent } from './content/info-panel/info-panel.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { MapService } from './map.service';
     CreateRouteComponent,
     FooterComponent,
     DetailsComponent,
-    ContentComponent
+    ContentComponent,
+    InfoPanelComponent
   ],
   imports: [
     BrowserModule,

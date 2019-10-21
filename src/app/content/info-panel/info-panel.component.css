@@ -1,0 +1,24 @@
+
+/* Side bar collapse button */
+.minimised-toggle-bar {
+    height: 10px;
+    z-index: 99;
+}
+
+.minimised-toggle-bar:hover {
+    background-color: lightgray;
+}
+
+
+
+/* Side bar formatting needed to located the containerin the right place */
+.side-bar {
+    top: 0px;
+    right: 0px;
+}
+
+/* make all buttons the same width */
+button {
+    width: 100px;
+}
+

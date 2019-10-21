@@ -1,6 +1,8 @@
 
 # Cotopaxi
-Project to develop a Strava-like platform to log completed distance of long-distance paths. <br>
+Project to develop a Strava-like platform with a USP aimed at long distance path users.  First phase will aim to implement
+route planning experience with tools targeted at ultra-runners and long distance walkers/runners.
+<p>
 This second generation is a ground up rewrite of Aconcagua implementing what I learned the first time around
 The plan this time is to develop mature(ish) features deployed to the internet rather than a fully
 featured but buggy experience that only works on my desktop.<br>
@@ -31,4 +33,8 @@ got into last time when trying to develop on a different computer.<br>
         <td>npm i @types/mapbox-gl</td>
         <td>https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/mapbox-gl</td>
     </tr>    
+    <tr>
+        <td>npm i @turf/turf</td>
+        <td>mapbox doesn't have its own geospatial agorithms http://turfjs.org/</td>
+    </tr> 
 </table>

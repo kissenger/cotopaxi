@@ -2,76 +2,8 @@
 <!-- Container for page content -->
 <div class="position-relative m-0 bg-light h-100">
 
-    <app-map></app-map>
+    <app-create-route></app-create-route>
 
-    <!-- Container for side bar: see also css class side-bar -->
-    <!-- TODO: Can this layout be simplified?? -->
-    <!-- This outer container allows menu to float on map content: is it invisible (transparent with no border) -->
-    <div class="position-absolute side-bar d-flex flex-column h-100">
+    <app-info-panel></app-info-panel>
 
-        <!-- This inner container is visible -->
-        <div class="d-flex flex-column flex-grow-1 border bg-light mt-4 mb-4 rounded-left">
-
-            <!-- Side bar to collapse the menu: see also css class toggler -->
-            <!-- TODO: COLLAPSE FUNCTIONALITY REMOVED AS DOESNT WORK WITH FLEX, NEEDED TO EXPAND TAB TO FILL THE SPACE   -->
-            <!-- <a data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="true" aria-controls="collapseExample">
-                <div class="toggle-button h-100"></div>
-            </a> -->
-
-            <!-- Everthing in here collapses when sidebutton is pressed -->
-            <!-- <div class="collapse show width mt-2" id="collapseExample"> -->
-                              
-            <div class="d-flex flex-column flex-grow-1 mt-2 ml-2 mb-2">
-
-                <!-- Define tabs -->
-                <ul class="nav nav-tabs m-0 p-0 nav-justified" id="myTab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">
-                            Details
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="overlay-tab" data-toggle="tab" href="#overlay" role="tab" aria-controls="overlay" aria-selected="false">
-                            Overlay
-                        </a>
-                    </li>
-                </ul>
-
-            <!-- Tab content -->
-            
-                <!-- <div class="d-flex flex-column flex-grow-1 border-left border-bottom bg-white"> -->
-
-                    <!-- Tab 1 -->
-                    <div class="d-flex flex-column flex-grow-1 tab-panel fade show active border-left border-bottom bg-white" id="details" role="tabpanel" aria-labelledby="details-tab">
-
-                        <div class="flex-grow-1 ml-2 mr-2 pt-2 mb-auto">
-                            <input class='form-control' type='text' placeholder='Give your route a name'>
-                            <textarea class='form-control mt-3' placeholder='Say something about your route'></textarea>
-                            <br>
-                            1356 points<br>
-                            3.6mi 156ft 25ft <br>
-                            156ft of ascent <br>
-                            257ft of descent<br> 
-                            Lumpiness factor of 135ft/mi<br>
-                        </div>
-
-                        <div class="d-flex justify-content-center mb-2">
-                            <button type="button" class="btn btn-primary btn-sm" type="submit">Save</button>
-                            <button type="button" class="btn btn-secondary btn-sm ml-1" type="cancel">Cancel</button>
-                        </div>
-
-                    </div>
-
-                    <!-- Tab 2 -->
-                    <div class="d-flex justify-content-start flex-column flex-grow-1 tab-panel fade active border-left border-bottom bg-white" id="overlay" role="tabpanel" aria-labelledby="overlay-tab">
-                        REMOVEDger<p>
-                        Giveet<p><p>
-               
-                    </div>
-                <!-- </div> -->
-            </div>
-
-            <!-- </div> -->
-        </div>
-    </div>          
 </div>

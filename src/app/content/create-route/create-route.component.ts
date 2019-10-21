@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import * as mapboxgl from 'mapbox-gl';
-import { GeoJSON, Feature } from 'geojson';
 import { MapService } from 'src/app/map.service'
 
 
 
 @Component({
-  selector: 'app-map',
+  selector: 'app-create-route',
   templateUrl: './create-route.component.html',
   styleUrls: ['./create-route.component.css']
 })

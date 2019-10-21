@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from 'src/app/http.service'
+import { DataService } from './data.service';
+import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globalVars from '../globals';
 
@@ -14,7 +16,9 @@ export class MapService {
   private snapToRoads = true;
 
   constructor(
-    public httpService: HttpService
+    public httpService: HttpService,
+    public geoService: GeoService,
+    public dataService: DataService
   ) { 
     
     Object.getOwnPropertyDescriptor(mapboxgl, 'accessToken').set(this.accessToken);
@@ -81,9 +85,16 @@ export class MapService {
           
           this.getCoords(start, end, this.snapToRoads).then( (coords) => {
             this.createdRouteCoords.push(coords);
-            // update the map (in two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877)
+            geojson = this.coords2GeoJSON(this.createdRouteCoords);
+            // two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877
             const source = m.getSource('geojson') as mapboxgl.GeoJSONSource;
-            source.setData(this.coords2GeoJSON(this.createdRouteCoords));
+            source.setData(geojson);
+            // get path stats and broadcast
+            this.dataService.pathStats.emit(
+              { 
+                distance: this.geoService.pathLength(geojson)
+              }
+            );
           });  
         }
       });
@@ -143,21 +154,13 @@ export class MapService {
   coords2GeoJSON(coords: Array<Array<GeoJSON.Position>>) {
 
     let gj: GeoJSON.FeatureCollection = this.getEmptyGeoJSONWrapper();
-    let c: Array<GeoJSON.Position>;
+
+    coords.forEach( (c) => {
+      gj.features.push( this.getGeoJSONLineString(c) );
+    })
+
+    return gj;
     
-    // because we need to create a geojson of linestrings, we need to catch the last coordinate of each coordinate group
-    // and on the next loop through, push all of the current coord group onto that original coord - this ensures a 
-    // continuous line - not the prettiest
-    for (let i = 0; i < coords.length; i++) {
-      if (i > 0) {
-        // coords[i].forEach( a => c.push(a));
-        // gj.features.push( this.getGeoJSONLineString(c) );
-        gj.features.push( this.getGeoJSONLineString(coords[i]) );
-      }
-      // c = coords[i].slice(-1);
-    }
-    
-    return gj
   }
 
 
