@@ -1,24 +1,32 @@
 
-/* Side bar collapse button */
-.minimised-toggle-bar {
-    height: 10px;
-    z-index: 99;
-}
 
-.minimised-toggle-bar:hover {
-    background-color: lightgray;
-}
-
-
-
-/* Side bar formatting needed to located the containerin the right place */
-.side-bar {
+/* info panel formatting needed to located the containerin the right place */
+.info-panel {
     top: 0px;
     right: 0px;
 }
 
-/* make all buttons the same width */
-button {
-    width: 100px;
+/*  */
+.outer-container {
+    opacity: 1;
 }
+
+.inner-container {
+    opacity: 1;
+}
+
+/* Extra formatting reqd for collapse button */
+.collapse-btn {
+    width: 30px; 
+    height: 30px;
+    opacity: 0.5;
+}
+
+.collapse-btn:hover {
+    width: 30px; 
+    height: 30px;
+    opacity: 1;
+}
+
+
 

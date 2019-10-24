@@ -11,9 +11,10 @@ import * as globalVars from '../globals';
 export class MapService {
 
   private accessToken = globalVars.mapboxAccessToken;
+  private map: mapboxgl.Map;
 
   private createdRouteCoords: Array<Array<GeoJSON.Position>> = [];
-  private snapToRoads = true;
+  private snapProfile = 'driving';
 
   constructor(
     public httpService: HttpService,
@@ -25,39 +26,77 @@ export class MapService {
 
   }
 
- 
+
+
+
   /**
    * Shows the mapbox map
    * @param location location on which to centre the map
    */
   showMap(location: mapboxgl.LngLatLike) {
 
-    
-    return new mapboxgl.Map({
+    this.map = new mapboxgl.Map({
       container: 'map', 
       style: 'mapbox://styles/mapbox/streets-v11',
       center: location, 
       zoom: 13 
     });
+
   }
+
+  undo() {
+    this.createdRouteCoords.pop();
+    let geojson = this.coords2GeoJSON(this.createdRouteCoords);
+    const source = this.map.getSource('geojson') as mapboxgl.GeoJSONSource;
+    source.setData(geojson);
+    this.updatePathStats(geojson);
+  }
+
+  setSnap(snapOption: string) {
+    if (snapOption === 'roads') { this.snapProfile = 'driving' }
+    else if (snapOption === 'paths') { this.snapProfile = 'walking' }
+    else { this.snapProfile = 'none' ;}
+  }
+
+  closePath() {
+    let start: GeoJSON.Position = this.createdRouteCoords.slice(-1)[0].slice(-1)[0];
+    let end: GeoJSON.Position = this.createdRouteCoords[0][0];
+
+    // this is copy-paste of code below - should divest to function
+    this.getCoords(start, end).then( (coords) => {
+
+      this.createdRouteCoords.push(coords);
+      let geojson = this.coords2GeoJSON(this.createdRouteCoords);
+      
+      // update map in two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877
+      const source = this.map.getSource('geojson') as mapboxgl.GeoJSONSource;
+      source.setData(geojson);
+
+      // get path stats and broadcast
+      this.updatePathStats(geojson);
+
+    }); 
+
+  }
+
+
 
   /**
    * Allow user to create a route on the shown map. Once invoked it will remain active 
    * until the page is refreshed or navigated
-   * @param m map
     */
-  createRoute(m: mapboxgl.Map) {
+  createRoute() {
     
     let geojson: GeoJSON.FeatureCollection = this.getEmptyGeoJSONWrapper();
    
-    m.on('load', () => {
+    this.map.on('load', () => {
 
-      m.addSource('geojson', {
+      this.map.addSource('geojson', {
         "type": "geojson",
         "data": geojson
       });
     
-      m.addLayer({
+      this.map.addLayer({
         id: 'measure-lines',
         type: 'line',
         source: 'geojson',
@@ -72,7 +111,7 @@ export class MapService {
         filter: ['in', '$type', 'LineString']
       });
 
-      m.on('click', (e) => {
+      this.map.on('click', (e) => {
 
         let end: GeoJSON.Position = [ e.lngLat.lng, e.lngLat.lat ];
         if (this.createdRouteCoords.length === 0) {
@@ -83,32 +122,36 @@ export class MapService {
           // all other loops, get the start point as the last point of the existing array
           let start: GeoJSON.Position = this.createdRouteCoords.slice(-1)[0].slice(-1)[0];
           
-          this.getCoords(start, end, this.snapToRoads).then( (coords) => {
+          this.getCoords(start, end).then( (coords) => {
             this.createdRouteCoords.push(coords);
             geojson = this.coords2GeoJSON(this.createdRouteCoords);
-            // two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877
-            const source = m.getSource('geojson') as mapboxgl.GeoJSONSource;
+            
+            // update map in two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877
+            const source = this.map.getSource('geojson') as mapboxgl.GeoJSONSource;
             source.setData(geojson);
+
             // get path stats and broadcast
-            this.dataService.pathStats.emit(
-              { 
-                distance: this.geoService.pathLength(geojson)
-              }
-            );
+            this.updatePathStats(geojson);
+
           });  
         }
       });
 
     });
 
-    m.on('mousemove', function (e) {
-      let features = m.queryRenderedFeatures(e.point, { layers: [] });
+    this.map.on('mousemove', function (e) {
+      let features = this.map.queryRenderedFeatures(e.point, { layers: ['geojson'] });
       // UI indicator for clicking/hovering a point on the map
-      m.getCanvas().style.cursor = (features.length) ? 'pointer' : 'crosshair';
+      this.map.getCanvas().style.cursor = (features.length) ? 'pointer' : 'crosshair';
     });
 
   }
 
+  updatePathStats(pathAsGeoJson) {
+    this.dataService.pathStats.emit(
+      { distance: this.geoService.pathLength(pathAsGeoJson) }
+    );
+  }
 
   /**
    *  Get a list of coordinates depending on whether snap to roads is on or off
@@ -118,20 +161,20 @@ export class MapService {
    * @param end   GeoJSON.Position (lng, lat) defining the ending point of this segment
    * @param snap  Boolean defining whether we want to snap to roads or not
    */
-  getCoords(start: GeoJSON.Position, end: GeoJSON.Position, snap: Boolean) {
+  getCoords(start: GeoJSON.Position, end: GeoJSON.Position) {
 
     return new Promise<Array<GeoJSON.Position>>( (resolve, reject) => {
       let c = [];
 
-      if (!snap) {
+      if ( this.snapProfile === 'none') {
         // dont snap to roads, just push the start and end points and resolve the promise
         c.push(start, end);
         resolve(c);
 
       } else {
         // do snap to roads so make the query and return when we have a response form the front end
-        let profile = 'walking';
-        this.httpService.mapboxDirectionsQuery(profile, start, end).subscribe( (result) => {
+      
+        this.httpService.mapboxDirectionsQuery(this.snapProfile, start, end).subscribe( (result) => {
           if (result.code === "Ok") { 
             result.routes[0].geometry.coordinates.forEach( (a: GeoJSON.Position) => {c.push(a)}); 
             resolve(c);
@@ -148,6 +191,7 @@ export class MapService {
 
   /**
    * Converts coords array to geojson for plotting on map
+   * TODO: Replace with https://turfjs.org/docs/#explode??
    * @param coords Array of array of coordinate pairs [[[lng1,lat1],[lng2,lat2]],[[lng3,lat3]]]...etc
    * @param return geojson feature collection ready for mapbox to display
    */

@@ -1,0 +1,21 @@
+
+<!-- invisible container to get d-flex onto child elements -->
+<div class="btn-group-vertical menu-bar position-absolute mt-2">
+
+    <button (click)="onClick('undo')" type="button" class="btn btn-light btn-sm mb-1">Undo last</button>
+    <button (click)="onClick('close')" type="button" class="btn btn-light btn-sm mb-1">Close route</button>
+
+
+    <div class="btn-group-vertical btn-group-toggle" data-toggle="buttons">
+        <label (click)="onClick('roads')" class="btn btn-light btn-sm active radio-btns">
+            <input type="radio" name="options" id="roads" autocomplete="off" checked> Snap: Roads
+        </label>
+        <label (click)="onClick('paths')" class="btn btn-light btn-sm">
+            <input type="radio" name="options" id="paths" autocomplete="off"> Snap: Paths
+        </label>
+        <label (click)="onClick('none')" class="btn btn-light btn-sm">
+            <input type="radio" name="options" id="none" autocomplete="off"> Snap: None
+        </label>
+        </div>
+
+</div>

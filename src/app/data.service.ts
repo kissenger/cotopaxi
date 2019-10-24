@@ -9,6 +9,7 @@ export class DataService {
 
   // from map service to info panel
   pathStats = new EventEmitter();
+  menuClick = new EventEmitter();
 
 }
 

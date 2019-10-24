@@ -2,39 +2,30 @@
 <!-- Container for side bar: see also css class side-bar -->
 <!-- TODO: Can this layout be simplified?? -->
 <!-- This outer container allows menu to float on map content: is it invisible (transparent with no border) -->
-<div class="position-absolute side-bar d-flex flex-column h-100">
+<div class="position-absolute info-panel h-100">
 
-    
-<div *ngIf="isMinimised" class="ml-0 mb-0 mt-3">
-
-    <div class="row justify-content-end m-0">
-        <div  (click)="onClick()" class="col-2 border-left border-top border-right rounded-top text-center mt-0 mr-3 p-0 bg-secondary border-dark">
-            <small>v</small>
-        </div>
+    <!-- Collape button -->
+    <div  (click)="onClick()" class="collapse-btn border-left border-top border-bottom rounded-left text-center ml-auto mt-2 p-0 bg-white">
+        {{icon}}
     </div>
 
-    <div class="border-left border-top border-bottom rounded-left bg-white">
-        <div class="row m-0">
-            <div class="col">{{pathStats.distance | number: '1.2-2'}}mi</div>
-            <div class="col">156ft</div>
-            <div class="col">25ft</div>
+
+        <!-- Minimised display - remember to reflect any changes in the maximised display also -->
+        <div *ngIf="isMinimised" class="border-left border-top border-bottom rounded-left mt-2 ml-2 mb-2 bg-white">
+            <div class="row m-0">
+                <div class="col">{{pathStats.distance | number: '1.2-2'}}mi</div>
+                <div class="col">156ft</div>
+                <div class="col">25ft</div>
+            </div>
         </div>
-    </div>
-</div>
 
-<!-- This inner container is visible -->
+        <!-- Maximised display -->
 
-    <div  *ngIf="!isMinimised" class="row justify-content-end mt-3 mr-3">
-        <div  (click)="onClick()" class="col-2 border-left border-top border-right rounded-top text-center mr-3 p-0 bg-secondary border-dark">
-            <small>^</small>
-        </div>
-    </div>
+    <!-- Outer container  - outer visible border -->
+    <div *ngIf="!isMinimised" class="outer-container border-left border-top border-bottom bg-light mt-2 mb-4 rounded-left">
 
-    <div *ngIf="!isMinimised" class="d-flex flex-column flex-grow-1 border bg-light mt-0 mb-4 rounded-left">
-
-
-
-        <div class="d-flex flex-column flex-grow-1 mt-2 ml-2 mb-2">
+        <!-- Inner container - not visible but give the margins around the tabs and tabbed content-->
+        <div class="position-relative inner-container mt-2 ml-2 mb-2">
 
             <!-- Define tabs -->
             <ul class="nav nav-tabs m-0 p-0 nav-justified" id="myTab" role="tablist">
@@ -50,18 +41,15 @@
                 </li>
             </ul>
 
-        <!-- Tab content -->
-        
-
+            <!-- Tabbed content -->
             <!-- Tab 1 -->
-            <div class="d-flex flex-column flex-grow-1 tab-panel fade show active border-left border-bottom bg-white" id="details" role="tabpanel" aria-labelledby="details-tab">
+            <div class="tab-panel fade show active border-left border-bottom bg-white" id="details" role="tabpanel" aria-labelledby="details-tab">
 
-                <div class="flex-grow-1 ml-2 mr-2 pt-2 mb-auto">
+                <div class="ml-2 mr-2 pt-2">
                     <input class='form-control' type='text' placeholder='Give your route a name'>
                     <textarea class='form-control mt-3' placeholder='Say something about your route'></textarea>
 
-                        <div class="row mt-3">
-                            <!-- number pipe useage {minIntegerDigits}.{minFractionDigits}-{maxFractionDigits} -->
+                        <div class="row mt-3 mb-3">
                             <div class="col">{{pathStats.distance | number: '1.2-2'}}mi</div>
                             <div class="col">156ft</div>
                             <div class="col">25ft</div>
@@ -77,15 +65,15 @@
             </div>
 
             <!-- Tab 2 -->
-            <div class="d-flex justify-content-start flex-column flex-grow-1 tab-panel fade active border-left border-bottom bg-white" id="overlay" role="tabpanel" aria-labelledby="overlay-tab">
+            <div class="tab-panel fade active border-left border-bottom bg-white" id="overlay" role="tabpanel" aria-labelledby="overlay-tab">
                 REMOVEDger<p>
                 Giveet<p><p>
         
             </div>
 
-        </div>
-
         <!-- </div> -->
+
+        </div>
     </div>
 
 </div>          

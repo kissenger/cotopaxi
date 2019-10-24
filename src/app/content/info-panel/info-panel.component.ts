@@ -13,6 +13,7 @@ export class InfoPanelComponent implements OnInit, OnDestroy {
   private pathStats = {
     distance: 0
   };
+  private icon = '-';
 
   constructor(
     private dataService: DataService
@@ -26,6 +27,7 @@ export class InfoPanelComponent implements OnInit, OnDestroy {
 
   onClick() {
     this.isMinimised = !this.isMinimised;
+    this.icon = this.isMinimised ? '+' : '-';
   }
 
   ngOnDestroy() {
