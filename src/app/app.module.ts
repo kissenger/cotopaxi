@@ -13,8 +13,10 @@ import { ContentComponent } from './content/content.component';
 //Services
 import { HttpService } from './http.service';
 import { MapService } from './map.service';
+import { NewRouteService } from './map.service';
 import { InfoPanelComponent } from './content/info-panel/info-panel.component';
 import { MenuBarComponent } from './content/menu-bar/menu-bar.component';
+import { UnitPipe } from './unit.pipe';
 
 @NgModule({
   declarations: [
@@ -25,7 +27,8 @@ import { MenuBarComponent } from './content/menu-bar/menu-bar.component';
     DetailsComponent,
     ContentComponent,
     InfoPanelComponent,
-    MenuBarComponent
+    MenuBarComponent,
+    UnitPipe
   ],
   imports: [
     BrowserModule,
@@ -33,7 +36,8 @@ import { MenuBarComponent } from './content/menu-bar/menu-bar.component';
   ],
   providers: [
     HttpService,
-    MapService
+    MapService,
+    NewRouteService
   ],
   bootstrap: [AppComponent]
 })

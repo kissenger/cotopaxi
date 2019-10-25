@@ -17,7 +17,9 @@ export class MenuBarComponent implements OnInit {
   }
 
   onClick(clickItem) {
-    console.log(clickItem);
-    this.dataService.menuClick.emit(clickItem);
+    this.dataService.menuClick.emit( clickItem );
   }
+
+
 }
+

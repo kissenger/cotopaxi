@@ -1,4 +1,7 @@
 
+.div {
+    font-size: small;
+}
 
 /* info panel formatting needed to located the containerin the right place */
 .info-panel {
@@ -26,6 +29,7 @@
     width: 30px; 
     height: 30px;
     opacity: 1;
+    cursor: pointer;
 }
 
 

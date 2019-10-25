@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MapService } from 'src/app/map.service'
+import { NewRouteService } from 'src/app/map.service'
 import { DataService } from 'src/app/data.service';
 
 
@@ -14,25 +15,29 @@ export class CreateRouteComponent implements OnInit, OnDestroy {
   private menuSubs;
 
   constructor(
-    private mapService: MapService,
-    private dataService: DataService
+    private dataService: DataService,
+    private newRoute: NewRouteService
     ) { }
 
   ngOnInit() {
 
-    this.mapService.showMap([0,52]);
-
-    this.mapService.createRoute();
-
-    this.menuSubs = this.dataService.menuClick.subscribe( (menuItem) => {
-      if (menuItem === 'undo') {
-        this.mapService.undo();
-      } else if (menuItem === 'close') {
-        this.mapService.closePath();
-      } else if (menuItem === 'roads' || menuItem === 'paths' || menuItem === 'none') {
-        this.mapService.setSnap(menuItem);
-      }
+    // initialise the map and launch createroute
+    let startPosition: mapboxgl.LngLatLike = [0,52];
+    this.newRoute.initialiseMap(startPosition).then( () => {
+      this.newRoute.createRoute();
     });
+    
+    // listen for menu commands
+    this.menuSubs = this.dataService.menuClick.subscribe( (fromMenu) => {
+      if (fromMenu.command) {
+        if (fromMenu.command === 'undo') { this.newRoute.undo(); }
+        if (fromMenu.command === 'close') { this.newRoute.closePath(); }
+        if (fromMenu.command === 'clear') { this.newRoute.clearPath(); }
+      } else { 
+        let optionKey = Object.keys(fromMenu.option)[0];
+        this.newRoute.options[optionKey] = fromMenu.option[optionKey]; 
+      }
+    })
 
   }    
 
