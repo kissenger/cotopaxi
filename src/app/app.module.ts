@@ -1,44 +1,78 @@
+//Modules
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AppRoutingModule } from './app-routing.module';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 //Components
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
-import { CreateRouteComponent } from './content/create-route/create-route.component';
+import { RoutesCreateComponent } from './main/routes/routes-create/routes-create.component';
+import { RoutesListComponent } from './main/routes/routes-list/routes-list.component';
 import { FooterComponent } from './footer/footer.component';
-import { DetailsComponent } from './content/details/details.component';
-import { ContentComponent } from './content/content.component';
+import { MainComponent } from './main/main.component';
+import { InfoPanelComponent } from './main/info-panel/info-panel.component';
+import { MenuBarComponent } from './main/menu-bar/menu-bar.component';
+
+import { PanelsInjectorComponent } from './main/info-panel/panels-injector/panels-injector.component';
+import { PanelRoutesCreateDetailsComponent } from './main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
+import { PanelRoutesCreateOverlayComponent } from './main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
+import { PanelRoutesListListComponent } from './main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
+import { PanelRoutesListDetailsComponent } from './main/info-panel/panels/panel-routes-list-details/panel-routes-list-details.component';
+import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 
 //Services
-import { HttpService } from './http.service';
-import { MapService } from './map.service';
-import { NewRouteService } from './map.service';
-import { InfoPanelComponent } from './content/info-panel/info-panel.component';
-import { MenuBarComponent } from './content/menu-bar/menu-bar.component';
-import { UnitPipe } from './unit.pipe';
+import { HttpService } from './app-services/http.service';
+import { MapService } from './app-services/map.service';
+import { MapCreateService } from './app-services/map-create.service';
+
+//Pipes
+import { UnitPipe } from './app-pipes/unit.pipe';
+
+
+//Directives
+// import { InfoPanelDirective } from './__archive/app-directives/info-panel.directive';
+
 
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
-    CreateRouteComponent,
+    RoutesCreateComponent,
+    RoutesListComponent,
     FooterComponent,
-    DetailsComponent,
-    ContentComponent,
+    MainComponent,
     InfoPanelComponent,
     MenuBarComponent,
-    UnitPipe
+    UnitPipe,
+    // InfoPanelDirective,
+    PanelsInjectorComponent,
+    PanelRoutesCreateDetailsComponent,
+    PanelRoutesCreateOverlayComponent,
+    PanelRoutesListListComponent,
+    PanelRoutesListDetailsComponent,
+    PanelRoutesListOptionsComponent
   ],
   imports: [
     BrowserModule,
-    HttpClientModule
+    HttpClientModule,
+    AppRoutingModule,
+    FormsModule
   ],
   providers: [
     HttpService,
     MapService,
-    NewRouteService
+    MapCreateService
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents: [
+    PanelRoutesCreateDetailsComponent, 
+    PanelRoutesCreateOverlayComponent,
+    PanelRoutesListListComponent,
+    PanelRoutesListDetailsComponent,
+    PanelRoutesListOptionsComponent
+    ]
 })
 export class AppModule { }

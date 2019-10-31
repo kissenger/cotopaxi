@@ -1,0 +1,7 @@
+.info-panel {
+    top: 0px;
+    right: 0px;
+    width: 225px;
+    font-size: smaller;
+    /* pointer-events: none; */
+}

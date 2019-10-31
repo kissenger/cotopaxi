@@ -1,0 +1,67 @@
+
+<!-- invisible container to give d-flex to child divs -->
+<div class="position-relative h-100 w-100 d-flex flex-column ">
+
+        <!-- Outer container  - outer visible border -->
+        <div  class="flex-grow-1 order-left border-top border-left border-bottom bg-light mt-2 mb-4 rounded-left">
+    
+
+                <!-- Define tabs -->
+                <ul class="nav nav-tabs mt-2 ml-2 p-0 nav-justified" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="details-tab" data-toggle="tab" href="#list" role="tab" aria-controls="details" aria-selected="true">
+                            List
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="overlay-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="false">
+                            Details
+                        </a>
+                    </li>                    
+                    <li class="nav-item">
+                        <a class="nav-link" id="overlay-tab" data-toggle="tab" href="#options" role="tab" aria-controls="options" aria-selected="false">
+                            Options
+                        </a>
+                    </li>
+                </ul>
+    
+                <!-- Tabbed content -->
+                <!-- Tab 1 -->
+                <div class="position-absolute tab-panel fade show active border-left border-bottom bg-white ml-2 w-100" id="list" role="tabpanel" aria-labelledby="list-tab">
+    
+                    <div class="ml-2 mr-2 pr-2 pt-2">
+
+                    </div>
+    
+                </div>
+
+                <!-- Tab 2 -->
+                <div class="position-absolute tab-panel fade active border-left border-bottom bg-white ml-2 w-100" id="details" role="tabpanel" aria-labelledby="details-tab">
+                    <div class="ml-2 mr-2 mb-2 pr-2 pt-2">
+                        name<br>
+                        decsription
+                    </div>
+            
+                </div>
+
+                <!-- Tab 3 -->
+                <div class="position-absolute tab-panel fade active border-left border-bottom bg-white ml-2 w-100" id="options" role="tabpanel" aria-labelledby="options-tab">
+                    <div class="ml-2 mr-2 mb-2 pr-2 pt-2">
+                        Operations on active route:<br>
+                        <a href="">Delete route</a><br>
+                        <a href="">Edit route</a><br>
+                        <a href="">Export to .fit file</a><br>
+                        <a href="">Export to .gpx file</a><br>
+                        <hr>
+                        Create a new route:<br>
+                        <a href="">Load from file</a><br>
+                        <a href="/routes/create">Create on map</a><br>
+                    </div>
+            
+                </div>
+    
+    
+        </div>
+    
+    
+    </div>

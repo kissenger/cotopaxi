@@ -1,0 +1,41 @@
+
+.outer-container {
+    /* pointer-events: auto; */
+}
+
+.div {
+    font-size: small;
+}
+
+
+.inner-container {
+    opacity: 1;
+}
+
+/* Extra formatting reqd for collapse button */
+.collapse-btn {
+    width: 30px; 
+    height: 30px;
+    opacity: 0.5;
+}
+
+.collapse-btn:hover {
+    width: 30px; 
+    height: 30px;
+    opacity: 1;
+    cursor: pointer;
+}
+
+
+input,
+input::-webkit-input-placeholder {
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+textarea,
+textarea::-webkit-input-placeholder {
+    font-size: 14px;
+}
+
+

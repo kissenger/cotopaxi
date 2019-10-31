@@ -1,0 +1,12 @@
+
+<!-- Container for side bar: see also css class side-bar -->
+<!-- TODO: Can this layout be simplified?? -->
+<!-- This outer container allows menu to float on map content: is it invisible (transparent with no border) -->
+
+    <div *ngIf="isCreatePage" class="info-panel position-absolute h-100">
+        <app-info-create-route></app-info-create-route>
+    </div>
+    
+    <div *ngIf="isListPage" class="info-panel position-absolute h-100">
+        <app-info-list-route></app-info-list-route>
+    </div>

@@ -1,0 +1,95 @@
+
+<!-- invisible container to give d-flex to child divs -->
+<div class="position-relative h-100 w-100 d-flex flex-column ">
+
+    <!-- Collape button -->
+    <div (click)="onClick()" class="collapse-btn border-left border-top border-bottom rounded-left text-center ml-auto mt-2 p-0 bg-white">
+        {{icon}}
+    </div>
+
+
+    <!-- Minimised display - remember to reflect any changes in the maximised display also -->
+    <div *ngIf="isMinimised" class="border-left border-top border-bottom rounded-left mt-2 ml-0 mr-0 mb-2 bg-white">
+        <div class="row m-0 mt-1 p-0 text-center">
+                <div class="col m-0 p-0">Distance</div>
+                <div class="col m-0 p-0">Ascent</div>
+                <div class="col m-0 p-0">Descent</div>
+            </div>
+        <div class="row m-0 mb-1 p-0 text-center">
+            <div class="col">{{pathStats.distance | units: 'distance': units.distance}}</div>
+            <div class="col">{{pathStats.ascent | units: 'elevation': units.elevation}}</div>
+            <div class="col">{{pathStats.descent | units: 'elevation': units.elevation}}</div>
+        </div>
+    </div>
+
+    <!-- Maximised display -->
+
+    <!-- Outer container  - outer visible border -->
+    <div *ngIf="!isMinimised" class="flex-grow-1 order-left border-top border-left border-bottom bg-light mt-2 mb-4 rounded-left">
+
+        <!-- Inner container - not visible but give the margins around the tabs and tabbed content-->
+
+            <!-- Define tabs -->
+            <ul class="nav nav-tabs mt-2 ml-2 p-0 nav-justified" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="true">
+                        Details
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="overlay-tab" data-toggle="tab" href="#overlay" role="tab" aria-controls="overlay" aria-selected="false">
+                        Overlay
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Tabbed content -->
+            <!-- Tab 1 -->
+            <div class="position-absolute d-flex flex-column tab-panel fade show active border-left border-bottom bg-white ml-2 w-100" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                <div class="ml-2 mr-2 pr-2 pt-2">
+                    <input class='form-control mr-2' type='text' placeholder='Give your route a name' [(ngModel)]="routeName">
+                    <textarea class='form-control mt-2' placeholder='Give your route a description' [(ngModel)]="routeDesc"></textarea>
+
+                    <div class="row mt-3 mb-0 text-center">
+                        <div class="col">Distance</div>
+                        <div class="col">Ascent</div>
+                        <div class="col">Descent</div>
+                    </div>
+                    <div class="row mt-0 mb-3 text-center">
+                        <div class="col">{{pathStats.distance | units: 'distance': units.distance}}</div>
+                        <div class="col">{{pathStats.ascent | units: 'elevation': units.elevation}}</div>
+                        <div class="col">{{pathStats.descent | units: 'elevation': units.elevation}}</div>
+                    </div>
+
+                    <div class="row mt-3 mb-0 text-center">
+                        <div class="col">Points</div>
+                        <div class="col">Lumpiness</div>
+                        <div class="col"></div>
+                    </div>                    
+                    <div class="row mt-0 mb-3 text-center">
+                        <div class="col">{{pathStats.nPoints | number: '1.0-0'}}</div>
+                        <div class="col">{{pathStats.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+                        <div class="col"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center mb-2 flex-grow-1">
+                    <button type="button" class="btn btn-primary btn-sm" type="submit">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm ml-1" type="cancel">Cancel</button>
+                </div>
+
+            </div>
+
+            <!-- Tab 2 -->
+            <div class="position-absolute tab-panel fade active border-left border-bottom bg-white" id="overlay" role="tabpanel" aria-labelledby="overlay-tab">
+                REMOVEDger<p>
+                Giveet<p><p>
+        
+            </div>
+
+
+    </div>
+
+
+</div>

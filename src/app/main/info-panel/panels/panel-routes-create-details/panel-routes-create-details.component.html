@@ -1,0 +1,32 @@
+
+
+<input class='form-control mr-2' type='text' placeholder='Give your route a name' [(ngModel)]="routeName">
+<textarea class='form-control mt-2' placeholder='Give your route a description' [(ngModel)]="routeDesc"></textarea>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Distance</div>
+    <div class="col">Ascent</div>
+    <div class="col">Descent</div>
+</div>
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.distance | units: 'distance': units.distance}}</div>
+    <div class="col">{{pathStats.ascent | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.descent | units: 'elevation': units.elevation}}</div>
+</div>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Points</div>
+    <div class="col">Lumpiness</div>
+    <div class="col"></div>
+</div>                    
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.nPoints | number: '1.0-0'}}</div>
+    <div class="col">{{pathStats.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+    <div class="col"></div>
+</div>
+
+
+<div class="d-flex justify-content-center mb-2 flex-grow-1">
+    <button type="button" class="btn btn-primary btn-sm" type="submit">Save</button>
+    <button type="button" class="btn btn-secondary btn-sm ml-1" type="cancel">Cancel</button>
+</div>
