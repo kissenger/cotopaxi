@@ -51,16 +51,16 @@ got into last time when trying to develop on a different computer.<br>
     </tr>         
     <tr>
         <td>npm i jsonwebtoken</td>
-        <td>backend authentication hhttps://www.npmjs.com/package/jsonwebtoken</td>
+        <td>backend authentication https://www.npmjs.com/package/jsonwebtoken</td>
     </tr>  
     <tr>
         <td>npm i bcrypt</td>
-        <td>backend password cryptography hhttps://www.npmjs.com/package/bcrypt
+        <td>backend password cryptography https://www.npmjs.com/package/bcrypt<br>
         Important notes:
         <ul>
         <li> Needs to be installed according to instructions here
         https://github.com/kelektiv/node.bcrypt.js/wiki/Installation-Instructions
-        Only compatoible with python 2x, so the local python version must be checked
+        <li>Only compatoible with python 2x, so the local python version must be checked
         </td>
     </tr>  
     <tr>

@@ -48,9 +48,9 @@ class GeoJson{
       bbox: this.bbox,
       features: this.features,
       properties: {
-        pathId: pathDocuments[0]._id,
-        ...this.pathProps[0],
-        ...this.stats
+       pathId: pathDocuments[0]._id,
+       ...this.pathProps[0],
+       ...this.stats
       }
     }
 
@@ -131,7 +131,7 @@ class GeoJson{
     return {
       type: 'Feature',
       geometry: {
-        type: 'Linestring',
+        type: 'LineString',
         coordinates: this.paths[ip][is].slice(start, end)
       },
       properties: {

@@ -6,11 +6,12 @@ import { Router } from '@angular/router';
 })
 export class DataService {
 
+  // holder for the active path where it is needed to be refd by different components
+  public activePathToView: GeoJSON.FeatureCollection;
+
   constructor(
     private router: Router
   ) { 
-
-
   }
 
   // from map service to info panel

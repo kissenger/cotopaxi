@@ -131,7 +131,7 @@ function readGpx(data) {
   // note that time and elev are only pushed if at least one point was found to contain this data
   //name, description, lngLat, elev, time, heartRate, cadence)
   console.log('>> readGpx: creating path object (this may take some time for large file)...' );
-  console.log(typeOfPath);
+  // console.log(typeOfPath);
   if ( typeOfPath === 'route') var path = new Route(nameOfPath, ' ', lngLat, isElev ? elev : [], isTime ? time : []);
   if ( typeOfPath === 'track') var path = new Track(nameOfPath, ' ', lngLat, isElev ? elev : [], isTime ? time : []);
 
@@ -208,6 +208,20 @@ function writeGpx(path){
 
 }
 
+
+/**
+ * export geoJson to file
+ * @param {Path} path
+ */
+function exportGeoJSON(geoJSON) {
+
+  const fs = require('fs');
+
+
+  JSON.stringify(geoJSON)
+  fs.writeFile('../myjsonfile.json', JSON.stringify(geoJSON), 'utf8', (err) => {console.log(err)});
+
+}
 
 
 /**
@@ -340,4 +354,4 @@ function parseOSM(data, bbox) {
 
 
 
-module.exports = { readGpx, writeGpx, parseOSM };
+module.exports = { readGpx, writeGpx, parseOSM, exportGeoJSON };

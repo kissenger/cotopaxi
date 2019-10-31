@@ -36,7 +36,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
   
   ngOnDestroy() {
-    this.menuSubs.unsubscribe();
+    // this.menuSubs.unsubscribe();
   }
 
 }

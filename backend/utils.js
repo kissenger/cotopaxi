@@ -57,6 +57,9 @@ function padInt(num, size) {
   return s;
 }
 
+function printGeoJSON2file(geojson) {
+  
+}
 
 
 class ProgressBar{
@@ -90,6 +93,8 @@ class ProgressBar{
   }
 
 }
+
+
 
 module.exports = {
   getRGB,

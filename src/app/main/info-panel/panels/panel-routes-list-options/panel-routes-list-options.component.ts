@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpService } from 'src/app/app-services/http.service';
+import { DataService } from 'src/app/app-services/data.service';
 
 @Component({
   selector: 'app-panel-routes-list-options',
@@ -9,7 +11,9 @@ import { Router } from '@angular/router';
 export class PanelRoutesListOptionsComponent implements OnInit {
 
   constructor(
-    private router: Router
+    private router: Router,
+    private httpService: HttpService,
+    private dataService: DataService
   ) { }
 
   ngOnInit() {
@@ -23,22 +27,26 @@ export class PanelRoutesListOptionsComponent implements OnInit {
   /** runs when file is selected */
   onFilePickedImport(event: Event, moreThanOneFile: boolean, pathType: string) {
 
-    // Get multiple file names
-    const files = (event.target as HTMLInputElement).files;        // multiple files
     document.documentElement.style.cursor = 'wait';
-
+    
+    // Get file names
+    const files = (event.target as HTMLInputElement).files;        // multiple files
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
     if ( pathType === 'route' ) {
-      console.log(fileData);
-      this.router.navigate(['routes/review']);
-      // TODO pathType === 'track' not supported yet
-      // this.httpService.importRoute(fileData).subscribe( (a: string) => {
-      //   document.documentElement.style.cursor = 'default';
-      //   this.dataService.storeNewPath(a.geoJson);
-      //   this.router.navigate(['paths', this.pathType, '-1']);
-      // });
+
+      // send data to the backend and wait for response
+      this.httpService.importRoute(fileData).subscribe( (result: Object) => {
+
+        console.log(result);
+
+        // store the returned path and navigate to the review page to view it
+        document.documentElement.style.cursor = 'default';
+        this.dataService.activePathToView = result['geoJson'];
+        this.router.navigate(['routes/review']);
+
+      });
     }
 
 

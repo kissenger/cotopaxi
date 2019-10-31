@@ -177,7 +177,7 @@ class Path  {
           } else {
             cwSum--;
           }
-          console.log(cwSum, thisBrg, minBrg, maxBrg, deltaBrg, maxBrg - minBrg);
+          // console.log(cwSum, thisBrg, minBrg, maxBrg, deltaBrg, maxBrg - minBrg);
         }
 
         lastBrg = thisBrg;

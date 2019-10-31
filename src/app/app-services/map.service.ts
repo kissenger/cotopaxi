@@ -38,10 +38,50 @@ export class MapService{
         center: location, 
         zoom: 13 
       });
-      resolve();
+      this.tsMap.on('load', () => {
+        resolve();
+      })
+      
     });
 
   }
+
+  /**
+   * plots a geojson path on the map and centers the view on it
+   * @param path path as geojson to view on map
+   * @param lineWidth width of the line
+   * @param lineColor colour of the line as RGB string '#000000' or auto to pick up colors in the geojson
+   */
+  plotGeoJson(path: GeoJSON.FeatureCollection, styleOptions? ) {
+
+    if (!styleOptions) {
+      styleOptions = {
+        lineWidth: 3,
+        lineColour: AudioTrack,
+        lineOpacity: 1
+      }
+    }
+
+    // add the layer to the map
+    this.tsMap.addLayer({
+      "id": "route",
+      "type": "line",
+      "source": {
+        "type": "geojson",
+        "data": path
+        },
+      "paint": {
+        'line-width': styleOptions.lineWidth,
+        'line-color': styleOptions.lineColor === 'auto' ? ['get', 'color'] : styleOptions.lineColor,
+        'line-opacity': styleOptions.lineOpacity
+        }
+      });
+
+      // set the bounds
+    this.tsMap.fitBounds([[path.bbox[0], path.bbox[1]], [path.bbox[2], path.bbox[3]]]);
+      
+  }
+
 
 }
 

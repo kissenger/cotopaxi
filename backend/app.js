@@ -16,7 +16,7 @@ const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
 const writeGpx = require('./gpx.js').writeGpx;
 const readGpx = require('./gpx.js').readGpx;
-const parseOSM = require('./gpx.js').parseOSM;
+const exportGeoJSON = require('./gpx.js').exportGeoJSON;
 // const outerBbox = require('./geoLib.js').outerBbox;
 
 
@@ -76,7 +76,71 @@ var upload = multer({
 
 
 
+/*****************************************************************
+ *
+ *  Import route from file
+ *
+ *
+ *****************************************************************/
 
+// app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
+app.post('/import-route/', upload.single('filename'), (req, res) => {
+
+  // ensure user is authorised
+  // const userId = req.userId;
+  // if ( !userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  const userId = 0;
+  console.log(req.file);
+
+  // Read file data & convert to geojson format
+  const path = readGpx(req.file.buffer.toString()).mongoFormat(userId, false);
+  path.userId = userId;  // inject userID into path object
+
+  // Save route into database and return it to the front end
+  MongoPath.Routes.create(path).then( (documents) => {
+    const temp = new GeoJson(documents, 'route');
+    console.log(temp.features[0].geometry);
+    exportGeoJSON(temp);
+    res.status(201).json({geoJson: new GeoJson(documents, 'route')});
+  })
+
+
+});
+
+
+
+/*****************************************************************
+ *
+ *  Save a path to database from review page
+ *  id of path is provided
+ *
+ *****************************************************************/
+
+// app.post('/save-path/:type/:id',  auth.verifyToken, (req, res) => {
+app.post('/save-path/:type/:id', (req, res) => {
+
+  // ensure user is authorised
+  // if ( !req.userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  // construct query based on incoming payload
+  let condition = {_id: req.params.id, userId: req.userId};
+  let filter = {isSaved: true};
+  if ( typeof req.body.description !== "undefined" ) { filter['description'] = req.body.description; }
+  if ( typeof req.body.name !== "undefined" ) { filter['name'] = req.body.name; }
+
+  // query database, updating changed data and setting isSaved to true
+  mongoModel(req.params.type)
+    .updateOne(condition, {$set: filter}, {writeConcern: {j: true}})
+    .then( () => {
+      res.status(201).json( {result: 'save ok'} );
+    }) 
+
+});
 
 
 
@@ -277,32 +341,6 @@ app.post('/import-tracks/:singleOrBatch', auth.verifyToken, upload.array('filena
 });
 
 
-/*****************************************************************
- *
- *  Import route from file
- *
- *
- *****************************************************************/
-
-app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-  }
-
-  // Read file data & convert to geojson format
-  const path = readGpx(req.file.buffer.toString()).mongoFormat(userId, false);
-  path.userId = userId;  // inject userID into path object
-
-  // Save route into database
-  MongoPath.Routes.create(path).then( (documents) => {
-    res.status(201).json({geoJson: new GeoJson(documents, 'route')});
-  })
-
-
-});
 
 
 

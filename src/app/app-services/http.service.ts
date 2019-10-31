@@ -7,10 +7,8 @@ export class HttpService {
 
   private DEBUG = true;
   private accessToken = globalVars.mapboxAccessToken;
-
-  // If using Gordons laptop, this will work, otherwise uncomment the line below
-  // private hostName = '192.168.0.12';
-  // private hostname = 'localhost';
+  // private hostName = '192.168.0.12'
+  private hostName = 'localhost';
 
   constructor( private http: HttpClient ) {}
 
@@ -22,4 +20,13 @@ export class HttpService {
   mapboxElevationsQuery(position: GeoJSON.Position) {
     return this.http.get<any>('https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/tilequery/' + position[0] + ',' + position[1] + '.json?layers=contour&limit=50&access_token=' + this.accessToken);
   }
+
+  importRoute(formData: Object) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/import-route/', formData);
+  }
+
+  saveCreatedRoute(type: String, pathData: Object) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/save-path/' + type, pathData);
+  }
+
 }
