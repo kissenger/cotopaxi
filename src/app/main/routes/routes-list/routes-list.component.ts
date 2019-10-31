@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MapService } from 'src/app/app-services/map.service'
+import { MapService } from 'src/app/app-services/map.service';
 import { DataService } from 'src/app/app-services/data.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -28,15 +28,10 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     this.mapService.initialiseMap(startPosition).then( () => {
 
     });
-    this.paramSubs = this.activatedRouter.params.subscribe(params => {
-      this.id = params.id;
-      console.log(params);
+    // this.paramSubs = this.activatedRouter.params.subscribe(params => {
+    //   this.id = params.id;
+    // })
 
-    })
-    // listen for menu commands
-    this.menuSubs = this.dataService.menuClick.subscribe( (fromMenu) => {
-
-    })
   }
 
   

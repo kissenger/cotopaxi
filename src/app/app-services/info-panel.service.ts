@@ -20,6 +20,10 @@ export class InfoPanelService {
         { active: false,
           name: 'overlay',
           component: PanelRoutesCreateOverlayComponent } ],
+    review: 
+      [ { active: true,
+          name: 'details',
+          component: PanelRoutesCreateDetailsComponent } ],          
     list: 
       [ { active: true,
           name: 'list',

@@ -30,6 +30,7 @@ import { MapCreateService } from './app-services/map-create.service';
 
 //Pipes
 import { UnitPipe } from './app-pipes/unit.pipe';
+import { RoutesReviewComponent } from './main/routes/routes-review/routes-review.component';
 
 
 //Directives
@@ -53,7 +54,8 @@ import { UnitPipe } from './app-pipes/unit.pipe';
     PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
     PanelRoutesListDetailsComponent,
-    PanelRoutesListOptionsComponent
+    PanelRoutesListOptionsComponent,
+    RoutesReviewComponent
   ],
   imports: [
     BrowserModule,

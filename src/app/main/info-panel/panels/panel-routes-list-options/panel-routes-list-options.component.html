@@ -5,5 +5,11 @@ Operations on active route:<br>
 <a href="">Export to .gpx file</a><br>
 <hr>
 Create a new route:<br>
-<a href="">Load from file</a><br>
+
+<span class="make-text-look-like-link" (click)="onLoadFileClick()"> Load from file </span> <br>
 <a [routerLink]="['/routes/create']">Create on map</a><br>
+
+<!-- This is a hidden element activated by the 'Load from file' link above -->
+<div class="file-selector">
+    <input type="file" id="file-select-single" (change)="onFilePickedImport($event, 'false', 'route')" single>
+</div>
