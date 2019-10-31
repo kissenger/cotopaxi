@@ -7,7 +7,6 @@
         {{icon}}
     </div>
 
-
     <!-- Minimised display - remember to reflect any changes in the maximised display also -->
     <div *ngIf="isMinimised" class="border-left border-top border-bottom rounded-left mt-2 ml-0 mr-0 mb-2 bg-white">
         <div class="row m-0 mt-1 p-0 text-center">
@@ -46,7 +45,7 @@
             <!-- Tabbed content -->
             <!-- Tab 1 -->
             <div class="position-absolute d-flex flex-column tab-panel fade show active border-left border-bottom bg-white ml-2 w-100" id="details" role="tabpanel" aria-labelledby="details-tab">
-
+       <!-- <div class="position-absolute                    tab-panel fade      active border-left border-bottom bg-white" id="overlay" role="tabpanel" aria-labelledby="overlay-tab"> -->
                 <div class="ml-2 mr-2 pr-2 pt-2">
                     <input class='form-control mr-2' type='text' placeholder='Give your route a name' [(ngModel)]="routeName">
                     <textarea class='form-control mt-2' placeholder='Give your route a description' [(ngModel)]="routeDesc"></textarea>

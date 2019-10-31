@@ -5,3 +5,13 @@
     font-size: smaller;
     /* pointer-events: none; */
 }
+
+.outer-container {
+    background: rgba(255,255,255,0.5); /* newer browsers */
+}
+
+/* this is needed to ensure that the tabs which are hidden and overlay
+the active tab, do not interfere with the active tab inputs */
+.tab-panel:not(.active) {
+    display: none;
+}

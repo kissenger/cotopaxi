@@ -1,7 +1,8 @@
 
 
-<input class='form-control mr-2' type='text' placeholder='Give your route a name' [(ngModel)]="routeName">
+<input class='form-control mr-2' type='text' placeholder='Give your route a name' [(ngModel)]="routeName" name="first">
 <textarea class='form-control mt-2' placeholder='Give your route a description' [(ngModel)]="routeDesc"></textarea>
+
 
 <div class="row mt-3 mb-0 text-center">
     <div class="col">Distance</div>
@@ -24,7 +25,6 @@
     <div class="col">{{pathStats.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
     <div class="col"></div>
 </div>
-
 
 <div class="d-flex justify-content-center mb-2 flex-grow-1">
     <button type="button" class="btn btn-primary btn-sm" type="submit">Save</button>

@@ -18,7 +18,9 @@ export class InfoPanelComponent implements OnInit {
    ) { }
 
   ngOnInit() {
-    this.tabsArray = this.infoPanelService.getTabs(this.dataService.pageType);
+    this.dataService.getPageName().then( pageName => {
+      this.tabsArray = this.infoPanelService.getTabs(pageName);
+    });
   }
 
 

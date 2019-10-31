@@ -18,13 +18,16 @@ export class PanelsInjectorComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.dataService.getPageName().then( pageName => {
+      const component = this.infoPanelService.getComponent(pageName, this.panelType);
+      this.loadPanel(component);
+    })
 
   }
 
   
   ngAfterViewInit() {
-    const component = this.infoPanelService.getComponent(this.dataService.pageType, this.panelType);
-    this.loadPanel(component);
+
   }
   
 
