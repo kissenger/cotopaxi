@@ -37,4 +37,35 @@ got into last time when trying to develop on a different computer.<br>
         <td>npm i @turf/turf</td>
         <td>mapbox doesn't have its own geospatial agorithms http://turfjs.org/</td>
     </tr> 
+    <tr>
+        <td>npm i nodemon</td>
+        <td>dev server for backend https://www.npmjs.com/package/nodemon</td>
+    </tr>     
+    <tr>
+        <td>npm i multer</td>
+        <td>file operations on the backend https://www.npmjs.com/package/multer</td>
+    </tr>      
+    <tr>
+        <td>npm i mongoose</td>
+        <td>node/express api for MongoDB https://www.npmjs.com/package/mongoose</td>
+    </tr>         
+    <tr>
+        <td>npm i jsonwebtoken</td>
+        <td>backend authentication hhttps://www.npmjs.com/package/jsonwebtoken</td>
+    </tr>  
+    <tr>
+        <td>npm i bcrypt</td>
+        <td>backend password cryptography hhttps://www.npmjs.com/package/bcrypt
+        Important notes:
+        <ul>
+        <li> Needs to be installed according to instructions here
+        https://github.com/kelektiv/node.bcrypt.js/wiki/Installation-Instructions
+        Only compatoible with python 2x, so the local python version must be checked
+        </td>
+    </tr>  
+    <tr>
+        <td>npm install --global --production windows-build-tools</td>
+        <td>tools required to support bcrypt package above - needs to be run in shell 
+        running in admin mode - installation cam take a while</td>
+    </tr>  
 </table>
