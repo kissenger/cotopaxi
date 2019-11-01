@@ -11,12 +11,13 @@ const DEBUG = true;
 // Local functions
 const Route = require('./_Path').Route;
 const Path = require('./_Path').Path;
-const GeoJson = require('./_GeoJson.js').GeoJson;
+const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
-const writeGpx = require('./gpx.js').writeGpx;
-const readGpx = require('./gpx.js').readGpx;
+const writeGPX = require('./gpx.js').writeGPX;
+const readGPX = require('./gpx.js').readGPX;
 const exportGeoJSON = require('./gpx.js').exportGeoJSON;
+const timeStamp = require('./utils.js').timeStamp;
 // const outerBbox = require('./geoLib.js').outerBbox;
 
 
@@ -52,12 +53,8 @@ app.use(express.static('backend/files'));
  ******************************************************************/
 
 mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/test?retryWrites=true')
-  .then(() => {
-    console.log('Connected to database');
-  })
-  .catch(() => {
-    console.log('Connection to database failed');
-  });
+  .then(() => {  console.log('Connected to database'); })
+  .catch(() => { console.log('Connection to database failed'); });
 
 /*****************************************************************
  *
@@ -86,6 +83,8 @@ var upload = multer({
 // app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
 app.post('/import-route/', upload.single('filename'), (req, res) => {
 
+  if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
+
   // ensure user is authorised
   // const userId = req.userId;
   // if ( !userId ) {
@@ -93,18 +92,17 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
   // }
 
   const userId = 0;
-  console.log(req.file);
 
-  // Read file data & convert to geojson format
-  const path = readGpx(req.file.buffer.toString()).mongoFormat(userId, false);
-  path.userId = userId;  // inject userID into path object
+  // Get a mongo object from the path data
+  const pathFromFile = readGPX(req.file.buffer.toString());
+  const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, [], []);
+  mongoPath = Path.mongoFormat(userId, false)
+  mongoPath.userId = userId;  // inject userID into path object
 
   // Save route into database and return it to the front end
-  MongoPath.Routes.create(path).then( (documents) => {
-    const temp = new GeoJson(documents, 'route');
-    console.log(temp.features[0].geometry);
-    exportGeoJSON(temp);
-    res.status(201).json({geoJson: new GeoJson(documents, 'route')});
+  MongoPath.Routes.create(mongoPath).then( (docs) => {
+    res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
+    if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
   })
 
 

@@ -4,6 +4,8 @@ const Point = require('./geoLib.js').Point;
 const boundingBox = require('./geoLib').boundingBox;
 const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
+const timeStamp = require('./utils.js').timeStamp;
+const DEBUG = true;
 
 /**
  * Path Class
@@ -13,14 +15,11 @@ const bearing = require('./geoLib.js').bearing;
 class Path  {
 
   constructor(lngLat, elev, pathType) {
+    if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
 
     this.lngLat = lngLat.map( (x) => [parseFloat(x[0].toFixed(6)), parseFloat(x[1].toFixed(6))]);
     if (elev) this.elev = elev;
-
-    if (pathType === 'route') {
-      this.simplify();
-    }
-
+    if (pathType === 'route') { this.simplify(); }
     this.pathType = pathType;
     this.bbox = boundingBox(this.lngLat);
     this.distance = pathDistance(this.lngLat);
@@ -47,9 +46,8 @@ class Path  {
    * // TODO change this to property of the class, not a method. Neater but need byRef?
    */
   mongoFormat(userId, isSaved) {
-    // return object in format required to save to mongo
+    if (DEBUG) { console.log(timeStamp() + ' >> Convert Path for Mongo '); }
 
-    // console.log(this.analysePath());
     const params = {};
     if (this.time) params.time = this.time;
     if (this.elev) params.elev = this.elev;
@@ -99,6 +97,8 @@ class Path  {
    */
   category() {
 
+    if (DEBUG) { console.log(timeStamp() + ' >> Get category of Path '); }
+
     const MATCH_DISTANCE = 25;   // in m, if points are this close then consider as coincident
     const BUFFER = 50;           // number of points ahead to skip in matching algorithm
     const PC_THRESH_UPP = 90;    // if % shared points > PC_THRESH_UPP then consider as 'out and back' route
@@ -109,9 +109,16 @@ class Path  {
     let nm = 0;
     for ( let i = 0; i < this.pathSize - BUFFER; i++ ) {
       for ( let j = i + BUFFER; j < this.pathSize; j++ ) {
-        if ( p2p(this.getPoint(i), this.getPoint(j)) < MATCH_DISTANCE ) {
+        const dist = p2p(this.getPoint(i), this.getPoint(j));
+
+        // if dist between nodes is below threshold then count the match and break loop
+        if ( dist < MATCH_DISTANCE ) {
           nm++;
           break;
+
+        // if dist is a high number, skip some points as we know the next point is not going to be a match also
+        } else if ( dist > MATCH_DISTANCE * 10 ) {
+          j += Math.round(dist / MATCH_DISTANCE);
         }
       }
     }
@@ -142,6 +149,8 @@ class Path  {
    * Currently only determines 'clockwise' or 'anticlockwise' for circular route
    */
   direction() {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Get Path direction '); }
 
     const RANGE_TOL = 0.5 * Math.PI;   // in m, if points are this close then consider as coincident
 
@@ -218,6 +227,8 @@ class Path  {
    * Create path statistics and parameters
    */
   analysePath() {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Analyse Path '); }
 
     const KM_TO_MILE = 0.6213711922;
     const ALPHA = 0.3;             //low pass filter constant, to higher the number the quicker the response
@@ -446,6 +457,8 @@ class Path  {
   * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
   */
   simplify() {
+    
+    if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
     const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
     const origLength = this.lngLat.length - 1;
@@ -480,8 +493,7 @@ class Path  {
 
     // update path length
     this.pathSize = this.lngLat.length - 1;
-    console.log( '>> Path.simplify(): simplified to: ' + ((j.length/origLength)*100.0).toFixed(1) + '%');
-
+    if (DEBUG) { console.log(timeStamp() + ' >> Simplified Path to: ' + ((j.length/origLength)*100.0).toFixed(1) + '%'); }
   }
 
 } // end of Path Class

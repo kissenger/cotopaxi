@@ -1,17 +1,87 @@
 import { Injectable } from '@angular/core';
 import * as turf from '@turf/turf'
+import { DataService } from './data.service';
+import { HttpService } from './http.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GeoService {
 
-  constructor() { }
+  constructor(
+    private dataService: DataService,
+    private httpService: HttpService
+  ) { }
+
+  /** 
+  *  ELEVATIONS
+  */
+
+  /** 
+  * Returns an array containing elevations at each provided coordinate
+  * TODO: handle reject
+  */
+ getMapboxElevations(coords: Array<GeoJSON.Position>) {
+
+  return new Promise<Array<number>>( (resolveOuter, rej) => {
+    let elevations: Array<number> = [];
+    let p = Promise.resolve();
+    coords.forEach(coord => {
+      p = p.then( () => this.getMapboxElevation(coord)
+          .then( elevation => { elevations.push(elevation); })
+          .catch( err => console.log(err))
+          );
+
+      });
+
+    // wait for all the p promises to resolve before returning the outer promise
+    Promise.all([p]).then( () => { resolveOuter(elevations); });
+  })
+}
+
+/** 
+ * Returns the elevation of a single lng,lat point 
+ * Elevation query returns all the geometric features at the point, so you have to loop through
+ * them all and find the one with the maximum elevation
+ * TODO: handle reject
+*/
+getMapboxElevation(position: GeoJSON.Position) {
+
+  return new Promise<number>( (resolve, reject) => {
+
+    this.httpService.mapboxElevationsQuery(position).subscribe( (result) => {
+      let maxElev = -999;
+      result.features.forEach( (feature: GeoJSON.Feature) => {
+        maxElev = feature.properties.ele > maxElev ? feature.properties.ele : maxElev;
+      })
+      resolve(maxElev);
+    });
+
+  })
+}
+
+
+
+
+  /**
+   * Handles the task of updating the path stats - distance, ascent etc
+   * Also emits the rsulting object for whatever listening component to pic
+   * @param pathAsGeoJson geojson containing the current path
+   */
+  getAndEmitPathStats(path: GeoJSON.FeatureCollection, elevs: Array<Array<number>>) {
+
+    let distance = this.pathLength(path);
+    let pathStats = this.elevationStats(elevs);
+    pathStats['distance'] = distance;
+    pathStats['lumpiness'] = pathStats.ascent/distance;
+
+    this.dataService.pathStats.emit( pathStats );
+  }
+
 
   pathLength(path) {
     return turf.length(path, {units: 'kilometers'});
   }
-
 
   /**
    * returns statistics for provided path
@@ -57,4 +127,20 @@ export class GeoService {
   }
 
 
+  // Creates a flat array of lntlats from supplied GeoJSON
+  getDataFromGeoJSON(path: GeoJSON.FeatureCollection) {
+    
+    let outArray = [];
+    path.features.forEach( feature => {
+      feature.geometry['coordinates'].forEach( coord => {
+        outArray.push(coord);
+      })
+    })
+    return outArray;
+  }
+
+
 }
+
+
+

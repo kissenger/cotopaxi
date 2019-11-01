@@ -95,12 +95,27 @@ class ProgressBar{
 }
 
 
+function timeStamp() {
+
+  var now = new Date();
+  var ms = String(now.getMilliseconds()).padStart(2,'0')
+  var s = String(now.getSeconds()).padStart(2,'0')
+  var m = String(now.getMinutes()).padStart(2,'0')
+  var h = String(now.getHours()).padStart(2,'0')
+  var dd = String(now.getDate()).padStart(2, '0');
+  var mm = String(now.getMonth() + 1).padStart(2, '0'); //January is 0!
+  var yyyy = now.getFullYear();
+
+  return dd+'/'+mm+'/'+yyyy+' '+h+':'+m+':'+s+':'+ms;
+
+}
 
 module.exports = {
   getRGB,
   padInt,
   getContourPalette,
   getRandomColour,
-  ProgressBar
+  ProgressBar,
+  timeStamp
 
 };

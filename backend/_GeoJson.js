@@ -2,9 +2,10 @@
 const outerBoundingBox = require('./geoLib.js').outerBoundingBox;
 const getRandomColour = require('./utils.js').getRandomColour;
 const getContourPalette = require('./utils.js').getContourPalette;
+const timeStamp = require('./utils.js').timeStamp;
+const DEBUG = true;
 
-
-class GeoJson{
+class GeoJSON{
 
   /**
    * Returns a GeoJson feature collection object froma  Mongo document input
@@ -18,6 +19,7 @@ class GeoJson{
    * 'tracks' is an array of path documents, each with a single lnglat segment
    */
   constructor(pathDocuments, plotType, matchDocument) {
+    if (DEBUG) { console.log(timeStamp() + ' >> Creating a new GeoJSON instance '); }
 
     pathDocuments = pathDocuments instanceof Array ? pathDocuments : [pathDocuments];
     this.paths = pathDocuments.map(doc => {
@@ -39,9 +41,6 @@ class GeoJson{
       this.nmatch = matchDocument.params.nmatch;
       this.getColouredFeatures();
     }
-
-    //console.log(this.stats);
-    //console.log();
 
     return  {
       type: 'FeatureCollection',
@@ -76,7 +75,7 @@ class GeoJson{
     for (let iPath = 0; iPath < this.paths.length; iPath++) {
       for (let iSeg = 0; iSeg < this.paths[iPath].length; iSeg++) {
         colour = this.plotType === 'route' ? '#FF0000' : getRandomColour();
-        this.features.push(this.getGeoJsonFeature(colour, iPath, iSeg));
+        this.features.push(this.getGeoJSONFeature(colour, iPath, iSeg));
       }
     }
 
@@ -104,7 +103,7 @@ class GeoJson{
         if ( i > 1 && cIndex !== c0 || i === n - 1 ) {
           const endSlice = i === n - 1 ? i + 2 : i;
           const colour = c0 === -1 ? '#000000' : contour.colours[c0];
-          this.features.push(this.getGeoJsonFeature(colour, 0, is, i0, endSlice));
+          this.features.push(this.getGeoJSONFeature(colour, 0, is, i0, endSlice));
           i0 = i - 1;
         }
 
@@ -123,7 +122,7 @@ class GeoJson{
    * @param {object} s0 index of point at which to start slice
    * @param {object} s1 index of point at which to end slice
    */
-  getGeoJsonFeature (colour, ip, is, s0, s1) {
+  getGeoJSONFeature (colour, ip, is, s0, s1) {
 
     let start = s0 ? s0 : 0;
     let end = s1 ? s1 : this.paths[ip][is].length;
@@ -215,15 +214,13 @@ class GeoJson{
       creationDate: doc.creationDate,
       description: doc.description,
       direction: doc.direction,
-       name: doc.name
+      name: doc.name
       // name: doc.name.length === 0 ? doc.category + ' ' + doc.pathType : doc.name,
     }
   }
 
 }
 
-
-
 module.exports = {
-  GeoJson
+  GeoJSON
 }

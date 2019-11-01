@@ -44,7 +44,8 @@ export class MapCreateService extends MapService {
     source.setData(this.pathAsGJ);
 
     // get path stats and broadcast
-    this.updatePathStats();
+    this.geoService.getAndEmitPathStats(this.pathAsGJ, this.elevations);
+    
 
   }
 
@@ -96,7 +97,7 @@ export class MapCreateService extends MapService {
       this.pathAsArray.push(coordsList);
 
       // get array of elevations for returned coordinates
-      this.getElevations(coordsList).then( (elevs) => {
+      this.geoService.getMapboxElevations(coordsList).then( (elevs) => {
         this.elevations.push(elevs);
 
         // and finally update the map and path stats
@@ -106,60 +107,11 @@ export class MapCreateService extends MapService {
     });  
   }
 
-  /** 
-  * Returns an array containing elevations at each provided coordinate
-  * TODO: handle errors
-  */
-  getElevations(coords: Array<GeoJSON.Position>) {
 
-    return new Promise<Array<number>>( (resolveOuter, rej) => {
-      let elevations: Array<number> = [];
-      let p = Promise.resolve();
-      coords.forEach(coord => {
-        p = p.then( () => this.getElevation(coord)
-            .then( elevation => { elevations.push(elevation); })
-            .catch( err => console.log(err))
-            );
 
-        });
 
-      // wait for all the p promises to resolve before returning the outer promise
-      Promise.all([p]).then( () => { resolveOuter(elevations); });
-    })
-  }
 
-  /** 
-   * Returns the elevation of a single lng,lat point 
-   * TODO: handle errors
-  */
-  getElevation(position: GeoJSON.Position) {
 
-    return new Promise<number>( (resolve, reject) => {
-
-      this.httpService.mapboxElevationsQuery(position).subscribe( (result) => {
-        let maxElev = -999;
-        result.features.forEach( (feature: GeoJSON.Feature) => {
-          maxElev = feature.properties.ele > maxElev ? feature.properties.ele : maxElev;
-        })
-        resolve(maxElev);
-      });
-
-    })
-  }
-
-  /**
-   * Handles the task of updating the path stats - distance, ascent etc
-   * @param pathAsGeoJson geojson containing the current path
-   */
-  updatePathStats() {
-
-    let distance = this.geoService.pathLength(this.pathAsGJ);
-    let pathStats = this.geoService.elevationStats(this.elevations);
-    pathStats['distance'] = distance;
-    pathStats['lumpiness'] = pathStats.ascent/distance;
-
-    this.dataService.pathStats.emit( pathStats );
-  }
 
   /**
    *  Get a list of coordinates depending on whether snap to roads is on or off

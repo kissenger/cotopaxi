@@ -15,6 +15,7 @@ export class MapService{
   public tsMap: mapboxgl.Map;
 
 
+
   constructor(
     public httpService: HttpService,
     public geoService: GeoService,
@@ -52,7 +53,7 @@ export class MapService{
    * @param lineWidth width of the line
    * @param lineColor colour of the line as RGB string '#000000' or auto to pick up colors in the geojson
    */
-  plotGeoJson(path: GeoJSON.FeatureCollection, styleOptions? ) {
+  plotGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
 
     if (!styleOptions) {
       styleOptions = {
@@ -68,7 +69,7 @@ export class MapService{
       "type": "line",
       "source": {
         "type": "geojson",
-        "data": path
+        "data": pathAsGeoJson
         },
       "paint": {
         'line-width': styleOptions.lineWidth,
@@ -78,7 +79,14 @@ export class MapService{
       });
 
       // set the bounds
-    this.tsMap.fitBounds([[path.bbox[0], path.bbox[1]], [path.bbox[2], path.bbox[3]]]);
+    this.tsMap.fitBounds([[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]]);
+
+    // now find elevations
+    let pathAsArray = this.geoService.getDataFromGeoJSON(pathAsGeoJson);
+    this.geoService.getMapboxElevations(pathAsArray).then( elevs => {
+      this.geoService.getAndEmitPathStats(pathAsGeoJson, [elevs])
+    })
+
       
   }
 

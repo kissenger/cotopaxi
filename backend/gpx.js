@@ -1,34 +1,31 @@
 const fs = require('fs');
-const Route = require('./_Path.js').Route;
-const Track = require('./_Path.js').Track;
+const timeStamp = require('./utils.js').timeStamp;
+const DEBUG = true;
 
-/**
- * getPathFromGpx
- *
- * Purpose is to convert data object from file read, into a Path object containing Point objects
- * for each data point.
- *
- */
+ /**
+  * readGPX(data)
+  * @param {*} data input data from multer file read 
+  * @param return object containing path name, coords, elevs and timestamp
+  */
+function readGPX(data) {
 
-function readGpx(data) {
+  if (DEBUG) { console.log(timeStamp() + ' >> readGPX()') };
+  
+  // write to file - only for debugging
+  // const fs = require('fs');
+  // const file = fs.createWriteStream("../check.txt");}
 
-  console.log('>> readGpx: reading data ...');
-  // if ( data.indexOf('\n' !== -1 ) {
-  //   newlineChar = '\n'
-  // } elseif
-
+  // declare function variables
   const MAX_LOOPS = 1000000;
   var a = 0;                          // start of interesting feature
-  var b = data.indexOf("\r",a);     // end of interesting feature
-  var typeOfPath = '';
-  var nameOfPath = '';                 // "route" or "path"
+  var b = data.indexOf("\r",a);       // end of interesting feature
   var latValue, lngValue, eleValue, timeValue;
   let lngLat = [];
   let time = [];
   let elev = [];
-  let isElev = false;
-  let isTime = false;
-
+  let nameOfPath;
+  let isElev = false;  // are these used??
+  let isTime = false;  // are these used??
 
   /**
    * Loop through each line until we find track or route start
@@ -66,8 +63,6 @@ function readGpx(data) {
    */
 
   ptEnd = b;
-  const fs = require('fs');
-  const file = fs.createWriteStream("../check.txt");
   for (let i = 0; i < MAX_LOOPS; i++) {
 
     // get the start and end of the current track point, break from loop if not found
@@ -123,21 +118,18 @@ function readGpx(data) {
     }
     time.push(timeValue);
 
-    file.write(lngValue + ',' + latValue + ',' + eleValue + ',' + timeValue + '\n');
+    // write to file - only for debugging
+    // file.write(lngValue + ',' + latValue + ',' + eleValue + ',' + timeValue + '\n');
 
   }
 
-  // create paths
-  // note that time and elev are only pushed if at least one point was found to contain this data
-  //name, description, lngLat, elev, time, heartRate, cadence)
-  console.log('>> readGpx: creating path object (this may take some time for large file)...' );
-  // console.log(typeOfPath);
-  if ( typeOfPath === 'route') var path = new Route(nameOfPath, ' ', lngLat, isElev ? elev : [], isTime ? time : []);
-  if ( typeOfPath === 'track') var path = new Track(nameOfPath, ' ', lngLat, isElev ? elev : [], isTime ? time : []);
-
-  // exportCsv(path);
-  console.log('>> readGpx: all done' );
-  return path;
+  if (DEBUG) { console.log(timeStamp() + ' >> readGPX() finished') };
+  return {
+    name: nameOfPath,
+    lngLat: lngLat,
+    elev: elev,
+    time: time
+  };
 
 }
 
@@ -150,7 +142,7 @@ function readGpx(data) {
  *
  */
 
-function writeGpx(path){
+function writeGPX(path){
 
   return new Promise( (resolve, reject) => {
 
@@ -228,7 +220,7 @@ function exportGeoJSON(geoJSON) {
  * export data to CSV
  * @param {Path} path
  */
-function exportCsv(path) {
+function exportCSV(path) {
 
   const fs = require('fs');
   let file = fs.createWriteStream("../node.out");
@@ -354,4 +346,4 @@ function parseOSM(data, bbox) {
 
 
 
-module.exports = { readGpx, writeGpx, parseOSM, exportGeoJSON };
+module.exports = { readGPX, writeGPX, parseOSM, exportGeoJSON };
