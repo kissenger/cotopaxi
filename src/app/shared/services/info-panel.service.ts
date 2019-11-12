@@ -4,6 +4,7 @@ import { PanelRoutesCreateOverlayComponent } from 'src/app/main/info-panel/panel
 import { PanelRoutesListListComponent } from 'src/app/main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
 import { PanelRoutesListDetailsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-details/panel-routes-list-details.component';
 import { PanelRoutesListOptionsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
+
 @Injectable({
   providedIn: 'root'
 })

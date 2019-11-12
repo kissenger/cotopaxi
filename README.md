@@ -68,4 +68,8 @@ got into last time when trying to develop on a different computer.<br>
         <td>tools required to support bcrypt package above - needs to be run in shell 
         running in admin mode - installation cam take a while</td>
     </tr>  
+    <tr>
+        <td>npm install @mapbox/tilebelt</td>
+        <td>library to identify raster tile locations for mapbox elevation query</td>
+    </tr>    
 </table>

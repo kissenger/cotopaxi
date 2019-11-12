@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpService } from 'src/app/app-services/http.service';
-import { DataService } from 'src/app/app-services/data.service';
+import { HttpService } from 'src/app/shared/services/http.service';
+import { DataService } from 'src/app/shared/services/data.service';
 
 @Component({
   selector: 'app-panel-routes-list-options',

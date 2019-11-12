@@ -493,7 +493,8 @@ class Path  {
 
     // update path length
     this.pathSize = this.lngLat.length - 1;
-    if (DEBUG) { console.log(timeStamp() + ' >> Simplified Path to: ' + ((j.length/origLength)*100.0).toFixed(1) + '%'); }
+    if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
+                ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
   }
 
 } // end of Path Class

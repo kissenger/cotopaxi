@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolver, Input, ComponentRef } from '@angular/core';
-import { DataService } from 'src/app/app-services/data.service'
-import { InfoPanelService } from 'src/app/app-services/info-panel.service'
+import { DataService } from 'src/app/shared/services/data.service'
+import { InfoPanelService } from 'src/app/shared/services/info-panel.service'
 
 @Component({
   selector: 'app-panels-injector',

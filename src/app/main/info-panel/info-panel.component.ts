@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { InfoPanelService } from 'src/app/app-services/info-panel.service';
-import { DataService } from 'src/app/app-services/data.service';
+import { InfoPanelService } from 'src/app/shared/services/info-panel.service';
+import { DataService } from 'src/app/shared/services/data.service';
 
 @Component({
   selector: 'app-info-panel',

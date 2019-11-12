@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MapCreateService } from 'src/app/app-services/map-create.service'
-import { DataService } from 'src/app/app-services/data.service';
-
+import { MapCreateService } from 'src/app/shared/services/map-create.service'
+import { DataService } from 'src/app/shared/services/data.service';
+import { tsCoordinate } from 'src/app/shared/interfaces';
 
 
 @Component({
@@ -21,7 +21,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
   ngOnInit() {
 
     // initialise the map and launch createroute
-    let startPosition: mapboxgl.LngLatLike = [0,52];
+    let startPosition: tsCoordinate = {lat: 51, lng: -1};
     this.mapCreateService.initialiseMap(startPosition).then( () => {
       this.mapCreateService.createRoute();
     });
@@ -34,7 +34,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
         if (fromMenu.command === 'clear') { this.mapCreateService.clearPath(); }
       } else { 
         let optionKey = Object.keys(fromMenu.option)[0];
-        this.mapCreateService.options[optionKey] = fromMenu.option[optionKey]; 
+        this.mapCreateService.getOptions()[optionKey] = fromMenu.option[optionKey]; 
       }
     })
 

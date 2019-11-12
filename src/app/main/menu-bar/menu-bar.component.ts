@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DataService } from 'src/app/app-services/data.service';
+import { DataService } from 'src/app/shared/services/data.service';
 
 @Component({
   selector: 'app-menu-bar',

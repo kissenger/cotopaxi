@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MapService } from 'src/app/app-services/map.service';
-import { DataService } from 'src/app/app-services/data.service';
+import { MapService } from 'src/app/shared/services/map.service';
+import { DataService } from 'src/app/shared/services/data.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { tsCoordinate } from 'src/app/shared/interfaces';
 
 @Component({
   selector: 'app-routes',
@@ -24,7 +25,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
   ngOnInit() {
 
     // initialise the map and launch createroute
-    let startPosition: mapboxgl.LngLatLike = [0,52];
+    let startPosition: tsCoordinate = {lat: 51, lng: -1};
     this.mapService.initialiseMap(startPosition).then( () => {
 
     });

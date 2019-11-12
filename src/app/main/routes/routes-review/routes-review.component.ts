@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { MapService } from 'src/app/app-services/map.service';
-import { DataService } from 'src/app/app-services/data.service';
+import { MapService } from 'src/app/shared/services/map.service';
+import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
+import { tsCoordinate } from 'src/app/shared/interfaces';
+import { Path } from 'src/app/shared/classes/path-classes';
 
 @Component({
   selector: 'app-routes-review',
@@ -24,11 +26,12 @@ export class RoutesReviewComponent implements OnInit {
     } else {
 
       // initialise the map 
-      let startPosition: mapboxgl.LngLatLike = [0,52];
+      let startPosition: tsCoordinate = {lat: 51, lng: -1};
       this.mapService.initialiseMap(startPosition).then( () => {
 
         // plot the stored route
         let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5}
+
         this.mapService.plotGeoJson(geoJson, styleOptions);
       });
     }

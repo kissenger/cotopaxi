@@ -1,9 +1,8 @@
 //Modules
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
-import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 //Components
@@ -24,12 +23,12 @@ import { PanelRoutesListDetailsComponent } from './main/info-panel/panels/panel-
 import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 
 //Services
-import { HttpService } from './app-services/http.service';
-import { MapService } from './app-services/map.service';
-import { MapCreateService } from './app-services/map-create.service';
+import { HttpService } from './shared/services/http.service';
+import { MapService } from './shared/services/map.service';
+import { MapCreateService } from './shared/services/map-create.service';
 
 //Pipes
-import { UnitPipe } from './app-pipes/unit.pipe';
+import { UnitPipe } from './shared/unit.pipe';
 import { RoutesReviewComponent } from './main/routes/routes-review/routes-review.component';
 
 

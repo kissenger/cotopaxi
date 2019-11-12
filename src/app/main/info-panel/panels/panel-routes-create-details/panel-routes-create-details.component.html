@@ -11,19 +11,27 @@
 </div>
 <div class="row mt-0 mb-3 text-center">
     <div class="col">{{pathStats.distance | units: 'distance': units.distance}}</div>
-    <div class="col">{{pathStats.ascent | units: 'elevation': units.elevation}}</div>
-    <div class="col">{{pathStats.descent | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.elevations.ascent | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.elevations.descent | units: 'elevation': units.elevation}}</div>
 </div>
 
 <div class="row mt-3 mb-0 text-center">
     <div class="col">Points</div>
     <div class="col">Lumpiness</div>
-    <div class="col"></div>
 </div>                    
 <div class="row mt-0 mb-3 text-center">
     <div class="col">{{pathStats.nPoints | number: '1.0-0'}}</div>
-    <div class="col">{{pathStats.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
-    <div class="col"></div>
+    <div class="col">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+</div>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Max Elev</div>
+    <div class="col">Min Elev</div>
+</div>                    
+
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.elevations.maxElevation | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.elevations.minElevation | units: 'elevation': units.elevation}}</div>
 </div>
 
 <div class="d-flex justify-content-center mb-2 flex-grow-1">

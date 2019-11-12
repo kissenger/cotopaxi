@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpService } from 'src/app/app-services/http.service'
+import { HttpService } from 'src/app/shared/services/http.service'
 import { DataService } from './data.service';
 import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
-import * as globalVars from './globals';
-import { getInterpolationArgsLength } from '@angular/compiler/src/render3/view/util';
+import * as globalVars from 'src/app/shared/globals';
+import { tsCoordinate } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -31,8 +31,8 @@ export class MapService{
    * Shows the mapbox map
    * @param location location on which to centre the map
    */
-  initialiseMap(location: mapboxgl.LngLatLike) {
-    return new Promise<Array<GeoJSON.Position>>( (resolve, reject) => {
+  initialiseMap(location: tsCoordinate) {
+    return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
       this.tsMap = new mapboxgl.Map({
         container: 'map', 
         style: 'mapbox://styles/mapbox/cjaudgl840gn32rnrepcb9b9g',
@@ -58,7 +58,7 @@ export class MapService{
     if (!styleOptions) {
       styleOptions = {
         lineWidth: 3,
-        lineColour: AudioTrack,
+        lineColour: 'auto',
         lineOpacity: 1
       }
     }
@@ -81,13 +81,11 @@ export class MapService{
       // set the bounds
     this.tsMap.fitBounds([[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]]);
 
-    // now find elevations
+    // now find elevations, and once returned, update path stats and emit to listening components
     let pathAsArray = this.geoService.getDataFromGeoJSON(pathAsGeoJson);
-    this.geoService.getMapboxElevations(pathAsArray).then( elevs => {
-      this.geoService.getAndEmitPathStats(pathAsGeoJson, [elevs])
-    })
-
-      
+    // this.geoService.getElevationAPIElevs(pathAsArray).then( (coords: Array<tsCoordinate>) => {
+    //   this.dataService.pathStats.emit( this.geoService.getPathStats(coords) );
+    // });
   }
 
 
