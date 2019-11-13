@@ -1,10 +1,11 @@
 const p2p = require('./geoLib.js').p2p;
-const p2l = require('./geoLib.js').p2l;
+// const p2l = require('./geoLib.js').p2l;
 const Point = require('./geoLib.js').Point;
 const boundingBox = require('./geoLib').boundingBox;
 const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
+const simplify = require('./geoLib.js').simplify;
 const DEBUG = true;
 
 /**
@@ -15,17 +16,24 @@ const DEBUG = true;
 class Path  {
 
   constructor(lngLat, elev, pathType) {
+
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
 
-    this.lngLat = lngLat.map( (x) => [parseFloat(x[0].toFixed(6)), parseFloat(x[1].toFixed(6))]);
+    // this.lngLat = lngLat.map( (x) => [parseFloat(x[0].toFixed(6)), parseFloat(x[1].toFixed(6))]);
+    
     if (elev) this.elev = elev;
-    if (pathType === 'route') { this.simplify(); }
+    this.points = lngLat.map( (x, i) => this.getPoint(i) );
+
+    if (pathType === 'route') { 
+      this.points = simplify(this.points); 
+    }
     this.pathType = pathType;
     this.bbox = boundingBox(this.lngLat);
     this.distance = pathDistance(this.lngLat);
     this.pathSize = this.lngLat.length - 1;
     this.category = this.category();
     this.direction = this.direction();
+    this.stats = this.analysePath();
 
   }
 
@@ -40,13 +48,15 @@ class Path  {
 
 
   /**
-   * Returns object in format for insertion into MongoDB
+   * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
+   * desired format
    * @param {string} userId
    * @param {boolean} isSaved
    * // TODO change this to property of the class, not a method. Neater but need byRef?
    */
-  mongoFormat(userId, isSaved) {
-    if (DEBUG) { console.log(timeStamp() + ' >> Convert Path for Mongo '); }
+  asMongoObject(userId, isSaved) {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Assemble Mongo Object '); }
 
     const params = {};
     if (this.time) params.time = this.time;
@@ -54,24 +64,24 @@ class Path  {
     if (this.heartRate) params.heartRate = this.heartRate;
     if (this.cadence) params.cadence = this.cadence;
 
-    const name = typeof this.name === 'undefined' ? "" : this.name;
-    const stats = this.analysePath();
-
     return {
       userId: userId,
       isSaved: isSaved,
-      pathType: this.pathType,
-      startTime: this.startTime,
-      category: this.category,
-      direction: this.direction,
-      name: name,
-      description: this.description,
       geometry: {
         type: 'LineString',
-        coordinates: this.lngLat
+        coordinates: this.points.map( x => [x.lng, x.lat])
+      },
+      pathInfo: {
+        direction: this.direction,
+        category: this.category,
+        isNationalTrail: false,
+        name: typeof this.name === 'undefined' ? "" : this.name,
+        description: this.description,
+        pathType: this.pathType,
+        startTime: this.startTime
       },
       params: params,
-      stats: stats,
+      stats: this.stats,
     }
   }
 
@@ -79,6 +89,9 @@ class Path  {
   /**
    * Returns point class for node of given index
    * @param {number} index
+   * TODO: this is a shit way of doing things ... every time you want to look at a point youre converting it to an object, and
+   * we loop through the coords array loads of times so this is being done lots and then discarded. Why not convert to a Point
+   * in the constructor when the Class is instantiated???
    */
   getPoint(index) {
     let thisPoint = [];
@@ -109,7 +122,7 @@ class Path  {
     let nm = 0;
     for ( let i = 0; i < this.pathSize - BUFFER; i++ ) {
       for ( let j = i + BUFFER; j < this.pathSize; j++ ) {
-        const dist = p2p(this.getPoint(i), this.getPoint(j));
+        const dist = p2p(this.points[i], this.points[j]);
 
         // if dist between nodes is below threshold then count the match and break loop
         if ( dist < MATCH_DISTANCE ) {
@@ -126,7 +139,7 @@ class Path  {
     this.bbox
     // caculate proportion of points that are matched ( x2 becasue only a max 1/2 of points can be matched)
     const pcShared = nm / this.pathSize * 100 * 2;
-    if ( p2p(this.getPoint(0), this.getPoint(this.pathSize)) < MATCH_DISTANCE * 10 ) {
+    if ( p2p(this.points[0], this.points[this.pathSize]) < MATCH_DISTANCE * 10 ) {
       // path ends where it started, within tolerance
 
       if ( pcShared > PC_THRESH_UPP ) return 'Out and back'
@@ -156,7 +169,7 @@ class Path  {
 
     if ( this.category === 'Circular' || this.category === 'One way') {
 
-      const startPoint = this.getPoint(0);
+      const startPoint = this.points[0];
       const stepSize = parseInt(this.pathSize/20);
       let brgShift = 0;
       let minBrg = 20;
@@ -165,7 +178,7 @@ class Path  {
       let lastBrg;
 
       for ( let i = 1; i < this.pathSize; i+= stepSize ) {
-        let thisBrg = bearing(startPoint, this.getPoint(i));
+        let thisBrg = bearing(startPoint, this.points[0]);
 
         if (i !== 1) {
           let deltaBrg = thisBrg - lastBrg;
@@ -231,7 +244,7 @@ class Path  {
     if (DEBUG) { console.log(timeStamp() + ' >> Analyse Path '); }
 
     const KM_TO_MILE = 0.6213711922;
-    const ALPHA = 0.3;             //low pass filter constant, to higher the number the quicker the response
+    const ALPHA = 0.3;             //low pass filter constant, to higher the number the quicker the response, used for smoothing gradient
     const GRAD_THRESHOLD = 2;      // gradient in % above which is considered a climb/descent
     const HILL_THRESHOLD = 20;     // hills of less height gain will not be considered
     const SPEED_THRESHOLD = 1.4;   // km/h
@@ -247,6 +260,8 @@ class Path  {
     let distance = 0;
     let ascent = 0;
     let descent = 0;
+    let maxElev = -9999;
+    let minElev = 9999;
     let movingTime = 0;
     let movingDist = 0;
     let duration = 0;
@@ -278,13 +293,13 @@ class Path  {
      * Pre-process
      *
      */
-    const isTime = typeof this.getPoint(0).time !== 'undefined' ? true : false;
-    const isElev = typeof this.getPoint(0).elev !== 'undefined' ? true : false;
+    const isTime = typeof this.points[0].time !== 'undefined' ? true : false;
+    const isElev = typeof this.points[0].elev !== 'undefined' ? true : false;
 
     let index = 0;
     do  {
 
-      const thisPoint = this.getPoint(index);
+      const thisPoint = this.points[index];
 
       // skipping the first point, compare this point to the previous one
       if (index !== 0) {
@@ -353,6 +368,8 @@ class Path  {
           dElev = thisPoint.elev - lastPoint.elev;
           ascent = dElev > 0 ? ascent + dElev : ascent;
           descent = dElev < 0 ? descent + dElev : descent;
+          maxElev = thisPoint.Elev > maxElev ? thisPoint.Elev : maxElev;
+          minElev = thisPoint.Elev < minElev ? thisPoint.Elev : minElev;
 
           if ( dElev != 0 ) {
             // elevation has changed since the last loop
@@ -419,7 +436,7 @@ class Path  {
 
       } else {
         // index === 0
-        if ( isElev) thisFiltElev = this.getPoint(index).elev;
+        if ( isElev) thisFiltElev = this.points[index].elev;
       }
 
       /**
@@ -434,16 +451,25 @@ class Path  {
 
       duration: isTime ? duration: 0,
       bbox: this.bbox,
-      movingTime: isTime ? movingTime : 0,
-      movingDist: isTime ? movingDist : 0,
       distance: distance,
-      ascent: ascent,
-      descent: descent,
-      hills: hills,
       pace: isTime ? (duration/60) / (distance/1000) : 0,
-      movingPace: isTime ? (movingDist/60) / (movingDist/1000) : 0,
-      kmSplits: kmSplits,
-      mileSplits: mileSplits,
+      movingStats: {
+        movingTime: isTime ? movingTime : 0,
+        movingDist: isTime ? movingDist : 0,
+        movingPace: isTime ? (movingDist/60) / (movingDist/1000) : 0,
+      },
+      elevations: {
+        ascent: ascent,
+        descent: descent,
+        maxElev: maxElev,
+        minElev: minElev,
+        lumpiness: (ascent - descent) / distance,
+      },
+      hills: hills,
+      splits: {
+        kmSplits: kmSplits,
+        mileSplits: mileSplits
+      },
       p2p: {
         max: p2pMax,
         ave: distance / this.pathSize
@@ -451,51 +477,52 @@ class Path  {
     }
   }
 
- /**
-  * function simplifyPath
-  * simplify path using perpendicular distance method
-  * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
-  */
-  simplify() {
+//  /**
+//   * function simplifyPath
+//   * simplify path using perpendicular distance method
+//   * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
+//   * TODO: shoul dbe in the geoLib and called form here - allows to be called without creating a Path object
+//   */
+//   simplify() {
     
-    if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
+//     if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
-    const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
-    const origLength = this.lngLat.length - 1;
-    let i;
-    let flag = true;
+//     const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
+//     const origLength = this.lngLat.length - 1;
+//     let i;
+//     let flag = true;
 
-    // create array of indexes - what remains at end are points remaining after simplification
-    let j = Array.from(this.lngLat, (x, i) => i)
+//     // create array of indexes - what remains at end are points remaining after simplification
+//     let j = Array.from(this.lngLat, (x, i) => i)
 
-    // Repeat loop until no nodes are deleted
-    while ( flag === true ) {
-      i = 0;
-      flag = false;   // if remains true then simplification is complete; loop will break
-      while ( i < ( j.length - 2 ) ) {
-        const pd = p2l( this.getPoint(j[i]), this.getPoint(j[i+2]), this.getPoint(j[i+1]) );
-        if ( Math.abs(pd) < TOLERANCE ) {
-          j.splice(i+1, 1);
-          flag = true;
-        }
-        i++;
-      }
-    }
+//     // Repeat loop until no nodes are deleted
+//     while ( flag === true ) {
+//       i = 0;
+//       flag = false;   // if remains true then simplification is complete; loop will break
+//       while ( i < ( j.length - 2 ) ) {
+//         const pd = p2l( this.Points[j[i]], this.Points[j[i+2]], this.Points[j[i+1]] );
+//         if ( Math.abs(pd) < TOLERANCE ) {
+//           j.splice(i+1, 1);
+//           flag = true;
+//         }
+//         i++;
+//       }
+//     }
 
-    // strip out points from class using whats left of j
-    this.lngLat = j.map( x => this.lngLat[x] );
-    if ( typeof this.elev !== 'undefined') {
-      if ( this.elev.length !== 0 ) this.elev = j.map( x => this.elev[x] );
-    }
-    if ( typeof this.time !== 'undefined') {
-      if ( this.time.length !== 0 ) this.time = j.map( x => this.time[x] );
-    }
+//     // strip out points from class using whats left of j
+//     this.lngLat = j.map( x => this.lngLat[x] );
+//     if ( typeof this.elev !== 'undefined') {
+//       if ( this.elev.length !== 0 ) this.elev = j.map( x => this.elev[x] );
+//     }
+//     if ( typeof this.time !== 'undefined') {
+//       if ( this.time.length !== 0 ) this.time = j.map( x => this.time[x] );
+//     }
 
-    // update path length
-    this.pathSize = this.lngLat.length - 1;
-    if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
-                ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
-  }
+//     // update path length
+//     this.pathSize = this.lngLat.length - 1;
+//     if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
+//                 ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
+//   }
 
 } // end of Path Class
 

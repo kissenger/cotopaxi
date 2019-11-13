@@ -1,3 +1,4 @@
+const Point = require('_Point').Point;
 
 /**
  * function p2p
@@ -164,23 +165,63 @@ function isPointInBBox(point, bbox) {
           point.lat > bbox[1];    /* lat is greater than minLat */
 }
 
-
 /**
- * Objectifies a point to ensure correct format for library methods
- * @param {Array<number>} array
+ * function simplifyPath
+ * simplify path using perpendicular distance method
+ * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf 
+ * @param {*} points array of Point instances defining the path to be simplified
  */
-class Point {
+function simplify(points) {
+    
+  if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
-  constructor(array) {
-    this.lng = array[0][0];
-    this.lat = array[0][1];
-    if ( typeof array[1] !== 'undefined' ) this.elev = array[1];
-    if ( typeof array[2] !== 'undefined' ) this.time = array[2];
-    if ( typeof array[3] !== 'undefined' ) this.hr = array[3];
-    if ( typeof array[4] !== 'undefined' ) this.cad = array[4];
+  const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
+  const origLength = points.length;
+  let i;
+  let flag;
+
+  // create array of indexes - what remains at end are points remaining after simplification
+  let j = Array.from(coords, (x, i) => i)
+
+  // Repeat loop until no nodes are deleted
+  while ( flag === true ) {
+    i = 0;
+    flag = false;   // if remains false then simplification is complete; loop will break
+    while ( i < ( j.length - 2 ) ) {
+      const pd = p2l( points[j[i]], points[j[i+2]], points[j[i+1]] );
+      if ( Math.abs(pd) < TOLERANCE ) {
+        j.splice(i+1, 1); // delete a point
+        flag = true;
+      }
+      i++;
+    }
   }
 
+  // show console how succesful weve been
+  if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
+              ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
+
+  return j.map( x => points[x] );
+
 }
+
+
+// /**
+//  * Objectifies a point to ensure correct format for library methods
+//  * @param {Array<number>} array
+//  */
+// class Point {
+
+//   constructor(array) {
+//     this.lng = array[0][0];
+//     this.lat = array[0][1];
+//     if ( typeof array[1] !== 'undefined' ) this.elev = array[1];
+//     if ( typeof array[2] !== 'undefined' ) this.time = array[2];
+//     if ( typeof array[3] !== 'undefined' ) this.hr = array[3];
+//     if ( typeof array[4] !== 'undefined' ) this.cad = array[4];
+//   }
+
+// }
 
 module.exports = {
   p2p,
@@ -189,6 +230,6 @@ module.exports = {
   outerBoundingBox,
   pathDistance,
   boundingBox,
-  Point,
-  isPointInBBox
+  isPointInBBox,
+  simplify
 };

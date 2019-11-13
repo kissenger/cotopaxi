@@ -96,8 +96,7 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
   // Get a mongo object from the path data
   const pathFromFile = readGPX(req.file.buffer.toString());
   const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, [], []);
-  mongoPath = Path.mongoFormat(userId, false)
-  mongoPath.userId = userId;  // inject userID into path object
+  const mongoPath = Path.asMongoObject(userId, false)
 
   // Save route into database and return it to the front end
   MongoPath.Routes.create(mongoPath).then( (docs) => {
@@ -271,7 +270,7 @@ app.get('/reverse-path/:type/:id', auth.verifyToken, (req, res) => {
  *  Simplify a path provided by the front end, and return it.
  *  Does this by simply creating a route object on the as this
  *  automatically invokes simplification algorithm
- *
+ *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
  *****************************************************************/
 app.post('/simplify-path/', auth.verifyToken, (req, res) => {
 
