@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from './http.service';
-import { tsCoordinate, openElevationResultObject } from 'src/app/shared/interfaces';
-import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
+import { tsCoordinate, myElevationResults, myElevationQuery } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -27,20 +26,22 @@ export class GeoService {
    * TODO - the data is publically available see - work out how to query it locally to save paying
    * https://lpdaac.usgs.gov/products/astgtmv003/
    * https://elevation-api.io/acknowledgements
-   * @param coords as geojeon long/lats
-   * Note that api required list of lat/lng so need to swap the values around
-   * maximum query length is 250 points, but no limit on no requests per second
-   * So chunks the data into arrays of 250 points max length and sends each with a promise
-   * loop, and returns when the last promise is resolved.
-   * TODO - pretty sure this can be neatened up...
+   * Notes on other platforms:
+   * - Runalyze host their own STRM files: https://runalyze.com/help/article/elevation?_locale=en. This data is from 
+   *   "Shuttle Radar Topography Mission from 2000", which is free on google maps or Geonames.org, but queries are rate limited
+   * - Strava generate their own elevation data from user baro data, but suppliments this with data from "public database"
+   *   where they dont have their own data : https://support.strava.com/hc/en-us/articles/216919447-Elevation-for-Your-Activity
+   * @param coordsArray array of as tsCoordinate objects (ie points in {lng: xx, lat: xx} format)
+   * @param interpolate boolean indication of whether interpolation is desired
+   * @param returns simple array of elevations, one for each supplied coordinate
    */
-  getElevationAPIElevs(coordArray: Array<tsCoordinate>) {
+  getElevationsFromAPI(coordArray: Array<tsCoordinate>, interpolate: boolean) {
     
-    return new Promise<Array<number>>( (resolveOuter, rejectOuter) => {
-
+    return new Promise<Array<number>>( (resolve, reject) => {
+      
       // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
       // dont use splice as it cocks things up for reasons i dont understand.
-      const MAX_LEN = 250;
+      const MAX_LEN = 2000;
       let sliceArray = [];
       let i = 0;
       do {
@@ -49,25 +50,14 @@ export class GeoService {
         i++;
       } while ( i * MAX_LEN < coordArray.length);
 
-      // loop through arrays and request elevation data
-      let outArray = [];
-      let p = Promise.resolve();
-      sliceArray.forEach(chunk => {
-        p = p.then( () => this.openElevationQuery(chunk.map( (c: tsCoordinate) => [c.lat, c.lng]))
-            .then( result => { 
-              console.log(result);
-              result.elevations.forEach( (position) => { outArray.push(position.elevation); })
-            })
-            .catch(err => console.log(err))
-            );
-
-        });
-
-        
-      // wait for all the p promises to resolve before returning the outer promise
-      Promise.all([p]).then( () => {
-        console.log(outArray);
-        resolveOuter(outArray);
+      // request each chunk in turn, waiting for the last one to resolve before moving on
+      sliceArray.reduce( (promise, coordsArray) => {
+        return promise.then( (allResults) => 
+          this.elevationQuery({options: {interpolate}, coordsArray}).then( (thisResult) => 
+            [...allResults, thisResult] 
+          ));
+      }, Promise.resolve([])).then( (result) => { 
+        resolve(result[0].result.map(e => e.elev));
       });
 
     });
@@ -75,10 +65,10 @@ export class GeoService {
   }
 
 
-  openElevationQuery(c: Array<Array<number>>) {
-    return new Promise<openElevationResultObject>( (resolve, rej) => {
-      this.httpService.elevationAPIQuery({'points': c}).subscribe( elevs => {
-        resolve(elevs);
+  elevationQuery(query: myElevationQuery) {
+    return new Promise<myElevationResults>( (res, rej) => {
+      this.httpService.myElevationsQuery(query).subscribe( (elevs) => {
+        res(elevs);
       })
     });   
   }
@@ -148,14 +138,14 @@ export class GeoService {
   
 
   /** 
-   * Calculate distance in km of supplied path chunk
+   * Calculate distance in meters of supplied path chunk
    */
   calculatePathDistance(coords: Array<tsCoordinate>) {
     let distance = 0;
     for (let i = 1; i < coords.length; i++) {
       distance += this.p2p(coords[i-1], coords[i])
     }
-    return distance/1000.0;
+    return distance;
   }
 
   

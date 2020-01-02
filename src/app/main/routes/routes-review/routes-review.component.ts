@@ -30,9 +30,9 @@ export class RoutesReviewComponent implements OnInit {
       this.mapService.initialiseMap(startPosition).then( () => {
 
         // plot the stored route
-        let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5}
-
+        let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};
         this.mapService.plotGeoJson(geoJson, styleOptions);
+        
       });
     }
 

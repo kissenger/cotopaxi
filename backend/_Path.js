@@ -1,11 +1,12 @@
 const p2p = require('./geoLib.js').p2p;
 // const p2l = require('./geoLib.js').p2l;
-const Point = require('./geoLib.js').Point;
+const Point = require('./_Point.js').Point;
 const boundingBox = require('./geoLib').boundingBox;
 const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
+const getElevations = require('./geoLib.js').getElevations;
 const DEBUG = true;
 
 /**
@@ -15,22 +16,23 @@ const DEBUG = true;
  */
 class Path  {
 
-  constructor(lngLat, elev, pathType) {
+  constructor(lngLat, elevations, pathType) {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
 
-    // this.lngLat = lngLat.map( (x) => [parseFloat(x[0].toFixed(6)), parseFloat(x[1].toFixed(6))]);
+    // deal with elevations
+    this.elev = this.checkElevations(elevations, lngLat);
+    this.elevationStatus = elevations.elevationStatus;
     
-    if (elev) this.elev = elev;
-    this.points = lngLat.map( (x, i) => this.getPoint(i) );
+    /// create points array and simplify if its a route
+    this.points = this.getPoints(lngLat, this.elev);
+    if (pathType === 'route') { this.points = simplify(this.points); }
 
-    if (pathType === 'route') { 
-      this.points = simplify(this.points); 
-    }
+    // other imfo
     this.pathType = pathType;
-    this.bbox = boundingBox(this.lngLat);
-    this.distance = pathDistance(this.lngLat);
-    this.pathSize = this.lngLat.length - 1;
+    this.bbox = boundingBox(this.points);
+    this.distance = pathDistance(this.points);
+    this.pathSize = this.points.length - 1;
     this.category = this.category();
     this.direction = this.direction();
     this.stats = this.analysePath();
@@ -38,15 +40,28 @@ class Path  {
   }
 
 
-  /**
-   * Allows insertion of a property onto the class object from an external user
-   * @param {object} obj is the key-value pair to insert {object: key}
-   */
-  injectKeyValuePair(obj) {
-    this[Object.keys(obj)[0]] = Object.values(obj)[0];
+  // /**
+  //  * Allows insertion of a property onto the class object from an external user
+  //  * @param {object} obj is the key-value pair to insert {object: key}
+  //  */
+  // injectKeyValuePair(obj) {
+  //   this[Object.keys(obj)[0]] = Object.values(obj)[0];
+  // }
+
+  checkElevations(elevObj, coords) {
+    return new Promise( (resolve, reject) => {
+      console.log(elevObj.elevationStatus);
+      if (elevObj.elevationStatus.indexOf('D') > -1) {
+        // imported elevations were discarded, so we need to replace them
+        console.log('get new elevations');
+        
+        resolve(getElevations(coords));
+      } else {
+        console.log('keep existing elevations');
+        resolve(elevations.elev);
+      }
+    })
   }
-
-
   /**
    * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
    * desired format
@@ -71,7 +86,7 @@ class Path  {
         type: 'LineString',
         coordinates: this.points.map( x => [x.lng, x.lat])
       },
-      pathInfo: {
+      info: {
         direction: this.direction,
         category: this.category,
         isNationalTrail: false,
@@ -93,14 +108,30 @@ class Path  {
    * we loop through the coords array loads of times so this is being done lots and then discarded. Why not convert to a Point
    * in the constructor when the Class is instantiated???
    */
-  getPoint(index) {
-    let thisPoint = [];
-    if ( this.lngLat ) thisPoint.push(this.lngLat[index]);
-    if ( this.elev ) thisPoint.push(this.elev[index]);
-    if ( this.time ) thisPoint.push(this.time[index]);
-    if ( this.heartRate ) thisPoint.push(this.heartRate[index]);
-    if ( this.cadence ) thisPoint.push(this.cadence[index]);
-    return (new Point(thisPoint));
+  // getPoint(index) {
+  //   let thisPoint = [];
+  //   if ( this.lngLat ) thisPoint.push(this.lngLat[index]);
+  //   if ( this.elev ) thisPoint.push(this.elev[index]);
+  //   if ( this.time ) thisPoint.push(this.time[index]);
+  //   if ( this.heartRate ) thisPoint.push(this.heartRate[index]);
+  //   if ( this.cadence ) thisPoint.push(this.cadence[index]);
+  //   return (new Point(thisPoint));
+  // }
+
+  getPoints(coords, elev, time, heartRate, cadence) {
+
+    let pointsArray = [];
+    for (let i = 0; i < coords.length; i++) {
+      let thisPoint = [];
+      if ( coords ) thisPoint.push(coords[i]);
+      if ( elev ) thisPoint.push(elev[i]);
+      if ( time ) thisPoint.push(time[i]);
+      if ( heartRate ) thisPoint.push(heartRate[i]);
+      if ( cadence ) thisPoint.push(cadence[i]);  
+      pointsArray.push(new Point(thisPoint));
+    }
+      
+    return pointsArray;
   }
 
 
@@ -368,8 +399,9 @@ class Path  {
           dElev = thisPoint.elev - lastPoint.elev;
           ascent = dElev > 0 ? ascent + dElev : ascent;
           descent = dElev < 0 ? descent + dElev : descent;
-          maxElev = thisPoint.Elev > maxElev ? thisPoint.Elev : maxElev;
-          minElev = thisPoint.Elev < minElev ? thisPoint.Elev : minElev;
+          console.log(thisPoint.elev, minElev, maxElev);
+          maxElev = thisPoint.elev > maxElev ? thisPoint.elev : maxElev;
+          minElev = thisPoint.elev < minElev ? thisPoint.elev : minElev;
 
           if ( dElev != 0 ) {
             // elevation has changed since the last loop
@@ -447,11 +479,14 @@ class Path  {
 
     } while (index <= this.pathSize)
 
+    // console.log(maxElev, minElev);
+
     return{
 
       duration: isTime ? duration: 0,
       bbox: this.bbox,
       distance: distance,
+      nPoints: this.pathSize,
       pace: isTime ? (duration/60) / (distance/1000) : 0,
       movingStats: {
         movingTime: isTime ? movingTime : 0,
@@ -578,7 +613,6 @@ class Route extends Path {
 
   }
 }
-
 
 
 module.exports = {

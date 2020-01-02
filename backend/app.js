@@ -3,7 +3,8 @@ const express = require('express');
 const app = express();
 const multer = require('multer');
 const bodyParser = require('body-parser');
-const request = require('request');
+
+// const request = require('request');
 
 const DEBUG = true;
 // const DEBUG = false;
@@ -14,11 +15,12 @@ const Path = require('./_Path').Path;
 const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
-const writeGPX = require('./gpx.js').writeGPX;
+// const writeGPX = require('./gpx.js').writeGPX;
 const readGPX = require('./gpx.js').readGPX;
-const exportGeoJSON = require('./gpx.js').exportGeoJSON;
+// const exportGeoJSON = require('./gpx.js').exportGeoJSON;
 const timeStamp = require('./utils.js').timeStamp;
 // const outerBbox = require('./geoLib.js').outerBbox;
+const getElevations = require('./geoLib.js').getElevations;
 
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
@@ -52,8 +54,14 @@ app.use(express.static('backend/files'));
  *
  ******************************************************************/
 
-mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/test?retryWrites=true')
-  .then(() => {  console.log('Connected to database'); })
+// mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/test?retryWrites=true')
+//   .then(() => {  console.log('Connected to database'); })
+//   .catch(() => { console.log('Connection to database failed'); });
+
+// mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/test?retryWrites=true')
+
+mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb')
+  .then(() => { console.log('Connected to database'); })
   .catch(() => { console.log('Connection to database failed'); });
 
 /*****************************************************************
@@ -95,11 +103,13 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
 
   // Get a mongo object from the path data
   const pathFromFile = readGPX(req.file.buffer.toString());
-  const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, [], []);
-  const mongoPath = Path.asMongoObject(userId, false)
+  const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, pathFromFile.elevations);
+  const mongoPath = Path.asMongoObject(userId, false);
 
-  // Save route into database and return it to the front end
+  // Save route into database with isSaved = false, and return it to the front end
   MongoPath.Routes.create(mongoPath).then( (docs) => {
+  // MongoPath.Routes.insertMany({"x":2}).then( (docs) => {    
+    // console.log(docs);
     res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
     if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
   })

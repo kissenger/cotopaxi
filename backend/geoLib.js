@@ -1,4 +1,74 @@
-const Point = require('_Point').Point;
+const Point = require('./_Point').Point;
+const timeStamp = require('./utils').timeStamp;
+const DEBUG = true;
+const elevationAPIQuery = require('./http').elevationAPIQuery;
+
+  /**
+   * Get elevation data from elevations api https://elevation-api.io/
+   * TODO - the data is publically available see - work out how to query it locally to save paying
+   * https://lpdaac.usgs.gov/products/astgtmv003/
+   * https://elevation-api.io/acknowledgements
+   * @param coords as geojeon long/lats
+   * Note that api required list of lat/lng so need to swap the values around
+   * maximum query length is 250 points, but no limit on no requests per second
+   * So chunks the data into arrays of 250 points max length and sends each with a promise
+   * loop, and returns when the last promise is resolved.
+   * TODO - pretty sure this can be neatened up...
+   */
+  function getElevations(coordArray) {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> getElevations '); }
+    
+    return new Promise( (resolveOuter, rejectOuter) => {
+
+      // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
+      // dont use splice as it cocks things up for reasons i dont understand.
+      const MAX_LEN = 250;
+      let sliceArray = [];
+      let i = 0;
+      do {
+        const start = i * MAX_LEN
+        sliceArray.push(coordArray.slice(start, start + MAX_LEN));
+        i++;
+      } while ( i * MAX_LEN < coordArray.length);
+
+      // loop through arrays and request elevation data chunk by chunk
+      let outArray = [];
+      let p = Promise.resolve();
+      sliceArray.forEach(chunk => {
+        p = p.then( () => openElevationQuery(chunk).then( result => { 
+            console.log('result', result);
+            result.elevations.forEach( (position) => { outArray.push(position.elevation); })
+          }).catch(err => console.log(err))
+          );
+
+        });
+
+        
+      // wait for all the p promises to resolve before returning the outer promise
+      Promise.all([p]).then( () => {
+        console.log(outArray);
+        resolveOuter(outArray);
+      });
+
+    });
+    
+  }
+
+
+  function openElevationQuery(c) {
+    return new Promise( (resolve, rej) => {
+      if (DEBUG) { console.log(timeStamp() + ' >> openElevationQuery '); }
+      // console.log({'points': c});
+      elevationAPIQuery({'points': c}).then( elevs => {
+
+        resolve(elevs);
+      })
+    });   
+  }
+
+
+
 
 /**
  * function p2p
@@ -100,54 +170,113 @@ function bearing(p1, p2) {
 }
 
 
+// /**
+//  * Returns bounding box in the form [minLng, minLat, maxLng, maxLat]
+//  * @param {*} lngLatArray
+//  */
+// function boundingBox(lngLatArray) {
+//   const bbox = [ 180, 90, -180, -90 ];
+//   for (let i = 0, n = lngLatArray.length; i < n; i++) {
+//     bbox[0] = lngLatArray[i][0] < bbox[0] ? lngLatArray[i][0] : bbox[0];
+//     bbox[1] = lngLatArray[i][1] < bbox[1] ? lngLatArray[i][1] : bbox[1];
+//     bbox[2] = lngLatArray[i][0] > bbox[2] ? lngLatArray[i][0] : bbox[2];
+//     bbox[3] = lngLatArray[i][1] > bbox[3] ? lngLatArray[i][1] : bbox[3];
+//   };
+//   return bbox;
+// }
+
 /**
- * Returns bounding box in the form [minLng, minLat, maxLng, maxLat]
- * @param {*} lngLatArray
+ * Returns bounding box object
+ * @param {*} pointsArray
  */
-function boundingBox(lngLatArray) {
-  const bbox = [ 180, 90, -180, -90 ];
-  for (let i = 0, n = lngLatArray.length; i < n; i++) {
-    bbox[0] = lngLatArray[i][0] < bbox[0] ? lngLatArray[i][0] : bbox[0];
-    bbox[1] = lngLatArray[i][1] < bbox[1] ? lngLatArray[i][1] : bbox[1];
-    bbox[2] = lngLatArray[i][0] > bbox[2] ? lngLatArray[i][0] : bbox[2];
-    bbox[3] = lngLatArray[i][1] > bbox[3] ? lngLatArray[i][1] : bbox[3];
+function boundingBox(pointsArray) {
+
+  const bbox = {
+    minLng: 180,
+    minLat: 90, 
+    maxLng: -180,
+    maxLat: -90};
+
+  for (let i = 0, n = pointsArray.length; i < n; i++) {
+    bbox.minLng = pointsArray[i].lng < bbox.minLng ? pointsArray[i].lng : bbox.minLng;
+    bbox.maxLng = pointsArray[i].lng > bbox.maxLng ? pointsArray[i].lng : bbox.maxLng;
+    bbox.minLat = pointsArray[i].lat < bbox.minLat ? pointsArray[i].lat : bbox.minLat;
+    bbox.maxLat = pointsArray[i].lat > bbox.maxLat ? pointsArray[i].lat : bbox.maxLat;
   };
+
   return bbox;
+
 }
 
-
+// /**
+//  * Returns an outer bounding box for a given array of inner bounding boxes
+//  * @param {Array<number>} arrayOfBboxes
+//  */
+// function outerBoundingBox(arrayOfBboxes) {
+//   let outerBbox = [ 180, 90, -180, -90 ];
+//   arrayOfBboxes.forEach( (x) => {
+//     outerBbox[0] = x[0] < outerBbox[0] ? x[0] : outerBbox[0];
+//     outerBbox[1] = x[1] < outerBbox[1] ? x[1] : outerBbox[1];
+//     outerBbox[2] = x[2] > outerBbox[2] ? x[2] : outerBbox[2];
+//     outerBbox[3] = x[3] > outerBbox[3] ? x[3] : outerBbox[3];
+//   });
+//   return outerBbox;
+// }
 /**
  * Returns an outer bounding box for a given array of inner bounding boxes
  * @param {Array<number>} arrayOfBboxes
  */
 function outerBoundingBox(arrayOfBboxes) {
-  let outerBbox = [ 180, 90, -180, -90 ];
-  arrayOfBboxes.forEach( (x) => {
-    outerBbox[0] = x[0] < outerBbox[0] ? x[0] : outerBbox[0];
-    outerBbox[1] = x[1] < outerBbox[1] ? x[1] : outerBbox[1];
-    outerBbox[2] = x[2] > outerBbox[2] ? x[2] : outerBbox[2];
-    outerBbox[3] = x[3] > outerBbox[3] ? x[3] : outerBbox[3];
+
+  const outerBbox = {
+    minLng: 180,
+    minLat: 90, 
+    maxLng: -180,
+    maxLat: -90};
+
+  arrayOfBboxes.forEach( (bbox) => {
+    outerBbox.minLng = bbox.minLng < outerBbox.minLng ? bbox.minLng : outerBbox.minLng;
+    outerBbox.maxLng = bbox.maxLng > outerBbox.maxLng ? bbox.maxLng : outerBbox.maxLng;
+    outerBbox.minLat = bbox.minLat < outerBbox.minLat ? bbox.minLat : outerBbox.minLat;
+    outerBbox.maxLat = bbox.maxLat > outerBbox.maxLat ? bbox.maxLat : outerBbox.maxLat;
   });
+
   return outerBbox;
+
 }
+
+
+// /**
+//  * Calculates distance in metres covered by path
+//  * @param {Array<number>} lngLats array containing [lng, lat] coordinates
+//  */
+// function pathDistance(lngLats) {
+
+//   let distance = 0;
+//   let lastPoint, thisPoint;
+
+//   for (let i = 0, n = lngLats.length; i < n; i++) {
+//     thisPoint = new Point([lngLats[i]]);
+//     if (i > 0) distance += p2p(thisPoint, lastPoint);
+//     lastPoint = thisPoint;
+//   }
+
+//   return distance;
+// }
 
 
 /**
  * Calculates distance in metres covered by path
- * @param {Array<number>} lngLats array containing [lng, lat] coordinates
+ * @param {Array<Point>} points array of Points
  */
-function pathDistance(lngLats) {
+function pathDistance(points) {
 
   let distance = 0;
-  let lastPoint, thisPoint;
-
-  for (let i = 0, n = lngLats.length; i < n; i++) {
-    thisPoint = new Point([lngLats[i]]);
-    if (i > 0) distance += p2p(thisPoint, lastPoint);
-    lastPoint = thisPoint;
+  for (let i = 0, n = points.length; i < n; i++) {
+    if (i > 0) distance += p2p(points[i-1], points[i]);
   }
-
   return distance;
+
 }
 
 
@@ -177,13 +306,13 @@ function simplify(points) {
 
   const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
   const origLength = points.length;
-  let i;
-  let flag;
-
-  // create array of indexes - what remains at end are points remaining after simplification
-  let j = Array.from(coords, (x, i) => i)
+  
+  // j is an array of indexes - the index of removed points are removed from this array
+  let j = Array.from(points, (x, i) => i)
 
   // Repeat loop until no nodes are deleted
+  let flag = true;
+  let i;
   while ( flag === true ) {
     i = 0;
     flag = false;   // if remains false then simplification is complete; loop will break
@@ -231,5 +360,6 @@ module.exports = {
   pathDistance,
   boundingBox,
   isPointInBBox,
-  simplify
+  simplify,
+  getElevations
 };

@@ -22,7 +22,7 @@ const pathSchema = mongoose.Schema({
   },
 
   // user entered information to describe/tag route
-  PathInfo: {
+  info: {
     direction: {type: String},
     category: {type: String},
     nationalTrail: {type: Boolean},  
@@ -43,17 +43,24 @@ const pathSchema = mongoose.Schema({
 
   // statistics calculated from the device data
   stats: {
-    bbox: {type: [Number]},
+    bbox: {
+      minLng: Number,
+      minLat: Number,
+      maxLng: Number,
+      maxLat: Number
+    },
     nPoints: {type: Number},
     duration: {type: Number},
     distance: {type: Number},
     pace: {type: Number},
     elevations: {
+      elevationStatus: {type: String},
       ascent: {type: Number},
       descent: {type: Number},
       maxElev: {type: Number},
       minElev: {type: Number},
       lumpimess: {type: Number},
+      badElevData: {type: Boolean}     
     },
     p2p: {
       max: {type: Number},

@@ -24,8 +24,8 @@ function readGPX(data) {
   let time = [];
   let elev = [];
   let nameOfPath;
-  let isElev = false;  // are these used??
-  let isTime = false;  // are these used??
+  let isElev = false;  // TODO are these used??
+  let isTime = false;  // TODO are these used??
 
   /**
    * Loop through each line until we find track or route start
@@ -123,12 +123,28 @@ function readGPX(data) {
 
   }
 
+  // check whether we have param data for each data point
+  // F - imported from file
+  // D - imported from file, discarded due to incomplete
+  // A - api elevations 
+  let elevationStatus = 'F';
+  for (let i = 0, n = lngLat.length - 1; i < n; i++) {
+    if (elev[i] === '') {
+      elevationStatus = elevationStatus.concat('D');
+      break;
+    }
+  }
+
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX() finished') };
   return {
     name: nameOfPath,
     lngLat: lngLat,
-    elev: elev,
-    time: time
+    elevations: {
+      elev: elev,
+      elevationStatus: elevationStatus
+    },
+    time: time,
+    
   };
 
 }

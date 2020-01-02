@@ -75,7 +75,7 @@ export class MapCreateService extends MapService {
           this.addMarker(this.multiPath.getLastPoint());
 
           // get and update elevations
-          this.geoService.getElevationAPIElevs(coords).then( (elevations: Array<number>) => {
+          this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
             this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
             this.multiPath.getStats();
             this.dataService.pathStats.emit( this.multiPath.getStats() );
@@ -193,7 +193,7 @@ export class MapCreateService extends MapService {
       this.addMarker(this.multiPath.getLastPoint());
 
       // get and update elevations
-      this.geoService.getElevationAPIElevs(coords).then( (elevations: Array<number>) => {
+      this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
         this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
         this.multiPath.getStats();
         this.dataService.pathStats.emit( this.multiPath.getStats() );

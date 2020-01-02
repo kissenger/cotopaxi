@@ -51,7 +51,7 @@ export class MapService{
    * plots a geojson path on the map and centers the view on it
    * @param path path as geojson to view on map
    * @param lineWidth width of the line
-   * @param lineColor colour of the line as RGB string '#000000' or auto to pick up colors in the geojson
+   * @param lineColor colour of the line as RGB string '#RRGGBB' or auto to pick up colors in the geojson
    */
   plotGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
 
@@ -70,25 +70,60 @@ export class MapService{
       "source": {
         "type": "geojson",
         "data": pathAsGeoJson
-        },
+      },
       "paint": {
         'line-width': styleOptions.lineWidth,
         'line-color': styleOptions.lineColor === 'auto' ? ['get', 'color'] : styleOptions.lineColor,
         'line-opacity': styleOptions.lineOpacity
-        }
-      });
+      }
+    });
 
       // set the bounds
-    this.tsMap.fitBounds([[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]]);
+    // let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]];
+    // let options = {
+    //   padding: {top: 10, bottom: 10, left: 10, right: 10},
+    //   linear: false
+    // }
+    // this.tsMap.fitBounds(bbox, options);
+
+    // get path stats from GeoJSON
+    console.log('d');
+    this.getElevationsIfNeeded(pathAsGeoJson).then( geoJSON => {
+      console.log('g');
+      this.dataService.pathStats.emit( pathAsGeoJson['properties'].stats );
+    });
+
+
+    // check for elevation data
+
+    // if doesnt exist then go fetch
+    // emit data
 
     // now find elevations, and once returned, update path stats and emit to listening components
-    let pathAsArray = this.geoService.getDataFromGeoJSON(pathAsGeoJson);
-    // this.geoService.getElevationAPIElevs(pathAsArray).then( (coords: Array<tsCoordinate>) => {
+    // let pathAsArray = this.geoService.getDataFromGeoJSON(pathAsGeoJson);
+    // // this.geoService.getElevationAPIElevs(pathAsArray).then( (coords: Array<tsCoordinate>) => {
+
+    //   this.dataService.pathStats.emit( this.multiPath.getStats() );
     //   this.dataService.pathStats.emit( this.geoService.getPathStats(coords) );
     // });
   }
 
 
+  getElevationsIfNeeded(fc: GeoJSON.FeatureCollection) {
+    console.log('a');
+    return new Promise<GeoJSON.FeatureCollection>( (resolve, reject) => {
+      console.log('b');
+      if (fc['properties'].params.elev.length === 0 ) {
+        // if elevations do not exist
+        console.log('no elevatioms');
+        resolve(fc);
+      } else {
+        // if elevations do exist
+        console.log('elevations');
+        resolve(fc);
+      }
+    });
+  }
 }
 
 

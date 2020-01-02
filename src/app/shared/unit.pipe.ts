@@ -8,10 +8,13 @@ export class UnitPipe implements PipeTransform {
 
     const M_2_FT = 3.28084;
     const KM_2_MI = 0.62137;
+
+    // convert meters to km
+    value /= 1000.0;
     
     // if value is a distance, baseline is km
     if (type === 'distance') {
-      if (unitA === 'km') { return value.toFixed(2) + 'km' }
+      if (unitA === 'km') { return (value).toFixed(2) + 'km' }
       else if (unitA === 'miles') {return (value * KM_2_MI).toFixed(2) + 'mi'}
 
     // if value is an elevation, baseline is meters

@@ -5,6 +5,17 @@ import { Injector } from '@angular/core';
 // import { HttpService } from '../services/http.service';
 
 
+// export class PathFromGeoJSON {
+
+//     private stats: pathStats = {distance: 0, nPoints: 0};
+//     private coordinates: Array<tsCoordinate>;
+//     private elevations: Array<number>;  
+//     private geoService: GeoService;
+
+//     constructor(pathAsGeoJSON: GeoJSON.FeatureCollection) {
+
+//     }
+// }
 
 /** 
  * Path class to define a complete or partial route or track - it can be used standalone, or 
