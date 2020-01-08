@@ -15,12 +15,9 @@ const Path = require('./_Path').Path;
 const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
-// const writeGPX = require('./gpx.js').writeGPX;
 const readGPX = require('./gpx.js').readGPX;
-// const exportGeoJSON = require('./gpx.js').exportGeoJSON;
 const timeStamp = require('./utils.js').timeStamp;
-// const outerBbox = require('./geoLib.js').outerBbox;
-const getElevations = require('./geoLib.js').getElevations;
+const getElevations = require('./upsAndDowns').upsAndDowns;
 
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
@@ -69,7 +66,6 @@ mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb
  * new file data is submitted from the front end
  *
  *****************************************************************/
-
 var storageOptions = multer.memoryStorage()
 
 var upload = multer({
@@ -79,6 +75,29 @@ var upload = multer({
   }
 });
 
+
+/*****************************************************************
+ *
+ * request elevations
+ *
+ *****************************************************************/
+app.post('/ups-and-downs/v1/', (req, res) => { 
+
+  // check options array - if it's not present then fill it in with falses
+  let options = req.body.options;
+  if (!options) {
+    options = {
+      interpolate: false,
+      writeResultsToFile: false
+    }
+  }
+
+  // this is where the work gets donw
+  getElevations(req.body.coordsArray, options).then( result => {
+    res.status(200).json( {result} );
+  })
+  
+});
 
 
 /*****************************************************************

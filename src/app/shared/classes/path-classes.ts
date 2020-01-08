@@ -183,7 +183,7 @@ export class MultiPath {
      * @param path path to add as Path instance
      */
     public addPath(path: Path) {
-        console.log(path);
+        // console.log(path);
         this.paths.push(path);
         this.addStats(path.getPathStats());
         this.geoJSON.addLineString(path);
@@ -252,7 +252,6 @@ export class MultiPath {
                 // if (path) avoids an error which clicking map too fast for elevs to keep up - not sure of result but doesnt throw error!!
                 const pathElevs = path.getPathStats().elevations;
                 if (pathElevs) {
-                    console.log(path);
                     this.stats.elevations.badElevData = !(pathElevs.badElevData || this.stats.elevations.badElevData);
                 }
             })

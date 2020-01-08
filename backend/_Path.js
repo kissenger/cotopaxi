@@ -6,7 +6,7 @@ const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
-const getElevations = require('./geoLib.js').getElevations;
+const getElevations = require('./upsAndDowns.js').upsAndDowns;
 const DEBUG = true;
 
 /**

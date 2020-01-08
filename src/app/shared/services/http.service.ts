@@ -23,8 +23,7 @@ export class HttpService {
   }
 
   myElevationsQuery(queryString: myElevationQuery) {
-    console.log('http://' + this.hostName + ':3001/elevations/', queryString);
-    return this.http.post<any>('http://' + this.hostName + ':3001/elevations/', queryString);
+    return this.http.post<any>('http://' + this.hostName + ':3000/ups-and-downs/v1/', queryString);
   }
 
   /********************************************************************************************

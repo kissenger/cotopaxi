@@ -56,7 +56,7 @@ export class GeoService {
           this.elevationQuery({options: {interpolate}, coordsArray}).then( (thisResult) => 
             [...allResults, thisResult] 
           ));
-      }, Promise.resolve([])).then( (result) => { 
+      }, Promise.resolve([])).then( (result) => {
         resolve(result[0].result.map(e => e.elev));
       });
 
