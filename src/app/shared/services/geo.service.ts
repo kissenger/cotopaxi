@@ -35,7 +35,7 @@ export class GeoService {
    * @param interpolate boolean indication of whether interpolation is desired
    * @param returns simple array of elevations, one for each supplied coordinate
    */
-  getElevationsFromAPI(coordArray: Array<tsCoordinate>, interpolate: boolean) {
+  getElevationsFromAPI(coordsArray: Array<tsCoordinate>, interpolate: boolean) {
     
     return new Promise<Array<number>>( (resolve, reject) => {
       
@@ -46,9 +46,9 @@ export class GeoService {
       let i = 0;
       do {
         const start = i * MAX_LEN
-        sliceArray.push(coordArray.slice(start, start + MAX_LEN));
+        sliceArray.push(coordsArray.slice(start, start + MAX_LEN));
         i++;
-      } while ( i * MAX_LEN < coordArray.length);
+      } while ( i * MAX_LEN < coordsArray.length);
 
       // request each chunk in turn, waiting for the last one to resolve before moving on
       sliceArray.reduce( (promise, coordsArray) => {
@@ -180,8 +180,8 @@ export class GeoService {
         ascent: ascent,
         descent: descent,
         lumpiness: distance ? (ascent - descent) / distance : -9999,
-        maxElevation: maxElev,
-        minElevation: minElev,
+        maxElev: maxElev,
+        minElev: minElev,
         badElevData: badElevData
         }
       }

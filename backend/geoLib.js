@@ -1,7 +1,7 @@
 const Point = require('./_Point').Point;
 const timeStamp = require('./utils').timeStamp;
 const DEBUG = true;
-const elevationAPIQuery = require('./http').elevationAPIQuery;
+// const elevationAPIQuery = require('./http').elevationAPIQuery;
 
   /**
    * Get elevation data from elevations api https://elevation-api.io/
@@ -15,57 +15,7 @@ const elevationAPIQuery = require('./http').elevationAPIQuery;
    * loop, and returns when the last promise is resolved.
    * TODO - pretty sure this can be neatened up...
    */
-  function getElevations(coordArray) {
-
-    if (DEBUG) { console.log(timeStamp() + ' >> getElevations '); }
-    
-    return new Promise( (resolveOuter, rejectOuter) => {
-
-      // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
-      // dont use splice as it cocks things up for reasons i dont understand.
-      const MAX_LEN = 250;
-      let sliceArray = [];
-      let i = 0;
-      do {
-        const start = i * MAX_LEN
-        sliceArray.push(coordArray.slice(start, start + MAX_LEN));
-        i++;
-      } while ( i * MAX_LEN < coordArray.length);
-
-      // loop through arrays and request elevation data chunk by chunk
-      let outArray = [];
-      let p = Promise.resolve();
-      sliceArray.forEach(chunk => {
-        p = p.then( () => openElevationQuery(chunk).then( result => { 
-            console.log('result', result);
-            result.elevations.forEach( (position) => { outArray.push(position.elevation); })
-          }).catch(err => console.log(err))
-          );
-
-        });
-
-        
-      // wait for all the p promises to resolve before returning the outer promise
-      Promise.all([p]).then( () => {
-        console.log(outArray);
-        resolveOuter(outArray);
-      });
-
-    });
-    
-  }
-
-
-  function openElevationQuery(c) {
-    return new Promise( (resolve, rej) => {
-      if (DEBUG) { console.log(timeStamp() + ' >> openElevationQuery '); }
-      // console.log({'points': c});
-      elevationAPIQuery({'points': c}).then( elevs => {
-
-        resolve(elevs);
-      })
-    });   
-  }
+  
 
 
 
@@ -360,6 +310,5 @@ module.exports = {
   pathDistance,
   boundingBox,
   isPointInBBox,
-  simplify,
-  getElevations
+  simplify
 };

@@ -20,8 +20,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
       { ascent: 0,
         descent: 0,
         lumpiness: 0,
-        maxElevation: 0,
-        minElevation: 0,
+        maxElev: 0,
+        minElev: 0,
         badElevData: false }
   };
   private icon = '-';
@@ -39,9 +39,10 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
     // subscribe to any path stats that are sent from the map component
     this.pathStatsSubs = this.dataService.pathStats.subscribe( (pathStats: pathStats) => {
       if (!pathStats.elevations) {
-        pathStats.elevations = {ascent: 0, descent: 0, maxElevation: 0, minElevation: 0, lumpiness: 0, badElevData: false};
+        pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
       }
       this.pathStats = pathStats;
+      console.log(pathStats);
     })
   }
 

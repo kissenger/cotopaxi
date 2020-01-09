@@ -145,8 +145,8 @@ export class MultiPath {
               { ascent: 0,
                 descent: 0,
                 lumpiness: 0,
-                maxElevation: 0,
-                minElevation: 0,
+                maxElev: 0,
+                minElev: 0,
                 badElevData: false }
           };
     }
@@ -226,8 +226,8 @@ export class MultiPath {
         if (pathStats.elevations) {
             this.stats.elevations.ascent += pathStats.elevations.ascent;
             this.stats.elevations.descent += pathStats.elevations.descent;
-            this.stats.elevations.maxElevation += pathStats.elevations.maxElevation;
-            this.stats.elevations.minElevation += pathStats.elevations.minElevation;
+            this.stats.elevations.maxElev += pathStats.elevations.maxElev;
+            this.stats.elevations.minElev += pathStats.elevations.minElev;
             this.stats.elevations.lumpiness = (this.stats.elevations.ascent - this.stats.elevations.descent) / this.stats.distance;
             this.stats.elevations.badElevData = !(pathStats.elevations.badElevData || this.stats.elevations.badElevData);
         }
@@ -245,8 +245,8 @@ export class MultiPath {
         if (pathStats.elevations) {
             this.stats.elevations.ascent -= pathStats.elevations.ascent;
             this.stats.elevations.descent -= pathStats.elevations.descent;
-            this.stats.elevations.maxElevation -= pathStats.elevations.maxElevation;
-            this.stats.elevations.minElevation -= pathStats.elevations.minElevation;
+            this.stats.elevations.maxElev -= pathStats.elevations.maxElev;
+            this.stats.elevations.minElev -= pathStats.elevations.minElev;
             this.stats.elevations.lumpiness = (this.stats.elevations.ascent - this.stats.elevations.descent) / this.stats.distance;
             this.paths.forEach( path => {
                 // if (path) avoids an error which clicking map too fast for elevs to keep up - not sure of result but doesnt throw error!!

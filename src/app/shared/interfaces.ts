@@ -7,8 +7,8 @@ export interface pathStats{
         ascent: number,
         descent: number,
         lumpiness: number,
-        maxElevation: number,
-        minElevation: number,
+        maxElev: number,
+        minElev: number,
         badElevData: boolean
     };
 }

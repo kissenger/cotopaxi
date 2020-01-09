@@ -6,7 +6,7 @@ const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
-const getElevations = require('./upsAndDowns.js').upsAndDowns;
+const upsAndDowns = require('./upsAndDowns.js').upsAndDowns;
 const DEBUG = true;
 
 /**
@@ -19,23 +19,37 @@ class Path  {
   constructor(lngLat, elevations, pathType) {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
-
-    // deal with elevations
-    this.elev = this.checkElevations(elevations, lngLat);
-    this.elevationStatus = elevations.elevationStatus;
-    
-    /// create points array and simplify if its a route
-    this.points = this.getPoints(lngLat, this.elev);
-    if (pathType === 'route') { this.points = simplify(this.points); }
-
-    // other imfo
+    this.lngLat = lngLat;
+    this.elevs = elevations;
     this.pathType = pathType;
-    this.bbox = boundingBox(this.points);
-    this.distance = pathDistance(this.points);
-    this.pathSize = this.points.length - 1;
-    this.category = this.category();
-    this.direction = this.direction();
-    this.stats = this.analysePath();
+    this.elevationStatus = elevations.elevationStatus;
+    this.points = this.getPoints(this.lngLat);
+  }
+
+  init() {
+    // deal with elevations
+    
+    return new Promise((res, rej) => {
+      this.checkElevations(this.elevs, this.points).then( elevs => {
+
+        this.elevs = elevs;
+        this.points = this.getPoints(this.lngLat, this.elevs);
+        
+        if (this.pathType === 'route') { 
+          this.points = simplify(this.points); 
+        }
+
+        // other info
+        this.bbox = boundingBox(this.points);
+        this.distance = pathDistance(this.points);
+        this.pathSize = this.points.length - 1;
+        this.category = this.category();
+        this.direction = this.direction();
+        this.stats = this.analysePath();
+        res();
+
+      })
+    })
 
   }
 
@@ -49,19 +63,53 @@ class Path  {
   // }
 
   checkElevations(elevObj, coords) {
+    if (DEBUG) { console.log(timeStamp() + ' >> Checking Elevations '); }
     return new Promise( (resolve, reject) => {
-      console.log(elevObj.elevationStatus);
       if (elevObj.elevationStatus.indexOf('D') > -1) {
         // imported elevations were discarded, so we need to replace them
-        console.log('get new elevations');
+        this.getElevations(coords).then( (elevs) => {
+          resolve( elevs );
+        });
         
-        resolve(getElevations(coords));
       } else {
-        console.log('keep existing elevations');
+        // delete flag not found, so dont get new ones
         resolve(elevations.elev);
       }
     })
   }
+
+  getElevations(coordsArray) {
+    if (DEBUG) { console.log(timeStamp() + ' >> Getting Elevations '); }
+    return new Promise( (resolve, reject) => {
+      
+      // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
+      // dont use splice as it cocks things up for reasons i dont understand.
+      const MAX_LEN = 2000;
+      let sliceArray = [];
+      let i = 0;
+      do {
+        const start = i * MAX_LEN
+        sliceArray.push(coordsArray.slice(start, start + MAX_LEN));
+        i++;
+      } while ( i * MAX_LEN < coordsArray.length);
+
+      // request each chunk in turn, waiting for the last one to resolve before moving on
+      sliceArray.reduce( (promise, coords) => {
+        return promise.then( (allResults) => 
+          upsAndDowns(coords, {options: {interpolate: true}}).then( (thisResult) => 
+              [...allResults, thisResult] 
+            ));
+        }, Promise.resolve([])).then( (result) => {
+          resolve(result[0].map(e => e.elev));
+        });
+
+    });
+    
+  }
+
+
+
+
   /**
    * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
    * desired format
@@ -108,16 +156,6 @@ class Path  {
    * we loop through the coords array loads of times so this is being done lots and then discarded. Why not convert to a Point
    * in the constructor when the Class is instantiated???
    */
-  // getPoint(index) {
-  //   let thisPoint = [];
-  //   if ( this.lngLat ) thisPoint.push(this.lngLat[index]);
-  //   if ( this.elev ) thisPoint.push(this.elev[index]);
-  //   if ( this.time ) thisPoint.push(this.time[index]);
-  //   if ( this.heartRate ) thisPoint.push(this.heartRate[index]);
-  //   if ( this.cadence ) thisPoint.push(this.cadence[index]);
-  //   return (new Point(thisPoint));
-  // }
-
   getPoints(coords, elev, time, heartRate, cadence) {
 
     let pointsArray = [];
@@ -399,7 +437,6 @@ class Path  {
           dElev = thisPoint.elev - lastPoint.elev;
           ascent = dElev > 0 ? ascent + dElev : ascent;
           descent = dElev < 0 ? descent + dElev : descent;
-          console.log(thisPoint.elev, minElev, maxElev);
           maxElev = thisPoint.elev > maxElev ? thisPoint.elev : maxElev;
           minElev = thisPoint.elev < minElev ? thisPoint.elev : minElev;
 
@@ -478,8 +515,6 @@ class Path  {
       index++;
 
     } while (index <= this.pathSize)
-
-    // console.log(maxElev, minElev);
 
     return{
 

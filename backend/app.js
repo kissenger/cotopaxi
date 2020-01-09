@@ -123,16 +123,19 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
   // Get a mongo object from the path data
   const pathFromFile = readGPX(req.file.buffer.toString());
   const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, pathFromFile.elevations);
-  const mongoPath = Path.asMongoObject(userId, false);
 
-  // Save route into database with isSaved = false, and return it to the front end
-  MongoPath.Routes.create(mongoPath).then( (docs) => {
-  // MongoPath.Routes.insertMany({"x":2}).then( (docs) => {    
-    // console.log(docs);
-    res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
-    if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
-  })
+  // once Path is instantiated, it needs to be initialised (returns a promise)
+  Path.init().then( () => {
+    const mongoPath = Path.asMongoObject(userId, false);
 
+    // Save route into database with isSaved = false, and return it to the front end
+    MongoPath.Routes.create(mongoPath).then( (docs) => {
+      // MongoPath.Routes.insertMany({"x":2}).then( (docs) => {    
+        // console.log(docs);
+        res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
+        if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
+      })
+    });
 
 });
 

@@ -59,7 +59,7 @@ const pathSchema = mongoose.Schema({
       descent: {type: Number},
       maxElev: {type: Number},
       minElev: {type: Number},
-      lumpimess: {type: Number},
+      lumpiness: {type: Number},
       badElevData: {type: Boolean}     
     },
     p2p: {

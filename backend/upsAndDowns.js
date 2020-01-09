@@ -22,7 +22,7 @@ let CACHE = {
  * @param {*} options options array
  */
 function upsAndDowns(points, options) {
-
+  
   // reset CACHE
   CACHE.pixels = {}; // read/write in function readPixels()
   CACHE.images = {}; // read/write in function getImages()
@@ -50,7 +50,7 @@ function upsAndDowns(points, options) {
  */
 
 function getElevation(point, booInterp) {
-
+  
   return new Promise( (res, rej) => { 
 
     const pixel = getPixelPosition(point, booInterp);

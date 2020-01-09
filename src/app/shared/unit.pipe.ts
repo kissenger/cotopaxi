@@ -10,14 +10,11 @@ export class UnitPipe implements PipeTransform {
     const KM_2_MI = 0.62137;
 
     // if value is a distance, baseline is km
-
-
-
     if (type === 'distance') {
 
       // convert meters to km
       value /= 1000.0;
-      
+
       if (unitA === 'km') { return (value).toFixed(2) + 'km' }
       else if (unitA === 'miles') {return (value * KM_2_MI).toFixed(2) + 'mi'}
 
@@ -29,13 +26,15 @@ export class UnitPipe implements PipeTransform {
     // if value is a lumpiness (elevation/height), baseline is m/km
     } else if (type === 'lumpiness') {
 
-      // work out what output units should be
-      let unitString = unitA + '/' + (unitB === 'miles' ? 'mi' : 'km');
+
 
       // check for errors
       if (typeof unitB === 'undefined') { return 'pipe error'; }
       else if (unitA !== 'ft' && unitA !== 'm') { return 'pipe error'; }
       else if (unitB !== 'miles' && unitB !== 'km') { return 'pipe error'; }
+
+      // work out what output units should be
+      let unitString = unitA + '/' + (unitB === 'miles' ? 'mi' : 'km');
 
       // check for divide by 0 error
       if (isNaN(value)) { return '0' + unitString}
