@@ -38,6 +38,7 @@ export class InfoCreateRouteComponent implements OnInit {
           this.pathStats = pathStats;
         })
   }
+  
   onClick() {
     this.isMinimised = !this.isMinimised;
     this.icon = this.isMinimised ? '+' : '-';

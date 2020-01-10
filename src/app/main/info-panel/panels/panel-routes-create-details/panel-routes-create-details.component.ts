@@ -46,8 +46,16 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
     })
   }
 
-  onClick() {
-    this.isMinimised = !this.isMinimised;
-    this.icon = this.isMinimised ? '+' : '-';
+  onSave() {
+    console.log('click');
   }
+
+  onCancel() {
+    this.router.navigate(['']);
+
+  }
+  // onClick() {
+  //   this.isMinimised = !this.isMinimised;
+  //   this.icon = this.isMinimised ? '+' : '-';
+  // }
 }

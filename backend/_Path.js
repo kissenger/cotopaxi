@@ -22,30 +22,38 @@ class Path  {
     this.lngLat = lngLat;
     this.elevs = elevations;
     this.pathType = pathType;
-    this.elevationStatus = elevations.elevationStatus;
-    this.points = this.getPoints(this.lngLat);
+
   }
 
+  /**
+   * Initialise the instance - basically required to remove the promise (needed because elevations
+   * takes some time) out of the constructor
+   */
   init() {
-    // deal with elevations
-    
+
+    // turn the list of lngLats into an array of Point instances, and simplify the route upfront to minimise processing effort 
+    this.points = this.getPoints(this.lngLat);
+    if (this.pathType === 'route') { this.points = simplify(this.points); }
+
+    // update the instance variables not impacted by elevations
+    this.elevationStatus = this.elevs.elevationStatus;
+    this.bbox = boundingBox(this.points);
+    this.distance = pathDistance(this.points);
+    this.pathSize = this.points.length - 1;
+    this.category = this.category();
+    this.direction = this.direction();
+
+    // check status of elevations, if need to be replaced return the new ones
     return new Promise((res, rej) => {
+      
       this.checkElevations(this.elevs, this.points).then( elevs => {
 
+        // update the instance elevations and points, and anlayse the final path
         this.elevs = elevs;
-        this.points = this.getPoints(this.lngLat, this.elevs);
-        
-        if (this.pathType === 'route') { 
-          this.points = simplify(this.points); 
-        }
-
-        // other info
-        this.bbox = boundingBox(this.points);
-        this.distance = pathDistance(this.points);
-        this.pathSize = this.points.length - 1;
-        this.category = this.category();
-        this.direction = this.direction();
+        this.points = this.getPoints(this.lngLat, this.elevs)
         this.stats = this.analysePath();
+
+        // resolve the promise when complete
         res();
 
       })
