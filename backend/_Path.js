@@ -13,14 +13,20 @@ const DEBUG = true;
  * Path Class
  * Use where data specific to a route/track is not of interest (eg simplification)
  * Otherwise use Route and Track classes, which extend the Path class
+ * @param {*} lngLat array of [lng, lat] coordinates
+ * @param {*} elevations object in the form {elevs: <ARRAY>, elevationStatus: <STRING>}
+ * @param {*} pathType string 'route' or 'track'
  */
+
+
 class Path  {
 
   constructor(lngLat, elevations, pathType) {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
     this.lngLat = lngLat;
-    this.elevs = elevations;
+    this.elevs = elevations.elevs;
+    this.elevationStatus = elevations.elevationStatus
     this.pathType = pathType;
 
   }
@@ -33,15 +39,14 @@ class Path  {
 
     // turn the list of lngLats into an array of Point instances, and simplify the route upfront to minimise processing effort 
     this.points = this.getPoints(this.lngLat);
+    
     if (this.pathType === 'route') { this.points = simplify(this.points); }
 
     // update the instance variables not impacted by elevations
-    this.elevationStatus = this.elevs.elevationStatus;
     this.bbox = boundingBox(this.points);
-    this.distance = pathDistance(this.points);
     this.pathSize = this.points.length - 1;
     this.category = this.category();
-    this.direction = this.direction();
+    // this.direction = this.direction();  // not currently working
 
     // check status of elevations, if need to be replaced return the new ones
     return new Promise((res, rej) => {
@@ -50,7 +55,7 @@ class Path  {
 
         // update the instance elevations and points, and anlayse the final path
         this.elevs = elevs;
-        this.points = this.getPoints(this.lngLat, this.elevs)
+        this.points = this.addElevationsToPointsArray(this.points, this.elevs);
         this.stats = this.analysePath();
 
         // resolve the promise when complete
@@ -70,18 +75,18 @@ class Path  {
   //   this[Object.keys(obj)[0]] = Object.values(obj)[0];
   // }
 
-  checkElevations(elevObj, coords) {
+  checkElevations(elevs, coords) {
     if (DEBUG) { console.log(timeStamp() + ' >> Checking Elevations '); }
     return new Promise( (resolve, reject) => {
-      if (elevObj.elevationStatus.indexOf('D') > -1) {
+      if (this.elevationStatus.indexOf('D') > -1) {
         // imported elevations were discarded, so we need to replace them
-        this.getElevations(coords).then( (elevs) => {
-          resolve( elevs );
+        this.getElevations(coords).then( (e) => {
+          resolve(e);
         });
         
       } else {
         // delete flag not found, so dont get new ones
-        resolve(elevations.elev);
+        resolve(elevs);
       }
     })
   }
@@ -143,10 +148,10 @@ class Path  {
         coordinates: this.points.map( x => [x.lng, x.lat])
       },
       info: {
-        direction: this.direction,
+        // direction: this.direction,
         category: this.category,
         isNationalTrail: false,
-        name: typeof this.name === 'undefined' ? "" : this.name,
+        name: this.name,
         description: this.description,
         pathType: this.pathType,
         startTime: this.startTime
@@ -167,7 +172,7 @@ class Path  {
   getPoints(coords, elev, time, heartRate, cadence) {
 
     let pointsArray = [];
-    for (let i = 0; i < coords.length; i++) {
+    for (let i = 0, n = coords.length; i < n; i++) {
       let thisPoint = [];
       if ( coords ) thisPoint.push(coords[i]);
       if ( elev ) thisPoint.push(elev[i]);
@@ -177,6 +182,21 @@ class Path  {
       pointsArray.push(new Point(thisPoint));
     }
       
+    return pointsArray;
+  }
+
+  /**
+   * Add elevations to an array of points
+   * @param {*} p 
+   * @param {*} e 
+   */
+  addElevationsToPointsArray(p, e) {
+    // if (p.length !== e.length ) { return p }
+    let pointsArray = [];
+    for (let i = 0, n = p.length; i < n; i++) {
+      p[i].addElevation(e[i]);
+      pointsArray.push(p[i]);
+    }
     return pointsArray;
   }
 
@@ -237,6 +257,7 @@ class Path  {
   /**
    * Determines the direction of the path
    * Currently only determines 'clockwise' or 'anticlockwise' for circular route
+   * TODO - not used as not working for short paths, needs reviewing
    */
   direction() {
 
@@ -555,52 +576,6 @@ class Path  {
     }
   }
 
-//  /**
-//   * function simplifyPath
-//   * simplify path using perpendicular distance method
-//   * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
-//   * TODO: shoul dbe in the geoLib and called form here - allows to be called without creating a Path object
-//   */
-//   simplify() {
-    
-//     if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
-
-//     const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
-//     const origLength = this.lngLat.length - 1;
-//     let i;
-//     let flag = true;
-
-//     // create array of indexes - what remains at end are points remaining after simplification
-//     let j = Array.from(this.lngLat, (x, i) => i)
-
-//     // Repeat loop until no nodes are deleted
-//     while ( flag === true ) {
-//       i = 0;
-//       flag = false;   // if remains true then simplification is complete; loop will break
-//       while ( i < ( j.length - 2 ) ) {
-//         const pd = p2l( this.Points[j[i]], this.Points[j[i+2]], this.Points[j[i+1]] );
-//         if ( Math.abs(pd) < TOLERANCE ) {
-//           j.splice(i+1, 1);
-//           flag = true;
-//         }
-//         i++;
-//       }
-//     }
-
-//     // strip out points from class using whats left of j
-//     this.lngLat = j.map( x => this.lngLat[x] );
-//     if ( typeof this.elev !== 'undefined') {
-//       if ( this.elev.length !== 0 ) this.elev = j.map( x => this.elev[x] );
-//     }
-//     if ( typeof this.time !== 'undefined') {
-//       if ( this.time.length !== 0 ) this.time = j.map( x => this.time[x] );
-//     }
-
-//     // update path length
-//     this.pathSize = this.lngLat.length - 1;
-//     if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
-//                 ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
-//   }
 
 } // end of Path Class
 
@@ -612,7 +587,7 @@ class Path  {
 class Track extends Path {
   constructor(name, description, lngLat, elev, time, heartRate, cadence){
 
-    super(lngLat, elev, 'track');
+    super(lngLat, elev, 'tracks');
 
     // this.pathType = 'track';
     this.name = name;
@@ -648,7 +623,7 @@ class Track extends Path {
 class Route extends Path {
   constructor(name, description, lngLat, elev){
 
-    super(lngLat, elev, 'route');
+    super(lngLat, elev, 'routes');
     this.name = name;
     this.description = description;
 

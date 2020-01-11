@@ -10,7 +10,13 @@ class Point {
     if ( typeof array[4] !== 'undefined' ) this.cad = array[4];
   }
 
+  addElevation(e) {
+    this.elev = e;
+  }
+
 }
+
+
 
 module.exports = {
   Point

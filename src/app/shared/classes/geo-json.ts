@@ -41,7 +41,7 @@ export class TsGeoJSON {
                 "coordinates": coordsList.map( c => [c.lng, c.lat])
             },
             "properties": {
-                "name": "iuogo"
+                "name": ""
             }
           };
 

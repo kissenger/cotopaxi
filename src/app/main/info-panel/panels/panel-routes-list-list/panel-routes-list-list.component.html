@@ -1,1 +1,33 @@
-<p>panel-routes-list-list works!</p>
+
+<div class='container'>
+  <div *ngFor="let line of htmlData">
+    <div id={{line.pathId}} (click)="onLineClick(line.pathId)" class="item">
+      <div *ngIf="line.name === ''" class="name">
+        {{line.category}} {{line.pathType}}
+      </div>
+      <div *ngIf="line.name !== ''" class="name">
+        {{line.name}}
+      </div>
+
+
+      <div *ngIf="pathType === 'routes'" class="details">
+        <!-- Created: {{line.creationDate | date: 'short'}} -->
+        <!-- {{line.pathId}} -->
+        {{line.stats.distance | units: 'distance': units.distance}}
+        {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}
+        {{line.stats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}
+      </div>
+
+      <div *ngIf="pathType === 'tracks'" class="details">
+        {{utils.prettifyDate(line.startTime)}} -
+        {{line.stats.distance/1000 | number: '1.1-1'}} km -
+        {{utils.formatDuration(line.stats.duration)}}
+      </div>
+
+      <hr>
+    </div>
+  </div>
+  <div *ngIf="!isEndOfList" class="more" (click)="onMoreClick()" id="more_div">
+
+  </div>
+</div>

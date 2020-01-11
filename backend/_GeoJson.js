@@ -56,12 +56,13 @@ class GeoJSON{
 
     // this is a feature collection that wraps up all the lower level features
     // take the first documents properties as the featurecollection props,
+    console.log(pathDocs[0]._id);
     return  {
       type: 'FeatureCollection',
       bbox: [this.bbox.minLng, this.bbox.minLat, this.bbox.maxLng, this.bbox.maxLat],
       features: this.features,
       properties: {
-       pathId: this.lngLats[0]._id,
+       pathId: pathDocs[0]._id,
        ...this.properties[0],
       }
     }

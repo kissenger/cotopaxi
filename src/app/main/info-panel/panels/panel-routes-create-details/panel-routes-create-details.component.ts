@@ -1,18 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import * as globalVars from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
 import { pathStats } from 'src/app/shared/interfaces';
+import { HttpService } from 'src/app/shared/services/http.service';
+import { MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Component({
   selector: 'app-panel-routes-create-details',
   templateUrl: './panel-routes-create-details.component.html',
   styleUrls: ['./panel-routes-create-details.component.css']
 })
-export class PanelRoutesCreateDetailsComponent implements OnInit {
+export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   private isMinimised = false;
   private pathStatsSubs;
+  private pathObjectSubs;
+  private pathObject: MultiPath;
   private pathStats: pathStats = {
     distance: 0,
     nPoints: 0,
@@ -31,6 +35,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
+    private httpService: HttpService,
     private router: Router
   ) {}
 
@@ -44,10 +49,33 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
       this.pathStats = pathStats;
       console.log(pathStats);
     })
+
+
   }
 
   onSave() {
-    console.log('click');
+    
+    const pathObj = this.dataService.pathObject;
+    if (pathObj['type'] === 'newRoute') {
+      
+      // if the pathObject contains data, then it is a new route created on the front end
+
+      pathObj['name'] = this.routeName;
+      pathObj['description'] = this.routeDesc;
+      this.httpService.saveCreatedRoute(pathObj).subscribe( (response) => {
+        console.log(response);
+      })
+
+    } else if (pathObj['type'] === 'importedPath') {
+      // if the pathObject does not exist, then it is a loaded gpx file already stored in 
+      // the db, we just need to sset the saved flag to true
+      pathObj['info']['name'] = this.routeName;
+      pathObj['info']['description'] = this.routeDesc;
+      this.httpService.saveImportedPath(pathObj).subscribe( (response) => {
+        console.log(response);
+      })
+    }
+
   }
 
   onCancel() {
@@ -58,4 +86,9 @@ export class PanelRoutesCreateDetailsComponent implements OnInit {
   //   this.isMinimised = !this.isMinimised;
   //   this.icon = this.isMinimised ? '+' : '-';
   // }
+
+  ngOnDestroy() {
+    this.pathStatsSubs.unsubscribe();
+  }
+
 }

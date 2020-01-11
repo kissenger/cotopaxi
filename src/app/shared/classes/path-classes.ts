@@ -25,8 +25,8 @@ import { Injector } from '@angular/core';
 export class Path {
 
     private stats: pathStats = {distance: 0, nPoints: 0};
-    private coordinates: Array<tsCoordinate>;
-    private elevations: Array<number>;  
+    public coordinates: Array<tsCoordinate>;
+    public elevations: Array<number>;  
     private geoService: GeoService;
     // private httpService: HttpService;
     
@@ -262,6 +262,16 @@ export class MultiPath {
 
     public getGeoJSON() {
         return this.geoJSON.getFeatureCollection();
+    }
+
+    // simplifies a multipath GeoJSON (single path defined by multiple features) into a single feature
+    public getFlatCoordsAndElevs() {
+        const coords = [].concat.apply([], this.paths.map( path => path.coordinates.map( c => [c.lng, c.lat]) ));
+        const elevs  = [].concat.apply([], this.paths.map( path => path.elevations ));
+        const elevations = {elevs, elevationStatus: 'A'}
+        const type = 'newRoute';
+        console.log({type, coords, elevations});
+        return {coords, elevations};
     }
 
     public getStats() {

@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpService } from '../shared/services/http.service';
 
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })
-export class MainComponent implements OnInit {
+export class MainComponent implements OnInit, OnDestroy {
 
   private paramSubs: any;
   private id: string;
@@ -15,6 +16,7 @@ export class MainComponent implements OnInit {
 
   constructor(
     private activatedRouter: ActivatedRoute,
+    private httpService: HttpService,
     private router: Router
   ) { }
 
@@ -39,5 +41,11 @@ export class MainComponent implements OnInit {
 
   ngOnDestroy() {
     // this.paramSubs.unsubscribe();
+
+    // flush mongo of unsaved paths
+    console.log('flush');
+    this.httpService.flushDatabase().subscribe( () => {
+      console.log('database flushed');
+    })
   }
 }

@@ -88,7 +88,7 @@ export class MapService{
 
     // get path stats from GeoJSON
     this.getElevationsIfNeeded(pathAsGeoJson).then( geoJSON => {
-      this.dataService.pathStats.emit( pathAsGeoJson['properties'].stats );
+      this.dataService.pathStats.emit( geoJSON['properties'].stats );
     });
 
   }

@@ -23,7 +23,7 @@ function readGPX(data) {
   let lngLat = [];
   let time = [];
   let elev = [];
-  let nameOfPath;
+  let nameOfPath = "";
   let isElev = false;  // TODO are these used??
   let isTime = false;  // TODO are these used??
 

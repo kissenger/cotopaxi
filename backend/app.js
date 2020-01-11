@@ -4,8 +4,6 @@ const app = express();
 const multer = require('multer');
 const bodyParser = require('body-parser');
 
-// const request = require('request');
-
 const DEBUG = true;
 // const DEBUG = false;
 
@@ -18,7 +16,6 @@ const auth = require('./auth.js');
 const readGPX = require('./gpx.js').readGPX;
 const timeStamp = require('./utils.js').timeStamp;
 const getElevations = require('./upsAndDowns').upsAndDowns;
-
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
 const mongoose = require('mongoose');
@@ -57,11 +54,21 @@ app.use(express.static('backend/files'));
 
 // mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/test?retryWrites=true')
 
-mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb')
-  .then(() => { console.log('Connected to database'); })
-  .catch(() => { console.log('Connection to database failed'); });
+// mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb')
+//   .then(() => { console.log('Connected to database'); })
+//   .catch(() => { console.log('Connection to database failed'); });
 
-/*****************************************************************
+// getting-started.js
+mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb', {useNewUrlParser: true});
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() { 
+  console.log('connected!');
+  // we're connected!
+});
+
+/*****************************************************************  
  *
  * new file data is submitted from the front end
  *
@@ -122,11 +129,11 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
 
   // Get a mongo object from the path data
   const pathFromFile = readGPX(req.file.buffer.toString());
-  const Path = new Route(pathFromFile.nameOfPath, ' ', pathFromFile.lngLat, pathFromFile.elevations);
+  const path = new Route(pathFromFile.nameOfPath, "", pathFromFile.lngLat, pathFromFile.elevations);
 
   // once Path is instantiated, it needs to be initialised (returns a promise)
-  Path.init().then( () => {
-    const mongoPath = Path.asMongoObject(userId, false);
+  path.init().then( () => {
+    const mongoPath = path.asMongoObject(userId, false);
 
     // Save route into database with isSaved = false, and return it to the front end
     MongoPath.Routes.create(mongoPath).then( (docs) => {
@@ -143,13 +150,13 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
 
 /*****************************************************************
  *
- *  Save a path to database from review page
- *  id of path is provided
+ *  Save a path to database - path has already been saved to the 
+ *  database, all we are doing is updating some fields, and 
+ *  changing isSaved flag to true; id of path is provided
  *
  *****************************************************************/
 
-// app.post('/save-path/:type/:id',  auth.verifyToken, (req, res) => {
-app.post('/save-path/:type/:id', (req, res) => {
+app.post('/save-imported-path/', (req, res) => {
 
   // ensure user is authorised
   // if ( !req.userId ) {
@@ -157,19 +164,130 @@ app.post('/save-path/:type/:id', (req, res) => {
   // }
 
   // construct query based on incoming payload
-  let condition = {_id: req.params.id, userId: req.userId};
-  let filter = {isSaved: true};
-  if ( typeof req.body.description !== "undefined" ) { filter['description'] = req.body.description; }
-  if ( typeof req.body.name !== "undefined" ) { filter['name'] = req.body.name; }
+  if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
+console.log(req.body);
+  let condition = {_id: req.body.pathId};
+  let filter = {isSaved: true, info: req.body.info};
 
   // query database, updating changed data and setting isSaved to true
-  mongoModel(req.params.type)
+  mongoModel(req.body.info.pathType)
     .updateOne(condition, {$set: filter}, {writeConcern: {j: true}})
     .then( () => {
       res.status(201).json( {result: 'save ok'} );
     }) 
 
 });
+
+
+/*****************************************************************
+ * Save a user-created route to database; geoJSON is supplied
+ *
+ *
+ *
+ *****************************************************************/
+app.post('/save-new-route/', (req, res) => {
+
+  // ensure user is authorised
+  // if ( !req.userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
+  var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevations);
+
+  path.init().then( () => {
+    const mongoPath = path.asMongoObject(1, true);
+    mongoModel('routes').create(mongoPath).then( (document) => {
+      res.status(201).json( {pathId: document._id} );  
+    }) 
+  });
+})
+
+
+/*****************************************************************
+ *
+ *  Flush database of all unsaved entries
+ *
+ *****************************************************************/
+app.post('/flush/', (req, res) => {
+
+  mongoModel('routes').deleteMany( {'isSaved': false} ).then( () => {
+    // MongoPath.Tracks.deleteMany( {'isSaved': false} ).then( () => {
+      // MongoChallenges.Challenges.deleteMany( {'isSaved': false} ).then( () => {
+        if (DEBUG) { console.log(timeStamp() + ' >> database flush' )};
+        res.status(201).json( {'result': 'db flushed'} );
+      // });
+    // });
+  });
+
+})
+
+/*****************************************************************
+ * 
+ *  Retrieve a list of paths from database
+ * 
+ *****************************************************************/
+
+app.get('/get-paths-list/:type/:offset', (req, res) => {
+
+  if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=', req.params.type, ', offset=', req.params.offset )};
+
+  /**
+   * returns only:
+   *  stats
+   *  name
+   *  */
+  // console.log('>> get-paths-list');
+  const LIMIT = 50 //number of items to return in one query
+
+  // ensure user is authorised
+  // const userId = req.userId;
+  // if ( !userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  // get the appropriate model and setup query
+  let condition = {isSaved: true};
+  let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
+  let sort = req.params.type === 'tracks' ? {startTime: -1} : {creationDate: -1};
+
+  // the front end would like to know how many paths there are in total, so make that the first query
+  mongoModel(req.params.type).countDocuments(condition).then( (count) => {
+    // then execute the full query
+    mongoModel(req.params.type)
+      .find(condition, filter).sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
+      .then(documents => {
+        res.status(201).json(new ListData(documents, count))
+      });
+  })
+})
+
+
+/*****************************************************************
+ *
+ *  LOCAL FUNCTIONS
+ *
+ *****************************************************************/
+/**
+ * Returns the model definition for a given path type
+ * @param {string} pathType 'challenge', 'route', 'track' or 'match'
+ */
+function mongoModel(pathType) {
+  switch(pathType) {
+    case 'challenge': return MongoChallenges.Challenges;
+    case 'routes': return MongoPath.Routes;
+    case 'tracks': return MongoPath.Tracks;
+    case 'match': return MongoMatch.Match;
+  }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -448,50 +566,6 @@ app.get('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
 
 
 
-/*****************************************************************
- *  Retrieve a list of paths from database
- *****************************************************************/
-
-app.get('/get-paths-list/:type/:offset', auth.verifyToken, (req, res) => {
-
-  /**
-   * returns only:
-   *  stats
-   *  name
-   *  */
-  // console.log('>> get-paths-list');
-  const LIMIT = 50 //number of items to return in one query
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-  }
-
-  // get the appropriate model and setup query
-  let condition = {isSaved: true, userId: userId};
-  let filter = {stats: 1, name: 1, pathType: 1, category: 1};
-  let sort = {};
-
-  if ( req.params.type === 'track' ) {
-    filter['startTime'] = 1;
-    sort['startTime'] = -1;
-  } else {
-    filter['creationDate'] = 1;
-    sort['creationDate'] = -1;
-  }
-
-  // execute the query and return result to front-end
-  mongoModel(req.params.type).countDocuments(condition).then( (count) => {
-    console.log(req.params.type);
-    mongoModel(req.params.type)
-      .find(condition, filter).sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
-      .then(documents => {
-        console.log(new ListData(documents, count));
-        res.status(201).json(new ListData(documents, count))
-      });
-  })
-})
 
 
 // /*****************************************************************
@@ -687,38 +761,7 @@ app.get('/get-matched-tracks/:challengeId', auth.verifyToken, (req, res) => {
 })
 
 
-/*****************************************************************
- *
- *  Flush database of all unsaved entries
- *
- *****************************************************************/
-app.get('/flush', (req, res) => {
 
-  MongoPath.Routes.deleteMany( {'isSaved': false} ).then( () => {
-    MongoPath.Tracks.deleteMany( {'isSaved': false} ).then( () => {
-      MongoChallenges.Challenges.deleteMany( {'isSaved': false} ).then( () => {
-        res.status(201).json( {'result': 'db flushed'} );
-      });
-    });
-  });
-
-})
-
-
-
-
-/**
- * Returns the model definition for a given path type
- * @param {string} pathType 'challenge', 'route', 'track' or 'match'
- */
-function mongoModel(pathType) {
-  switch(pathType) {
-    case 'challenge': return MongoChallenges.Challenges;
-    case 'route': return MongoPath.Routes;
-    case 'track': return MongoPath.Tracks;
-    case 'match': return MongoMatch.Match;
-  }
-}
 
 
 /**

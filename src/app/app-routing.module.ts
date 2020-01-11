@@ -9,10 +9,10 @@ import { RoutesReviewComponent } from './main/routes/routes-review/routes-review
 
 const appRoutes: Routes = [
   { path: '', component: RoutesListComponent},
-  { path: 'routes/list', component: RoutesListComponent},
-  { path: 'routes/list/:id', component: RoutesListComponent},
-  { path: 'routes/create', component: RoutesCreateComponent},
-  { path: 'routes/review', component: RoutesReviewComponent}
+  { path: ':pathType/list/', component: RoutesListComponent},
+  { path: ':pathType/list/:id', component: RoutesListComponent},
+  { path: ':pathType/create', component: RoutesCreateComponent},
+  { path: ':pathType/review', component: RoutesReviewComponent}
 ];
 
 @NgModule({

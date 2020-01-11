@@ -34,12 +34,15 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
-    if ( pathType === 'route' ) {
+    if ( pathType === 'routes' ) {
 
       // send data to the backend and wait for response
       this.httpService.importRoute(fileData).subscribe( (result: Object) => {
 
-        console.log(result);
+        this.dataService.pathObject =  
+          { type: 'importedPath', 
+            pathId: result['geoJson']['properties']['pathId'],
+            info: result['geoJson']['properties']['info'] };
 
         // store the returned path and navigate to the review page to view it
         document.documentElement.style.cursor = 'default';

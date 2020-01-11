@@ -7,20 +7,19 @@ class ListData  {
     docs.forEach( (d) => {
 
       out.push({
-        // name: d.name.length === 0 ? d.category + ' ' + d.pathType : d.name,
-        name: d.name,
+        name: d.info.name,
         stats: d.stats,
-        category: d.category,
-        direction: d.direction,
-        pathType: d.pathType,
+        category: d.info.category,
+        direction: d.info.direction,
+        pathType: d.info.pathType,
         startTime: d.startTime,
+        creationDate: d.creationDate,
         pathId: d._id,
         count: c
       })
     })
 
-
-   return out
+    return out;
 
   }
 

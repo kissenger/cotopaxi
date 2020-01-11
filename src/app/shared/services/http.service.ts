@@ -33,8 +33,19 @@ export class HttpService {
     return this.http.post<any>('http://' + this.hostName + ':3000/import-route/', formData);
   }
 
-  saveCreatedRoute(type: String, pathData: Object) {
-    return this.http.post<any>('http://' + this.hostName + ':3000/save-path/' + type, pathData);
+  saveCreatedRoute(pathData: Object) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/save-new-route/', pathData);
   }
 
+  saveImportedPath(pathData: Object) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/save-imported-path/', pathData);
+  }
+
+  flushDatabase() {
+    return this.http.post<any>('http://' + this.hostName + ':3000/flush/', '');
+  }
+
+  getPathsList(type: String, offset: Number) {
+    return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset);
+  }
 }

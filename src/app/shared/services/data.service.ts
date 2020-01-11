@@ -17,6 +17,7 @@ export class DataService {
   // from map service to info panel
   pathStats = new EventEmitter();
   menuClick = new EventEmitter();
+  public pathObject;
 
   getPageName() {
     return new Promise<string>( (resolve, rej) => {
