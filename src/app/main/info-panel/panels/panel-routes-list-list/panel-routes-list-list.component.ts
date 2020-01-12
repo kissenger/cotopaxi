@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as globalVars from 'src/app/shared/globals';
+import { DataService } from 'src/app/shared/services/data.service';
 
 @Component({
   selector: 'app-panel-routes-list-list',
@@ -23,86 +24,48 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   constructor(
     private httpService: HttpService,
     private activatedRouter: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private dataService: DataService
     ) {}
 
   ngOnInit() {
 
-    if (this.DEBUG) { console.log('-->list.component.ngOnInit()---------------'); }
+    this.updateList(true);
 
-    this.paramsSubs = this.activatedRouter.params.subscribe(params => {
-
-      // get local variables from url
-      this.pathType = params.pathType;
-      this.pathId = params.id;
-      console.log(this.pathType, this.pathId);
-
-      // we need to be able to highlight the active row, but it isnt create when the component is intialised
-      // so use a timer to poll its existance and call function when we find it
-      // TODO coul dthi sbe better handles using a diffrent lifecycle hook?
-
-      // this.timer = setInterval( () => {
-      //   const divHandle = <HTMLElement>document.getElementById(this.pathId);
-      //   if (this.DEBUG) { console.log('-->list.component.ngOnInit(): divHandle = ', divHandle); }
-      //   this.highlightActiveRow(divHandle);
-      // }, 200);
-
-    });
-
-    this.updateList();
-
-  } // ngOnInit
-
-
-  /**
-  * Highlights the list item that is being displayed on the map
-  */
-  // highlightActiveRow(div) {
-  //   if (this.DEBUG) { console.log('-->list.component.highlightActiveRow()'); }
-
-  //   // return false if the required div does not exist
-  //   if ( !div ) { return false; }
-
-  //   // otherwise highlight the div and clear the timer
-  //   div.style.backgroundColor = '#E9E2CB';
-  //   clearInterval(this.timer);
-  // }
+  } 
 
 
   /**
   * Get list data on component load or request for additional list items
+  * @param booEmitFirstPathId true on first pass, false otherwise - to prevent path change when 'more' is pressed
   */
-  updateList() {
-
-    if (this.DEBUG) { console.log('-->list.component.updateList()'); }
+  updateList(booAutoSelectPathId: boolean) {
 
     // get list of paths
-    this.httpService.getPathsList(this.pathType, this.listOffset).subscribe( pathsList => {
+    this.httpService.getPathsList('route', this.listOffset).subscribe( pathsList => {
 
+      // query returned data, so process it
       if ( typeof pathsList[0] !== 'undefined' ) {
-        // query returned data, so process it
-
+        
         // reset content of 'more_div'
         // document.getElementById('more_div').innerHTML = 'more';
 
         // compile data and confirm if we are at the end of the list yet
         this.htmlData = this.htmlData.concat(pathsList);
-        console.log(this.htmlData);
-
         if ( this.htmlData.length === this.htmlData[0].count ) {
           this.isEndOfList = true;
         }
 
-        // if id not provided on the url, then use first one in list and re-navigate
-        // this causes the list component to be loaded twice - once to populate the list and once after the required path as been found
-        // IS THERE A BETTER WAY TO DO THIS?
-        // if ( typeof this.pathId === 'undefined' || this.pathId === '0') {
-        //   this.router.navigate(['paths', this.pathType, this.htmlData[0].pathId]);
-        // }
+        // emit the first id in the list and highlight that row
+        if (booAutoSelectPathId) {
+          this.pathId = this.htmlData[0].pathId;
+          this.dataService.desiredPathEmitter.emit(this.pathId); 
+        }
+        
 
       } else {
         // no data in query, so navigate back with path id = 0 (ensures that  map loads)
-        this.router.navigate(['routes', this.pathType, '0']);
+        
       }
 
     });
@@ -115,7 +78,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   onMoreClick() {
   // when the 'more_div' is clicked...
     this.listOffset++;
-    this.updateList();
+    this.updateList(false);
     document.getElementById('more_div').innerHTML = 'fetching...';
   }
 
@@ -126,32 +89,31 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
    */
   onLineClick(idFromClick: string) {
 
-    // display on debug only
-    if (this.DEBUG) { console.log('-->list.component.onLineClick()'); }
-
     if (idFromClick !== this.pathId) {
-      // get handle for current highlighted div and unhighlight --> new highlight will be handled in ngOnInit
-      const oldDivHandle = document.getElementById(this.pathId);
-      if (this.DEBUG) { console.log('-->list.component.onLineClick(): oldDivHandle = ', oldDivHandle); }
-      oldDivHandle.style.backgroundColor = '#FFFFFF';
-
-      // navigate to the newly requested path
-      this.router.navigate(['paths', this.pathType, idFromClick]);
-      document.documentElement.style.cursor = 'default';
+      this.pathId = idFromClick;
+      this.dataService.desiredPathEmitter.emit(idFromClick);
     }
 
   }
 
+  /**
+   * function use in html template - returns the css classes according to come conditions
+   * @param id id of the list item being processed
+   * @param i index of the list item being processed
+   */
+  getCssClass(id: String, i: Number) {
+    let cssClass = '';
+    if (id === this.pathId) { cssClass += 'highlight-div '; }
+    if (i === 0) { cssClass += 'border-top'; }
+    return cssClass;
+  }
 
   /**
    * Actions to do when component is destroyed
    */
   ngOnDestroy() {
-    if (this.DEBUG) { console.log('-->list.component.ngOnDestroy()'); }
-
-    clearInterval(this.timer);      // cancel the timer used to determine div existance for highlighting
-    this.paramsSubs.unsubscribe();
   }
+
 
 }
 

@@ -9,8 +9,7 @@ import { RoutesReviewComponent } from './main/routes/routes-review/routes-review
 
 const appRoutes: Routes = [
   { path: '', component: RoutesListComponent},
-  { path: ':pathType/list/', component: RoutesListComponent},
-  { path: ':pathType/list/:id', component: RoutesListComponent},
+  { path: ':pathType/list', component: RoutesListComponent},
   { path: ':pathType/create', component: RoutesCreateComponent},
   { path: ':pathType/review', component: RoutesReviewComponent}
 ];

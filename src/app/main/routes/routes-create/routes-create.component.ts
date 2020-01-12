@@ -20,6 +20,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
+    console.log('routes-create');
     // initialise the map and launch createroute
     let startPosition: tsCoordinate = {lat: 51, lng: -1};
     this.mapCreateService.initialiseMap(startPosition).then( () => {
@@ -27,7 +28,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
     });
     
     // listen for menu commands
-    this.menuSubs = this.dataService.menuClick.subscribe( (fromMenu) => {
+    this.menuSubs = this.dataService.menuClickEmitter.subscribe( (fromMenu) => {
       if (fromMenu.command) {
         if (fromMenu.command === 'undo') { this.mapCreateService.undo(); }
         if (fromMenu.command === 'close') { this.mapCreateService.closePath(); }

@@ -1,5 +1,5 @@
 Operations on active route:<br>
-Delete route<br>
+<span class="make-text-look-like-link" (click)="onDeleteClick()"> Delete route </span> <br>
 Edit route<br>
 Export to .fit file<br>
 Export to .gpx file<br>
@@ -7,9 +7,9 @@ Export to .gpx file<br>
 Create a new route:<br>
 <span> Load from .fit file </span> <br>
 <span class="make-text-look-like-link" (click)="onLoadFileClick()"> Load from .gpx file </span> <br>
-<a [routerLink]="['/routes/create']">Create on map</a><br>
+<a [routerLink]="['/route/create']">Create on map</a><br>
 
 <!-- This is a hidden element activated by the 'Load from file' link above -->
 <div class="file-selector">
-ks    <input type="file" id="file-select-single" (change)="onFilePickedImport($event, 'false', 'routes')" single>
+  <input type="file" id="file-select-single" (change)="onFilePickedImport($event, 'false', 'route')" single>
 </div>

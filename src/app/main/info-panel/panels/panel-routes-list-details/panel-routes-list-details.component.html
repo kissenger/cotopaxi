@@ -1,2 +1,32 @@
-name<br>
-decsription
+<div class="larger bold mt-1 mb-2">{{pathName}}</div>
+<div class="description mt-1 mb-2">{{pathDescription}}</div>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Distance</div>
+    <div class="col">Ascent</div>
+    <div class="col">Descent</div>
+</div>
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.distance | units: 'distance': units.distance}}</div>
+    <div class="col">{{pathStats.elevations.ascent | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.elevations.descent | units: 'elevation': units.elevation}}</div>
+</div>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Points</div>
+    <div class="col">Lumpiness</div>
+</div>                    
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.nPoints | number: '1.0-0'}}</div>
+    <div class="col">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+</div>
+
+<div class="row mt-3 mb-0 text-center">
+    <div class="col">Max Elev</div>
+    <div class="col">Min Elev</div>
+</div>                    
+
+<div class="row mt-0 mb-3 text-center">
+    <div class="col">{{pathStats.elevations.maxElev | units: 'elevation': units.elevation}}</div>
+    <div class="col">{{pathStats.elevations.minElev | units: 'elevation': units.elevation}}</div>
+</div>

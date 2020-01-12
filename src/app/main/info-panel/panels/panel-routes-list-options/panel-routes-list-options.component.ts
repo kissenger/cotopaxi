@@ -24,6 +24,13 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     document.getElementById('file-select-single').click(); 
   }
 
+  onDeleteClick() {
+    this.httpService.deletePath(this.dataService.getActivePathId()).subscribe( (response) => {
+      console.log(response);
+      this.router.navigate(['route/list/']);
+    });
+  }
+
   /** runs when file is selected */
   onFilePickedImport(event: Event, moreThanOneFile: boolean, pathType: string) {
 
@@ -34,20 +41,19 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
-    if ( pathType === 'routes' ) {
+    if ( pathType === 'route' ) {
 
       // send data to the backend and wait for response
       this.httpService.importRoute(fileData).subscribe( (result: Object) => {
 
-        this.dataService.pathObject =  
-          { type: 'importedPath', 
-            pathId: result['geoJson']['properties']['pathId'],
+        this.dataService.importedPathData =  
+          { pathId: result['geoJson']['properties']['pathId'],
             info: result['geoJson']['properties']['info'] };
 
         // store the returned path and navigate to the review page to view it
         document.documentElement.style.cursor = 'default';
         this.dataService.activePathToView = result['geoJson'];
-        this.router.navigate(['routes/review']);
+        this.router.navigate(['route/review/']);
 
       });
     }

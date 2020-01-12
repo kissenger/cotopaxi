@@ -587,7 +587,7 @@ class Path  {
 class Track extends Path {
   constructor(name, description, lngLat, elev, time, heartRate, cadence){
 
-    super(lngLat, elev, 'tracks');
+    super(lngLat, elev, 'track');
 
     // this.pathType = 'track';
     this.name = name;
@@ -623,7 +623,7 @@ class Track extends Path {
 class Route extends Path {
   constructor(name, description, lngLat, elev){
 
-    super(lngLat, elev, 'routes');
+    super(lngLat, elev, 'route');
     this.name = name;
     this.description = description;
 

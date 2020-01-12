@@ -15,3 +15,8 @@ the active tab, do not interfere with the active tab inputs */
 .tab-panel:not(.active) {
     display: none;
 }
+
+.panel-size-calc {
+    width: calc(100% - 10px);
+    height: calc(100% - 90px);
+}

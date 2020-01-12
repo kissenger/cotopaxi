@@ -31,14 +31,14 @@ export class MapService{
    * Shows the mapbox map
    * @param location location on which to centre the map
    */
-  initialiseMap(location: tsCoordinate) {
+  initialiseMap(location?: tsCoordinate) {
     return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
       this.tsMap = new mapboxgl.Map({
         container: 'map', 
         style: 'mapbox://styles/mapbox/cjaudgl840gn32rnrepcb9b9g',
-        center: location, 
         zoom: 13 
       });
+      if (location) { this.tsMap.setCenter(location); }
       this.tsMap.on('load', () => {
         resolve();
       })
@@ -47,13 +47,18 @@ export class MapService{
 
   }
 
+  getCentre() {
+    const location = this.tsMap.getCenter();
+    return <tsCoordinate>{lng: location[0], lat: location[1]}
+  }
+
   /**
    * plots a geojson path on the map and centers the view on it
    * @param path path as geojson to view on map
    * @param lineWidth width of the line
    * @param lineColor colour of the line as RGB string '#RRGGBB' or auto to pick up colors in the geojson
    */
-  plotGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
+  plotSingleGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
     // console.log(pathAsGeoJson);
     if (!styleOptions) {
       styleOptions = {
@@ -62,6 +67,13 @@ export class MapService{
         lineOpacity: 1
       }
     }
+
+    // remove existing layer if it exists
+    // if (this.tsMap.getLayer('route')) {this.tsMap.removeLayer('route')};
+    if (this.tsMap.getLayer('route')) {
+      this.tsMap.removeLayer('route');
+      this.tsMap.removeSource('route');
+    };
 
     // add the layer to the map
     this.tsMap.addLayer({
@@ -86,28 +98,9 @@ export class MapService{
     }
     this.tsMap.fitBounds(bbox, options);
 
-    // get path stats from GeoJSON
-    this.getElevationsIfNeeded(pathAsGeoJson).then( geoJSON => {
-      this.dataService.pathStats.emit( geoJSON['properties'].stats );
-    });
+    // emit the pathStats to the details component 
+    this.dataService.emitAndStoreActivePath(pathAsGeoJson);
 
-  }
-
-
-  getElevationsIfNeeded(fc: GeoJSON.FeatureCollection) {
-    console.log('a');
-    return new Promise<GeoJSON.FeatureCollection>( (resolve, reject) => {
-      console.log('b');
-      if (fc['properties'].params.elev.length === 0 ) {
-        // if elevations do not exist
-        console.log('no elevatioms');
-        resolve(fc);
-      } else {
-        // if elevations do exist
-        console.log('elevations');
-        resolve(fc);
-      }
-    });
   }
 }
 

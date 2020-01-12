@@ -40,12 +40,6 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // this.paramSubs.unsubscribe();
-
-    // flush mongo of unsaved paths
-    console.log('flush');
-    this.httpService.flushDatabase().subscribe( () => {
-      console.log('database flushed');
-    })
+    clearInterval(this.timer);
   }
 }

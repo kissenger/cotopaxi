@@ -34,7 +34,7 @@ export class HttpService {
   }
 
   saveCreatedRoute(pathData: Object) {
-    return this.http.post<any>('http://' + this.hostName + ':3000/save-new-route/', pathData);
+    return this.http.post<any>('http://' + this.hostName + ':3000/save-created-route/', pathData);
   }
 
   saveImportedPath(pathData: Object) {
@@ -47,5 +47,13 @@ export class HttpService {
 
   getPathsList(type: String, offset: Number) {
     return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset);
+  }
+  
+  getPathById(type: String, id: String) {
+    return this.http.get<any>('http://' + this.hostName + ':3000/get-path-by-id/' + type + '/' + id);
+  }
+
+  deletePath(id) {
+    return this.http.delete<any>('http://' + this.hostName + ':3000/delete-path/' + 'route' + '/' + id);
   }
 }

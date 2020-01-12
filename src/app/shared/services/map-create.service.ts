@@ -29,7 +29,6 @@ export class MapCreateService extends MapService {
   ) { 
     super(httpService, geoService, dataService);
     this.multiPath = new MultiPath();
-    console.log(this.multiPath);
   }
 
   
@@ -69,15 +68,15 @@ export class MapCreateService extends MapService {
         // get coordinates for the next chunk of path and update the map
         this.getNextPathCoords(startPoint, clickedPoint).then( coords => {
           this.multiPath.addPath(new Path(coords));
-          this.dataService.pathStats.emit( this.multiPath.getStats() );
+          this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
           this.updateMap();
           this.addMarker(this.multiPath.getLastPoint());
 
           // get and update elevations
           this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
             this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
-            this.dataService.pathStats.emit( this.multiPath.getStats() );
-            this.dataService.pathObject = this.multiPath.getFlatCoordsAndElevs();
+            this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
+            this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
           })
         })
       }
@@ -162,7 +161,7 @@ export class MapCreateService extends MapService {
       this.multiPath.remPath();
       this.updateMap();
       this.popMarker();
-      this.dataService.pathStats.emit( this.multiPath.getStats() );
+      this.dataService.pathStatsEmitter.emit( this.multiPath.getStats() );
     }
   }
 
@@ -170,7 +169,7 @@ export class MapCreateService extends MapService {
     this.clearAllMarkers();
     this.multiPath = new MultiPath();
     this.updateMap(); 
-    this.dataService.pathStats.emit( this.multiPath.getStats() );
+    this.dataService.pathStatsEmitter.emit( this.multiPath.getStats() );
     
 
   }
@@ -187,7 +186,7 @@ export class MapCreateService extends MapService {
     // get coordinates for the next chunk of path and update the map
     this.getNextPathCoords(startPoint, endPoint).then( coords => {
       this.multiPath.addPath(new Path(coords));
-      this.dataService.pathStats.emit( this.multiPath.getStats() );
+      this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
       this.updateMap();
       this.addMarker(this.multiPath.getLastPoint());
 
@@ -195,8 +194,8 @@ export class MapCreateService extends MapService {
       this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
         this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
         this.multiPath.getStats();
-        this.dataService.pathStats.emit( this.multiPath.getStats() );
-        this.dataService.pathObject = this.multiPath.getFlatCoordsAndElevs();
+        this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
+        this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
       });
     })
   }

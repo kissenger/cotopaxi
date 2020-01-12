@@ -35,7 +35,7 @@ class GeoJSON{
     });
 
      // simple route or track
-    if (plotType === 'route' || plotType === 'tracks' ) {
+    if (plotType === 'route' || plotType === 'track' ) {
       this.properties = [];
       this.bboxes = [];
       pathDocs.forEach( doc => {

@@ -165,7 +165,7 @@ app.post('/save-imported-path/', (req, res) => {
 
   // construct query based on incoming payload
   if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
-console.log(req.body);
+
   let condition = {_id: req.body.pathId};
   let filter = {isSaved: true, info: req.body.info};
 
@@ -173,7 +173,7 @@ console.log(req.body);
   mongoModel(req.body.info.pathType)
     .updateOne(condition, {$set: filter}, {writeConcern: {j: true}})
     .then( () => {
-      res.status(201).json( {result: 'save ok'} );
+      res.status(201).json( {pathId: req.body.pathId} );
     }) 
 
 });
@@ -185,7 +185,7 @@ console.log(req.body);
  *
  *
  *****************************************************************/
-app.post('/save-new-route/', (req, res) => {
+app.post('/save-created-route/', (req, res) => {
 
   // ensure user is authorised
   // if ( !req.userId ) {
@@ -197,10 +197,30 @@ app.post('/save-new-route/', (req, res) => {
 
   path.init().then( () => {
     const mongoPath = path.asMongoObject(1, true);
-    mongoModel('routes').create(mongoPath).then( (document) => {
+    mongoModel('route').create(mongoPath).then( (document) => {
+      console.log('rwerniowge');
       res.status(201).json( {pathId: document._id} );  
     }) 
   });
+})
+
+
+
+/*****************************************************************
+ *  Retrieve a single path from database
+ *  id of required path is supplied
+ *****************************************************************/
+app.get('/get-path-by-id/:type/:id', (req, res) => {
+
+  // ensure user is authorised
+  // if ( !req.userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  // query the database and return result to front end
+  getPathDocFromId(req.params.id, req.params.type).then( path => {
+      res.status(201).json({geoJson: new GeoJSON(path, 'route')});
+  })
 })
 
 
@@ -211,7 +231,7 @@ app.post('/save-new-route/', (req, res) => {
  *****************************************************************/
 app.post('/flush/', (req, res) => {
 
-  mongoModel('routes').deleteMany( {'isSaved': false} ).then( () => {
+  mongoModel('route').deleteMany( {'isSaved': false} ).then( () => {
     // MongoPath.Tracks.deleteMany( {'isSaved': false} ).then( () => {
       // MongoChallenges.Challenges.deleteMany( {'isSaved': false} ).then( () => {
         if (DEBUG) { console.log(timeStamp() + ' >> database flush' )};
@@ -249,7 +269,7 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
   // get the appropriate model and setup query
   let condition = {isSaved: true};
   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
-  let sort = req.params.type === 'tracks' ? {startTime: -1} : {creationDate: -1};
+  let sort = req.params.type === 'track' ? {startTime: -1} : {creationDate: -1};
 
   // the front end would like to know how many paths there are in total, so make that the first query
   mongoModel(req.params.type).countDocuments(condition).then( (count) => {
@@ -261,6 +281,32 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
       });
   })
 })
+
+/*****************************************************************
+ *  Delete a path from database
+ *  id of path is provided - doesnt actually delete, just sets isSaved to false
+ *****************************************************************/
+
+app.delete('/delete-path/:type/:id', (req, res) => {
+
+  // // ensure user is authorised
+  // const userId = req.userId;
+  // if ( !userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+  // construct query based on incoming payload
+  let condition = {_id: req.params.id};
+  let filter = {isSaved: false};
+
+  // query database, updating change data and setting isSaved to true
+  mongoModel(req.params.type)
+    .updateOne(condition, {$set: filter})
+    .then( () => { res.status(201).json( {'result': 'delete ok'} ) },
+        (err) => { res.status(201).json(err) });
+
+});
+
 
 
 /*****************************************************************
@@ -275,10 +321,26 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
 function mongoModel(pathType) {
   switch(pathType) {
     case 'challenge': return MongoChallenges.Challenges;
-    case 'routes': return MongoPath.Routes;
-    case 'tracks': return MongoPath.Tracks;
+    case 'route': return MongoPath.Routes;
+    case 'track': return MongoPath.Tracks;
     case 'match': return MongoMatch.Match;
   }
+}
+
+/**
+ * get a mongo db entry from a provided path id
+ * @param {string} pid path id
+ * @param {string} ptype path type - 'challenge', 'route', 'track' or 'match'
+ */
+function getPathDocFromId(pid, ptype) {
+
+  console.log('>> getPathDocFromId: ', pid);
+  return new Promise( resolve => {
+    mongoModel(ptype).find({_id: pid}).then( (path) => {
+      resolve(path[0]);
+    })
+  })
+
 }
 
 
@@ -536,30 +598,6 @@ app.post('/save-path/:type/:id',  auth.verifyToken, (req, res) => {
 
 
 
-/*****************************************************************
- *  Delete a path from database
- *  id of path is provided
- *****************************************************************/
-
-app.get('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-  }
-
-  // construct query based on incoming payload
-  let condition = {_id: req.params.id, userId: userId};
-  let filter = {isSaved: false};
-
-  // query database, updating change data and setting isSaved to true
-  mongoModel(req.params.type)
-    .updateOne(condition, {$set: filter})
-    .then( () => { res.status(201).json( {'result': 'delete ok'} ) },
-        (err) => { res.status(201).json(err) });
-
-});
 
 
 
@@ -750,11 +788,11 @@ app.get('/get-matched-tracks/:challengeId', auth.verifyToken, (req, res) => {
   }
 
   getMatchingTracksFromMatchObj(req.params.challengeId).then( (tracks) => {
-    console.log('> get-matched-tracks: matched ' + tracks.length + ' tracks');
+    console.log('> get-matched-tracks: matched ' + tracks.length + ' track');
     if (!tracks) {
       res.status(201).json({result: 'no matched tracks'})
     } else {
-      res.status(201).json({geoTracks: geoJson = new GeoJson(tracks, 'tracks')})
+      res.status(201).json({geoTracks: geoJson = new GeoJson(tracks, 'track')})
     }
   })
 

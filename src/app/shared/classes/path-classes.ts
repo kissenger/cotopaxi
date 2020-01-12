@@ -269,8 +269,6 @@ export class MultiPath {
         const coords = [].concat.apply([], this.paths.map( path => path.coordinates.map( c => [c.lng, c.lat]) ));
         const elevs  = [].concat.apply([], this.paths.map( path => path.elevations ));
         const elevations = {elevs, elevationStatus: 'A'}
-        const type = 'newRoute';
-        console.log({type, coords, elevations});
         return {coords, elevations};
     }
 

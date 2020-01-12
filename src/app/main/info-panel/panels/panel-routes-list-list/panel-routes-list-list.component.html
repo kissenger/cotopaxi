@@ -1,7 +1,13 @@
+<!-- [ngClass]="(i===0) ? 'border-top' : ''" -->
+<!-- [ngClass]="(pathId === line.pathId) ? 'highlight-div' : ''" -->
+<!--  -->
+<div class='container'  class="p-0 m-0 oveflow-auto">
+  <div *ngFor="let line of htmlData; let i = index">
+    <div id={{line.pathId}} 
+      (click)="onLineClick(line.pathId)" 
+      class="item p-1 border-bottom border-left border-right" 
+      [ngClass]="getCssClass(line.pathId, i)">
 
-<div class='container'>
-  <div *ngFor="let line of htmlData">
-    <div id={{line.pathId}} (click)="onLineClick(line.pathId)" class="item">
       <div *ngIf="line.name === ''" class="name">
         {{line.category}} {{line.pathType}}
       </div>
@@ -10,21 +16,20 @@
       </div>
 
 
-      <div *ngIf="pathType === 'routes'" class="details">
+      <!-- <div *ngIf="pathType === 'route'" class="details"> -->
         <!-- Created: {{line.creationDate | date: 'short'}} -->
         <!-- {{line.pathId}} -->
         {{line.stats.distance | units: 'distance': units.distance}}
         {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}
         {{line.stats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}
-      </div>
+      <!-- </div> -->
 
-      <div *ngIf="pathType === 'tracks'" class="details">
+      <!-- <div *ngIf="pathType === 'track'" class="details">
         {{utils.prettifyDate(line.startTime)}} -
         {{line.stats.distance/1000 | number: '1.1-1'}} km -
         {{utils.formatDuration(line.stats.duration)}}
-      </div>
+      </div> -->
 
-      <hr>
     </div>
   </div>
   <div *ngIf="!isEndOfList" class="more" (click)="onMoreClick()" id="more_div">
