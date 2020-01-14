@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
 export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   private isMinimised = false;
-  private pathPropsSubscription: Subscription;
+  private pathStatsSubscription: Subscription;
   private pathObjectSubs;
   private pathObject: MultiPath;
   private pathStats: pathStats = {
@@ -43,14 +43,17 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // subscribe to any path stats that are sent from the map component
-    this.pathPropsSubscription = this.dataService.activePathPropertiesEmitter.subscribe( (pathProps) => {
-      console.log(pathProps);
-      if (!pathProps.stats.elevations) {
+
+    // TODO imported route details not being shown - is the correct emitter being used for both
+    // import and create? 
+    this.pathStatsSubscription = this.dataService.pathStatsEmitter.subscribe( (pathStats) => {
+      // console.log(pathStats);
+      if (!pathStats.stats.elevations) {
         this.pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
       }
-      this.pathStats = pathProps.stats;
-      this.pathName = pathProps.info.name;
-      this.pathDescription = pathProps.info.description;
+      this.pathStats = pathStats.stats;
+      this.pathName = pathStats.info.name;
+      this.pathDescription = pathStats.info.description;
     })
 
 
@@ -59,8 +62,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   onSave() {
     
-    const createdPathData = this.dataService.createdPathData;
-    const importedPathData = this.dataService.importedPathData;
+    const createdPathData = this.dataService.getFromStore('stats', true);
+    const importedPathData = this.dataService.getFromStore('importedPathData', true);
     console.log(createdPathData);
     console.log(importedPathData);
 
@@ -97,7 +100,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   // }
 
   ngOnDestroy() {
-    this.pathPropsSubscription.unsubscribe();
+    this.pathStatsSubscription.unsubscribe();
 
     this.httpService.flushDatabase().subscribe( () => {
       console.log('db flushed');

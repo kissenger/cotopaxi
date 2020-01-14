@@ -34,14 +34,15 @@ export class PanelRoutesListDetailsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    this.pathPropsSubscription = this.dataService.activePathPropertiesEmitter.subscribe( (pathProps) => {
-      console.log(pathProps);
-      if (!pathProps.stats.elevations) {
+    // listen for data sent from map service
+    this.pathPropsSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
+      console.log(geoJson);
+      if (!geoJson.properties.stats.elevations) {
         this.pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
       }
-      this.pathStats = pathProps.stats;
-      this.pathName = pathProps.info.name;
-      this.pathDescription = pathProps.info.description;
+      this.pathStats = geoJson.properties.stats;
+      this.pathName = geoJson.properties.info.name;
+      this.pathDescription = geoJson.properties.info.description;
     })
 
   }

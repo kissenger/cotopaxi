@@ -13,10 +13,9 @@ import { Subscription } from 'rxjs';
 })
 export class RoutesListComponent implements OnInit, OnDestroy {
 
-  private desiredPathSubscription: Subscription;
+  private pathIdSubscription: Subscription;
   private menuSubs;
   private paramSubs: any;
-  private startPosition: tsCoordinate = {lat: 51, lng: -1};
 
   constructor(
     private dataService: DataService,
@@ -30,14 +29,14 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
     this.loadEmptyMap(); 
     
-    this.desiredPathSubscription = this.dataService.desiredPathEmitter.subscribe( (desiredPathId) => {
-      this.plotPathOnMap(desiredPathId);
+    this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId) => {
+      this.plotPathOnMap(pathId);
     })
 
   }
 
   loadEmptyMap() {
-    this.mapService.initialiseMap(this.startPosition).then( () => {
+    this.mapService.initialiseMap().then( () => {
       // do nothing
     });
   }
@@ -58,7 +57,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     })
   }
   ngOnDestroy() {
-    this.desiredPathSubscription.unsubscribe();
+    this.pathIdSubscription.unsubscribe();
   }
 
 }

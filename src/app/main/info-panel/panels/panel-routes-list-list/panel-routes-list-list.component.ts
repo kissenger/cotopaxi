@@ -59,7 +59,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
         // emit the first id in the list and highlight that row
         if (booAutoSelectPathId) {
           this.pathId = this.htmlData[0].pathId;
-          this.dataService.desiredPathEmitter.emit(this.pathId); 
+          this.dataService.pathIdEmitter.emit(this.pathId); 
         }
         
 
@@ -91,7 +91,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
     if (idFromClick !== this.pathId) {
       this.pathId = idFromClick;
-      this.dataService.desiredPathEmitter.emit(idFromClick);
+      this.dataService.pathIdEmitter.emit(idFromClick);
     }
 
   }

@@ -76,7 +76,8 @@ export class MapCreateService extends MapService {
           this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
             this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
             this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-            this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
+            // this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
+            this.dataService.saveToStore('stats', this.multiPath.getFlatCoordsAndElevs());
           })
         })
       }
@@ -195,7 +196,8 @@ export class MapCreateService extends MapService {
         this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
         this.multiPath.getStats();
         this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-        this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
+        // this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
+        this.dataService.saveToStore('stats', this.multiPath.getFlatCoordsAndElevs());
       });
     })
   }

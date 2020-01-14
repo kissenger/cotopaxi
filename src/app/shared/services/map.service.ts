@@ -31,14 +31,17 @@ export class MapService{
    * Shows the mapbox map
    * @param location location on which to centre the map
    */
-  initialiseMap(location?: tsCoordinate) {
+  initialiseMap(location?: tsCoordinate, zoom?: number) {
+    
+    // setting the center and zoom here prevents flying animation - zoom gets over-ridden when the map bounds are set below 
     return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
       this.tsMap = new mapboxgl.Map({
         container: 'map', 
         style: 'mapbox://styles/mapbox/cjaudgl840gn32rnrepcb9b9g',
-        zoom: 13 
+        center: location ? location : globalVars.userHomeLocation,
+        zoom: zoom ? zoom : 13
       });
-      if (location) { this.tsMap.setCenter(location); }
+
       this.tsMap.on('load', () => {
         resolve();
       })
@@ -47,9 +50,13 @@ export class MapService{
 
   }
 
-  getCentre() {
-    const location = this.tsMap.getCenter();
-    return <tsCoordinate>{lng: location[0], lat: location[1]}
+  /**
+   * Returns the centre and zoom level of the current map view
+   */
+  getMapView() {
+    const centre = this.tsMap.getCenter();
+    const zoom = this.tsMap.getZoom();
+    return {centre, zoom}
   }
 
   /**
@@ -94,14 +101,26 @@ export class MapService{
     let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]];
     let options = {
       padding: {top: 10, bottom: 10, left: 10, right: 10},
-      linear: false
+      linear: true
     }
     this.tsMap.fitBounds(bbox, options);
 
-    // emit the pathStats to the details component 
-    this.dataService.emitAndStoreActivePath(pathAsGeoJson);
+    // emit the pathStats to the details component (true parameter emits)
+    // this.dataService.emitAndStoreActivePath(pathAsGeoJson);
+    this.dataService.saveToStore('activePath', pathAsGeoJson);
+    this.dataService.activePathEmitter.emit(pathAsGeoJson);
+
+    // share the map centre so we can use later if we want to create a new map on this position
+    // IMPORTANT to wait until the map has stopped moving or this doesnt work
+    this.tsMap.on('moveend', (ev) => {
+      this.dataService.saveToStore('mapView', this.getMapView());
+    });
 
   }
+
+
+
+
 }
 
 

@@ -20,14 +20,14 @@ export class RoutesReviewComponent implements OnInit {
 
   ngOnInit() {
 
-    const geoJson = this.dataService.activePathToView;
+    const geoJson = this.dataService.getFromStore('activePath', true);
+
     if (typeof geoJson === 'undefined') {
       this.router.navigate(['routes/list']);
     } else {
 
       // initialise the map 
-      let startPosition: tsCoordinate = {lat: 51, lng: -1};
-      this.mapService.initialiseMap(startPosition).then( () => {
+      this.mapService.initialiseMap().then( () => {
 
         // plot the stored route
         let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};

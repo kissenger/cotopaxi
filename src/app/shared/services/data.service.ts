@@ -7,9 +7,6 @@ import { tsCoordinate } from '../interfaces';
 })
 export class DataService {
 
-  // holder for the active path where it is needed to be refd by different components
-  public activePathToView: GeoJSON.FeatureCollection;
-
   constructor(
     private router: Router
   ) { 
@@ -22,27 +19,40 @@ export class DataService {
   public menuClickEmitter = new EventEmitter();          // from map service to info panel
   public pathStatsEmitter = new EventEmitter();   // from map-create to panel-create-detail 
   // stored by map-create-service, accessed by panel-routes-create-details
-  public createdPathData: {coords: Array<tsCoordinate>, elevations: {elevs: Array<Number>, elevationStatus: String}}; 
+  // public createdPathData: {coords: Array<tsCoordinate>, elevations: {elevs: Array<Number>, elevationStatus: String}}; 
   // stored by panel-routes-list-options, accessed by panel-routes-create-details
-  public importedPathData: {pathId: String, info: {}};
+  // public importedPathData: {pathId: String, info: {}};
 
   /**
    * Collection of variables and methods to enable emission, storage and retrieval of the 
    * CURRENTLY ACTIVE PATH RECALLED FROM DATABASE
    */
-  public desiredPathEmitter = new EventEmitter();   // emits from panel-routes-list-list and subscribed to in routes-list
-  public activePathPropertiesEmitter = new EventEmitter();
-  private activePathGeoJSON;
-  public emitAndStoreActivePath(pathAsGeoJSON: GeoJSON.FeatureCollection) {
-    this.activePathPropertiesEmitter.emit(pathAsGeoJSON['properties']);
-    this.activePathGeoJSON = pathAsGeoJSON;
+  // public desiredPathEmitter = new EventEmitter();   // emits from panel-routes-list-list and subscribed to in routes-list
+  public activePathEmitter = new EventEmitter();
+  public pathIdEmitter = new EventEmitter();
+
+  /**
+   * Data store
+   * @param dataStore is a key/value object to store all shared dat in one place
+   */
+  private dataStore: Object = {}
+  
+  // saves a key/value pair to the data store, also emitting the same data if {{emit}} is true
+  public saveToStore(keyName: string, value: any) {
+    this.dataStore[keyName] = value;
   }
-  public getActivePathProps() {
-    return this.activePathGeoJSON.properties;
+
+  // returns the current value of a named key, setting the value to null if {{clearKey}} is true
+  public getFromStore(keyName: string, clearKey: Boolean) {
+    const returnData = this.dataStore[keyName];
+    if (clearKey) { delete this.dataStore[keyName] };
+    return returnData;
   }
-  public getActivePathId() {
-    return this.activePathGeoJSON.properties.pathId;
-  }
+
+
+
+
+
 
 
   getPageName() {
@@ -59,3 +69,17 @@ export class DataService {
   
 }
 
+// export class dataStore {
+
+//   private 
+//   constructor(storeName: String, emit: Boolean) {
+//   }
+  
+//   save() {
+
+//   }
+
+//   get() {
+//     return 
+//   }
+// }

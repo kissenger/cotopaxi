@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from 'src/app/shared/services/data.service';
+import { MapService } from 'src/app/shared/services/map.service';
 
 @Component({
   selector: 'app-panel-routes-list-options',
@@ -13,7 +14,8 @@ export class PanelRoutesListOptionsComponent implements OnInit {
   constructor(
     private router: Router,
     private httpService: HttpService,
-    private dataService: DataService
+    private dataService: DataService,
+    private mapService: MapService
   ) { }
 
   ngOnInit() {
@@ -25,10 +27,21 @@ export class PanelRoutesListOptionsComponent implements OnInit {
   }
 
   onDeleteClick() {
-    this.httpService.deletePath(this.dataService.getActivePathId()).subscribe( (response) => {
-      console.log(response);
-      this.router.navigate(['route/list/']);
+    
+    const activePath = this.dataService.getFromStore('activePath', true);
+    this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
+
+      // extra guff needed to refresh the page as we are wanting to refresh the current page rather than navigate away
+      this.router.routeReuseStrategy.shouldReuseRoute = () => false;
+      this.router.onSameUrlNavigation = 'reload';
+      this.router.navigate(['route/list']);
+      
     });
+  }
+
+  onCreateOnMapClick() {
+    
+    this.router.navigate(['/route/create']);
   }
 
   /** runs when file is selected */
@@ -46,13 +59,14 @@ export class PanelRoutesListOptionsComponent implements OnInit {
       // send data to the backend and wait for response
       this.httpService.importRoute(fileData).subscribe( (result: Object) => {
 
-        this.dataService.importedPathData =  
-          { pathId: result['geoJson']['properties']['pathId'],
-            info: result['geoJson']['properties']['info'] };
-
+        const toStore = { pathId: result['geoJson']['properties']['pathId'],
+                          info: result['geoJson']['properties']['info'] };
+                          console.log(toStore);
+        this.dataService.saveToStore('importedPathData', toStore);
+          
         // store the returned path and navigate to the review page to view it
         document.documentElement.style.cursor = 'default';
-        this.dataService.activePathToView = result['geoJson'];
+        this.dataService.saveToStore('activePath', result['geoJson']);
         this.router.navigate(['route/review/']);
 
       });

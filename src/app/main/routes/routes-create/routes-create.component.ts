@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MapCreateService } from 'src/app/shared/services/map-create.service'
 import { DataService } from 'src/app/shared/services/data.service';
 import { tsCoordinate } from 'src/app/shared/interfaces';
+import * as globalVars from 'src/app/shared/globals';
 
 
 @Component({
@@ -21,9 +22,14 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
   ngOnInit() {
 
     console.log('routes-create');
+
+    // centre map on the currently loading route if it exists, otherwise take users home location
+    let mapView = this.dataService.getFromStore('mapView', true);
+    let startPosition = mapView ? mapView.centre : globalVars.userHomeLocation;
+    let startZoom = mapView ? mapView.zoom : 5;
+
     // initialise the map and launch createroute
-    let startPosition: tsCoordinate = {lat: 51, lng: -1};
-    this.mapCreateService.initialiseMap(startPosition).then( () => {
+    this.mapCreateService.initialiseMap(startPosition, startZoom).then( () => {
       this.mapCreateService.createRoute();
     });
     
