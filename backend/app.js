@@ -129,7 +129,7 @@ app.post('/import-route/', upload.single('filename'), (req, res) => {
 
   // Get a mongo object from the path data
   const pathFromFile = readGPX(req.file.buffer.toString());
-  const path = new Route(pathFromFile.nameOfPath, "", pathFromFile.lngLat, pathFromFile.elevations);
+  const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elevations);
 
   // once Path is instantiated, it needs to be initialised (returns a promise)
   path.init().then( () => {
@@ -167,11 +167,11 @@ app.post('/save-imported-path/', (req, res) => {
   if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
 
   let condition = {_id: req.body.pathId};
-  let filter = {isSaved: true, info: req.body.info};
+  let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
 
   // query database, updating changed data and setting isSaved to true
-  mongoModel(req.body.info.pathType)
-    .updateOne(condition, {$set: filter}, {writeConcern: {j: true}})
+  mongoModel(req.body.pathType)
+    .updateOne(condition, {$set: filter}, {upsert: true, writeConcern: {j: true}})
     .then( () => {
       res.status(201).json( {pathId: req.body.pathId} );
     }) 
@@ -193,12 +193,12 @@ app.post('/save-created-route/', (req, res) => {
   // }
 
   if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
+  console.log(req.body);
   var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevations);
 
   path.init().then( () => {
     const mongoPath = path.asMongoObject(1, true);
     mongoModel('route').create(mongoPath).then( (document) => {
-      console.log('rwerniowge');
       res.status(201).json( {pathId: document._id} );  
     }) 
   });
@@ -258,7 +258,7 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
    *  name
    *  */
   // console.log('>> get-paths-list');
-  const LIMIT = 50 //number of items to return in one query
+  const LIMIT = 10 //number of items to return in one query
 
   // ensure user is authorised
   // const userId = req.userId;
@@ -334,7 +334,6 @@ function mongoModel(pathType) {
  */
 function getPathDocFromId(pid, ptype) {
 
-  console.log('>> getPathDocFromId: ', pid);
   return new Promise( resolve => {
     mongoModel(ptype).find({_id: pid}).then( (path) => {
       resolve(path[0]);

@@ -14,6 +14,16 @@ body {
   --ts-background: #E9E2CB;
 }
 
+.global-make-text-look-like-link{
+  cursor: pointer;
+  color: #007BFF;
+}
+.global-make-text-look-like-link:hover{
+  text-decoration: underline; 
+  color: #0056B3;
+  cursor: pointer;
+}
+
 /* a:link {
   color: red;
 } */

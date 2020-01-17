@@ -26,7 +26,6 @@ export class MainComponent implements OnInit, OnDestroy {
     this.timer = setInterval( () => {
       if (this.router.url !== '/') { 
         this.page = this.router.url.split('/')[2];
-        console.log(this.page);
         clearInterval(this.timer); 
       } 
     }, 1);

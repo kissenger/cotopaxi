@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from './http.service';
-import { tsCoordinate, myElevationResults, myElevationQuery } from 'src/app/shared/interfaces';
+import { tsCoordinate, myElevationResults, myElevationQuery, tsElevations } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +37,7 @@ export class GeoService {
    */
   getElevationsFromAPI(coordsArray: Array<tsCoordinate>, interpolate: boolean) {
     
-    return new Promise<Array<number>>( (resolve, reject) => {
+    return new Promise<tsElevations>( (resolve, reject) => {
       
       // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
       // dont use splice as it cocks things up for reasons i dont understand.
@@ -57,7 +57,7 @@ export class GeoService {
             [...allResults, thisResult] 
           ));
       }, Promise.resolve([])).then( (result) => {
-        resolve(result[0].result.map(e => e.elev));
+        resolve({elevationStatus: 'A', elevs: result[0].result.map(e => e.elev)});
       });
 
     });
@@ -77,6 +77,12 @@ export class GeoService {
   /** 
   *  UTILITIES
   */
+
+  // returns the centre point (centre of gravity) of the rectange defined by the bounding box
+  getPathCoG(bbox) {
+    return{ lng: ( bbox[0] + bbox[2] ) / 2,
+            lat: ( bbox[1] + bbox[3] ) / 2 }; 
+  }
 
 
   // Creates a flat array of lntlats from supplied GeoJSON
@@ -154,14 +160,15 @@ export class GeoService {
    * @param elevs simple array of elevations
    * @param distance distance to calculate lumpiness statistic
    */
-  calculateElevationStats(elevs: Array<number>, distance?: number) {
-    
+  calculateElevationStats(elevations: tsElevations, distance?: number) {
+
     let ascent: number = 0;
     let descent: number = 0;
     let dElev: number;
     let minElev = 9999;
     let maxElev = -9999;
     let badElevData: boolean = false;
+    let elevs = elevations.elevs;
 
     for (let i = 0; i < elevs.length; i++) {
       if (elevs[i] !== -9999 && elevs[i-1] !== -9999) {
@@ -177,6 +184,7 @@ export class GeoService {
     }
 
     return {
+        elevationStatus: elevations.elevationStatus,
         ascent: ascent,
         descent: descent,
         lumpiness: distance ? (ascent - descent) / distance : -9999,

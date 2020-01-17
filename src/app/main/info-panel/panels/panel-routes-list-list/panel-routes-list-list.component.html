@@ -1,38 +1,34 @@
-<!-- [ngClass]="(i===0) ? 'border-top' : ''" -->
-<!-- [ngClass]="(pathId === line.pathId) ? 'highlight-div' : ''" -->
-<!--  -->
-<div class='container'  class="p-0 m-0 oveflow-auto">
+
+
+<div class='container'  class="p-0 m-0 oveflow-auto position-static">
+
   <div *ngFor="let line of htmlData; let i = index">
+
     <div id={{line.pathId}} 
       (click)="onLineClick(line.pathId)" 
-      class="item p-1 border-bottom border-left border-right" 
+      class="p-1 border-bottom border-left border-right" 
       [ngClass]="getCssClass(line.pathId, i)">
 
-      <div *ngIf="line.name === ''" class="name">
-        {{line.category}} {{line.pathType}}
-      </div>
-      <div *ngIf="line.name !== ''" class="name">
-        {{line.name}}
-      </div>
+    <div *ngIf="line.name === ''" class="name">
+      {{line.category}} {{line.pathType}}
+    </div>
 
+    <div *ngIf="line.name !== ''" class="name">
+      {{line.name}}
+    </div>
 
-      <!-- <div *ngIf="pathType === 'route'" class="details"> -->
-        <!-- Created: {{line.creationDate | date: 'short'}} -->
-        <!-- {{line.pathId}} -->
-        {{line.stats.distance | units: 'distance': units.distance}}
-        {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}
-        {{line.stats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}
-      <!-- </div> -->
-
-      <!-- <div *ngIf="pathType === 'track'" class="details">
-        {{utils.prettifyDate(line.startTime)}} -
-        {{line.stats.distance/1000 | number: '1.1-1'}} km -
-        {{utils.formatDuration(line.stats.duration)}}
-      </div> -->
+    {{line.stats.distance | units: 'distance': units.distance}}
+    {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}
+    {{line.stats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}
 
     </div>
   </div>
-  <div *ngIf="!isEndOfList" class="more" (click)="onMoreClick()" id="more_div">
 
+
+  <div class="more p-0 text-center">
+    {{numberOfLoadedRoutes}} of {{numberOfRoutes}} routes loaded <br>
+
+    <span *ngIf="!isEndOfList" class="global-make-text-look-like-link" (click)="onMoreClick()"> Load more </span> <br>
   </div>
+
 </div>

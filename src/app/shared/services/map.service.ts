@@ -14,17 +14,25 @@ export class MapService{
   private accessToken: string = globalVars.mapboxAccessToken;
   public tsMap: mapboxgl.Map;
 
-
-
   constructor(
     public httpService: HttpService,
     public geoService: GeoService,
     public dataService: DataService
+    
+    
   ) { 
-
+    console.log('map init');
     // get and set the mapbox access token to enable the api
     Object.getOwnPropertyDescriptor(mapboxgl, 'accessToken').set(this.accessToken);
 
+  }
+
+  isMap(){
+    return !!this.tsMap;
+  }
+
+  killMap() {
+    this.tsMap = null;
   }
 
   /**
@@ -66,7 +74,7 @@ export class MapService{
    * @param lineColor colour of the line as RGB string '#RRGGBB' or auto to pick up colors in the geojson
    */
   plotSingleGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
-    // console.log(pathAsGeoJson);
+
     if (!styleOptions) {
       styleOptions = {
         lineWidth: 3,
@@ -76,7 +84,6 @@ export class MapService{
     }
 
     // remove existing layer if it exists
-    // if (this.tsMap.getLayer('route')) {this.tsMap.removeLayer('route')};
     if (this.tsMap.getLayer('route')) {
       this.tsMap.removeLayer('route');
       this.tsMap.removeSource('route');
@@ -96,7 +103,7 @@ export class MapService{
         'line-opacity': styleOptions.lineOpacity
       }
     });
-
+    
       // set the bounds
     let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]];
     let options = {
@@ -107,8 +114,9 @@ export class MapService{
 
     // emit the pathStats to the details component (true parameter emits)
     // this.dataService.emitAndStoreActivePath(pathAsGeoJson);
-    this.dataService.saveToStore('activePath', pathAsGeoJson);
+    this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJson});
     this.dataService.activePathEmitter.emit(pathAsGeoJson);
+    console.log(pathAsGeoJson);
 
     // share the map centre so we can use later if we want to create a new map on this position
     // IMPORTANT to wait until the map has stopped moving or this doesnt work

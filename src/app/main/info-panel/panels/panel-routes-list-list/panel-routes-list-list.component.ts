@@ -11,27 +11,23 @@ import { DataService } from 'src/app/shared/services/data.service';
 })
 export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
-  private pathType: String;
-  private paramsSubs;
-  htmlData = [];
-  public timer;
+  private htmlData = [];
   private pathId: string;
   private listOffset = 0;
   private isEndOfList = false; // value is read in the html do dont be tempted to delete
   private DEBUG = false;
   private units = globalVars.units;
+  private numberOfRoutes: number;
+  private numberOfLoadedRoutes: number;
 
   constructor(
     private httpService: HttpService,
-    private activatedRouter: ActivatedRoute,
     private router: Router,
     private dataService: DataService
     ) {}
 
   ngOnInit() {
-
     this.updateList(true);
-
   } 
 
 
@@ -47,14 +43,11 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
       // query returned data, so process it
       if ( typeof pathsList[0] !== 'undefined' ) {
         
-        // reset content of 'more_div'
-        // document.getElementById('more_div').innerHTML = 'more';
-
         // compile data and confirm if we are at the end of the list yet
         this.htmlData = this.htmlData.concat(pathsList);
-        if ( this.htmlData.length === this.htmlData[0].count ) {
-          this.isEndOfList = true;
-        }
+        this.numberOfRoutes = this.htmlData[0].count + 1;
+        this.numberOfLoadedRoutes = this.htmlData.length+ 1;
+        this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes ? true : false;
 
         // emit the first id in the list and highlight that row
         if (booAutoSelectPathId) {
@@ -62,7 +55,6 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
           this.dataService.pathIdEmitter.emit(this.pathId); 
         }
         
-
       } else {
         // no data in query, so navigate back with path id = 0 (ensures that  map loads)
         
@@ -79,7 +71,6 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   // when the 'more_div' is clicked...
     this.listOffset++;
     this.updateList(false);
-    document.getElementById('more_div').innerHTML = 'fetching...';
   }
 
 
@@ -97,7 +88,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * function use in html template - returns the css classes according to come conditions
+   * function used in html template - returns the css classes according to some conditions
    * @param id id of the list item being processed
    * @param i index of the list item being processed
    */

@@ -4,7 +4,7 @@ import { HttpService } from './http.service';
 import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
-import { tsCoordinate } from 'src/app/shared/interfaces';
+import { tsCoordinate, tsElevations } from 'src/app/shared/interfaces';
 import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
@@ -31,18 +31,24 @@ export class MapCreateService extends MapService {
     this.multiPath = new MultiPath();
   }
 
-  
   public getOptions() {
     return this.options;
   }
 
   /**
    * Handles the task of creating a geoJson and setting it onto the map
-   * note update in two steps per last comment in this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877
    */
-  private updateMap() {
+  private refreshMapAfterPathChange() {
+
+    // update the map source ( two steps per this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877 )
     const source = this.tsMap.getSource('geojson') as mapboxgl.GeoJSONSource;
-    source.setData(this.multiPath.getGeoJSON());
+    const geoJSON = this.multiPath.getGeoJSON();
+    source.setData(geoJSON);
+
+    // emit so that the details tabs can update, save so that onSave has access to the final route
+    this.dataService.saveToStore('activePath', {source: 'created', geoJSON});
+    this.dataService.activePathEmitter.emit(geoJSON);
+
   }
 
   /**
@@ -65,19 +71,12 @@ export class MapCreateService extends MapService {
       } else {
         const startPoint: tsCoordinate = this.multiPath.getLastPoint();
 
-        // get coordinates for the next chunk of path and update the map
-        this.getNextPathCoords(startPoint, clickedPoint).then( coords => {
-          this.multiPath.addPath(new Path(coords));
-          this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-          this.updateMap();
-          this.addMarker(this.multiPath.getLastPoint());
-
-          // get and update elevations
-          this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
-            this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
-            this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-            // this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
-            this.dataService.saveToStore('stats', this.multiPath.getFlatCoordsAndElevs());
+        // get coordinates for the next chunk of path, add to the path object
+        this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<tsCoordinate>) => {
+          this.geoService.getElevationsFromAPI(coords, true).then( (elevations: tsElevations) => {
+            this.multiPath.addPath(new Path(coords, elevations));
+            this.refreshMapAfterPathChange();
+            this.addMarker(this.multiPath.getLastPoint());
           })
         })
       }
@@ -132,14 +131,13 @@ export class MapCreateService extends MapService {
    * Note:
    *  Uses turf to simply the route in order to minimise data points for elevation query
    */
-  getPathDirections(s: tsCoordinate, e: tsCoordinate) {
+  // getPathDirections(s: tsCoordinate, e: tsCoordinate) {
 
-    return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
+  //   return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
 
-
-    })
+  //   })
       
-  }
+  // }
 
 
   /**
@@ -157,22 +155,18 @@ export class MapCreateService extends MapService {
         this.multiPath.resetPathStats();
       }
     
-      // there are paths on the array so remove the most recent one
+    // there are paths on the array so remove the most recent one
     } else {
-      this.multiPath.remPath();
-      this.updateMap();
+      this.multiPath.remPath()
+      this.refreshMapAfterPathChange();
       this.popMarker();
-      this.dataService.pathStatsEmitter.emit( this.multiPath.getStats() );
     }
   }
 
   public clearPath() {
     this.clearAllMarkers();
     this.multiPath = new MultiPath();
-    this.updateMap(); 
-    this.dataService.pathStatsEmitter.emit( this.multiPath.getStats() );
-    
-
+    this.refreshMapAfterPathChange(); 
   }
 
 
@@ -184,28 +178,18 @@ export class MapCreateService extends MapService {
     let startPoint: tsCoordinate = this.multiPath.getLastPoint();
     let endPoint: tsCoordinate = this.multiPath.getFirstPoint();
 
-    // get coordinates for the next chunk of path and update the map
-    this.getNextPathCoords(startPoint, endPoint).then( coords => {
-      this.multiPath.addPath(new Path(coords));
-      this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-      this.updateMap();
-      this.addMarker(this.multiPath.getLastPoint());
-
-      // get and update elevations
-      this.geoService.getElevationsFromAPI(coords, true).then( (elevations: Array<number>) => {
-        this.multiPath.addElevationsToPath(elevations, this.multiPath.nPaths()-1);
-        this.multiPath.getStats();
-        this.dataService.pathStatsEmitter.emit( {stats: this.multiPath.getStats(), info: {}} );
-        // this.dataService.createdPathData = this.multiPath.getFlatCoordsAndElevs();
-        this.dataService.saveToStore('stats', this.multiPath.getFlatCoordsAndElevs());
-      });
+    // get coordinates for the next chunk of path, add to the path object
+    this.getNextPathCoords(startPoint, endPoint).then( (coords: Array<tsCoordinate>) => {
+      this.geoService.getElevationsFromAPI(coords, true).then( (elevations: tsElevations) => {
+        this.multiPath.addPath(new Path(coords, elevations));
+        this.refreshMapAfterPathChange();
+        this.addMarker(this.multiPath.getLastPoint());
+      })
     })
   }
 
   popMarker() {
-    console.log(this.markers);
     let thisMarker: mapboxgl.Marker = this.markers.pop();
-    console.log(thisMarker, this.markers);
     thisMarker.remove();
   }
 

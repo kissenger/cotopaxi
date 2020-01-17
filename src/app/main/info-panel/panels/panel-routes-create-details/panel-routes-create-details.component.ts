@@ -14,22 +14,21 @@ import { Subscription } from 'rxjs';
 })
 export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
-  private isMinimised = false;
-  private pathStatsSubscription: Subscription;
-  private pathObjectSubs;
-  private pathObject: MultiPath;
+  private activePathSubscription: Subscription;
   private pathStats: pathStats = {
     distance: 0,
     nPoints: 0,
     elevations: 
-      { ascent: 0,
+      { elevationStatus: '',
+        ascent: 0,
         descent: 0,
         lumpiness: 0,
         maxElev: 0,
         minElev: 0,
         badElevData: false }
   };
-  private icon = '-';
+  // private isMinimised = false;
+  // private icon = '-';
   private units = globalVars.units;
   private pathName: string = '';
   private pathDescription: string = '';
@@ -42,50 +41,65 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
 
   ngOnInit() {
-    // subscribe to any path stats that are sent from the map component
 
-    // TODO imported route details not being shown - is the correct emitter being used for both
-    // import and create? 
-    this.pathStatsSubscription = this.dataService.pathStatsEmitter.subscribe( (pathStats) => {
-      // console.log(pathStats);
-      if (!pathStats.stats.elevations) {
-        this.pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
+    // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
+    this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJSON) => {
+
+      if (geoJSON.features.length === 0) {
+        this.resetPathStats();
+      } else {
+        this.pathStats = geoJSON.features[0].properties.stats;
+        this.pathName = geoJSON.features[0].properties.info.name ? geoJSON["properties"].info.name : "";
+        this.pathDescription =  geoJSON.features[0].properties.info.description ? geoJSON["properties"].info.description: "";
       }
-      this.pathStats = pathStats.stats;
-      this.pathName = pathStats.info.name;
-      this.pathDescription = pathStats.info.description;
+    
     })
 
+  }
 
-
+  resetPathStats() {
+    this.pathStats = {
+      distance: 0,
+      nPoints: 0,
+      elevations: { elevationStatus: '', ascent: 0, descent: 0, lumpiness: 0, maxElev: 0, minElev: 0, badElevData: false }
+    };
   }
 
   onSave() {
     
-    const createdPathData = this.dataService.getFromStore('stats', true);
-    const importedPathData = this.dataService.getFromStore('importedPathData', true);
-    console.log(createdPathData);
-    console.log(importedPathData);
+    
+    // activePath is stored from two locations - both are full geoJSON descriptions of the path:
+    // - when a route is created on the map,  mapCreateService saves each time a new chunk of path is added
+    // - when a route is imported, the backend sends the geoJSON, which is in turned saved by panel-routes-list-options
+    const newPath = this.dataService.getFromStore('activePath', false).geoJSON;
+    const source = this.dataService.getFromStore('activePath', false).source;
 
-    // if createdPathData is not undefined, then we have a newly created path to send to the backend
-    if (typeof createdPathData !== 'undefined') {
-      createdPathData['name'] = this.pathName;
-      createdPathData['description'] = this.pathDescription;
-      this.httpService.saveCreatedRoute(createdPathData).subscribe( (response) => {
-        console.log('saved path id: ', response.pathId);
-        response.pathId
+    // newPath.creationType is set in the appropriate components to help us distinguish
+    // imported file, beackend only needs to knw the pathType, pathId, name and description, so create theis object and call http
+    if (source === 'imported') {
+      const sendObj = {
+        pathId: newPath.properties.pathId, 
+        pathType: newPath.properties.info.pathType,
+        name: this.pathName,
+        description: this.pathDescription
+      };
+      this.httpService.saveImportedPath(sendObj).subscribe( () => {
         this.router.navigate(['/route/list/']);
       })
 
-    // if the importedPathData is not undefined, then it is a loaded gpx file already stored in 
-    // the db, we just need to sset the saved flag to true
-    } else if (typeof importedPathData !== 'undefined') {
-      importedPathData['info']['name'] = this.pathName;
-      importedPathData['info']['description'] = this.pathDescription;
-      this.httpService.saveImportedPath(importedPathData).subscribe( (response) => {
-        console.log('saved path id: ', response.pathId);
+    // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
+    } else if (source === 'created') {
+      const sendObj = {
+        coords: newPath.features[0].geometry.coordinates, 
+        elevations: {
+          elevationStatus: newPath.features[0].properties.stats.elevations.elevationStatus,
+          elevs: newPath.features[0].properties.params.elev},
+        name: this.pathName,
+        description: this.pathDescription
+      };
+      this.httpService.saveCreatedRoute(sendObj).subscribe( () => {
         this.router.navigate(['/route/list/']);
-      })
+      })      
     }
 
   }
@@ -99,8 +113,9 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   //   this.icon = this.isMinimised ? '+' : '-';
   // }
 
+
   ngOnDestroy() {
-    this.pathStatsSubscription.unsubscribe();
+    this.activePathSubscription.unsubscribe();
 
     this.httpService.flushDatabase().subscribe( () => {
       console.log('db flushed');

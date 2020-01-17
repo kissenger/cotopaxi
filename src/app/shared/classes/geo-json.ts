@@ -1,4 +1,4 @@
-import { tsCoordinate } from 'src/app/shared/interfaces';
+import { tsCoordinate, pathStats, tsElevations } from 'src/app/shared/interfaces';
 import { Path } from 'src/app/shared/classes/path-classes';
 
 
@@ -17,7 +17,7 @@ export class TsGeoJSON {
      */
     private getEmptyFeatureCollection() {
 
-        return <GeoJSON.FeatureCollection>{
+        return {
             "type": "FeatureCollection",
             "features": []
         };
@@ -28,25 +28,31 @@ export class TsGeoJSON {
     //  * @param path list of cooordinates either as a Path instance, or just a list of coordinates in an object
     //  */
 
-    public addLineString(path: Path | {coords: Array<tsCoordinate>}) {
+    public addLineString(path: Path | Array<tsCoordinate>, elevations: tsElevations, pathStats?: pathStats) {
 
-        let coordsList: Array<tsCoordinate>;
-        if (path instanceof Path) { coordsList = path.getCoords(); } 
-        else { coordsList = path.coords; }
+        let coordsList: Array<tsCoordinate> = path instanceof Path ? path.getCoords() : path;
 
-        const lineString: GeoJSON.Feature = {
+        const lineString = {
             "type": "Feature",
             "geometry": {
                 "type": "LineString",
                 "coordinates": coordsList.map( c => [c.lng, c.lat])
             },
             "properties": {
-                "name": ""
+                "params": {
+                    "elev": elevations.elevs
+                },
+                "stats": pathStats,
+                "info": {
+                    "name": "",
+                    "description": ""
+                }
             }
-          };
+            };
 
         this.featureCollection.features.push(lineString);
     }
+
 
     /** Allows a point feature to be added
      * @param p coordinate to add as tsCoordinate
@@ -67,8 +73,8 @@ export class TsGeoJSON {
      * @param index integer defining the position of the feature to remove
      */
 
-    public remLineString(index: number = this.featureCollection.features.length) {
-        if (index > this.featureCollection.features.length) { return 'invalid index'; }
+    public remLineString(index: number = this.featureCollection.features.length - 1) {
+        if (index > this.featureCollection.features.length - 1) { return 'invalid index'; }
         return this.featureCollection.features.splice(index, 1);
     }
 

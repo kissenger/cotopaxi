@@ -2,12 +2,4 @@
     display: none;
 }
 
-.make-text-look-like-link{
-    cursor: pointer;
-    color: #007BFF;
-}
-.make-text-look-like-link:hover{
-    text-decoration: underline; 
-    color: #0056B3;
-    cursor: pointer;
-}
+

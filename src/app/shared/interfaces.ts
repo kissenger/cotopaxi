@@ -1,9 +1,16 @@
 
 
+export interface tsElevations{
+    elevationStatus: string,
+    elevs: Array<number>
+}
+
+
 export interface pathStats{
     distance: number,
     nPoints: number,
     elevations?: {
+        elevationStatus: string,
         ascent: number,
         descent: number,
         lumpiness: number,

@@ -21,8 +21,6 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    console.log('routes-create');
-
     // centre map on the currently loading route if it exists, otherwise take users home location
     let mapView = this.dataService.getFromStore('mapView', true);
     let startPosition = mapView ? mapView.centre : globalVars.userHomeLocation;

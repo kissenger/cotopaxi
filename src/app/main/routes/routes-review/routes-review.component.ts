@@ -4,6 +4,7 @@ import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
 import { tsCoordinate } from 'src/app/shared/interfaces';
 import { Path } from 'src/app/shared/classes/path-classes';
+import { GeoService } from 'src/app/shared/services/geo.service';
 
 @Component({
   selector: 'app-routes-review',
@@ -15,19 +16,22 @@ export class RoutesReviewComponent implements OnInit {
   constructor(
     private mapService: MapService,
     private dataService: DataService,
-    private router: Router
+    private router: Router,
+    private geoService: GeoService
   ) { }
 
   ngOnInit() {
 
     const geoJson = this.dataService.getFromStore('activePath', true);
 
+    // this.geoService.getPathCoG(geoJson);
+
     if (typeof geoJson === 'undefined') {
       this.router.navigate(['routes/list']);
     } else {
 
       // initialise the map 
-      this.mapService.initialiseMap().then( () => {
+      this.mapService.initialiseMap(this.geoService.getPathCoG(geoJson), 10).then( () => {
 
         // plot the stored route
         let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};

@@ -1,21 +1,7 @@
-import { tsCoordinate, pathStats } from 'src/app/shared/interfaces';
+import { tsCoordinate, pathStats, tsElevations } from 'src/app/shared/interfaces';
 import { GeoService } from 'src/app/shared/services/geo.service';
 import { TsGeoJSON } from 'src/app/shared/classes/geo-json'
 import { Injector } from '@angular/core';
-// import { HttpService } from '../services/http.service';
-
-
-// export class PathFromGeoJSON {
-
-//     private stats: pathStats = {distance: 0, nPoints: 0};
-//     private coordinates: Array<tsCoordinate>;
-//     private elevations: Array<number>;  
-//     private geoService: GeoService;
-
-//     constructor(pathAsGeoJSON: GeoJSON.FeatureCollection) {
-
-//     }
-// }
 
 /** 
  * Path class to define a complete or partial route or track - it can be used standalone, or 
@@ -25,41 +11,32 @@ import { Injector } from '@angular/core';
 export class Path {
 
     private stats: pathStats = {distance: 0, nPoints: 0};
-    public coordinates: Array<tsCoordinate>;
-    public elevations: Array<number>;  
     private geoService: GeoService;
-    // private httpService: HttpService;
+    private coordinates: Array<tsCoordinate>;
+    private elevations: tsElevations;
     
-    // constructor(parentInjector:Injector, coords: Array<tsCoordinate>, elevs?: Array<number>){
-    //     let injector = ReflectiveInjector.resolveAndCreate([GeoService]);
-    //     this.geoService = injector.get(GeoService, parentInjector);
-      
-    constructor(coords: Array<tsCoordinate>, elevs?: Array<number>) {
+    constructor(coords: Array<tsCoordinate>, elevations: tsElevations) {
 
+        //TODO: dont understand what this is!! 
         const injector = Injector.create({ providers: [ { provide: GeoService, deps: [] } ] });
         this.geoService = Object.getPrototypeOf(injector.get(GeoService));
 
+        // class variables
         this.coordinates = coords;
-        this.elevations = elevs;
+        this.elevations = elevations;
         this.stats.distance = this.geoService.calculatePathDistance(this.coordinates);
         this.stats.nPoints = this.coordinates.length;
-        if (elevs) {
-            this.stats.elevations = this.geoService.calculateElevationStats(elevs, this.stats.distance);
-        }
+        this.stats.elevations = this.geoService.calculateElevationStats(this.elevations, this.stats.distance);
+        console.log(this.stats.elevations);
     }
 
     /**
      * Allows elevations to be set after the class has be instantiated
      * @param elevs elevations array
      */
-    public setElevations(elevs: Array<number>) {
-        // if (elevs.length !== this.coordinates.length) {
-        //     return 'number of elevations does not match number of coordinates'
-        // } else {
-            this.elevations = elevs;
-            this.stats.elevations = this.geoService.calculateElevationStats(elevs, this.stats.distance);
-        // }
-
+    public setElevations(elevations: tsElevations) {
+            this.elevations = elevations;
+            this.stats.elevations = this.geoService.calculateElevationStats(this.elevations, this.stats.distance);
     }
 
     /**
@@ -72,15 +49,19 @@ export class Path {
     /**
      * Returns the coordinate array for the instance
      */
-    public length() {
-        return this.coordinates.length;
-    }
+    // public length() {
+    //     return this.coordinates.length;
+    // }
 
     /**
      * Returns the elevations array for the instance
      */
-    public getElevations() {
-        return this.elevations;
+    public getElevs() {
+        return this.elevations.elevs ? this.elevations.elevs : []
+    }
+
+    public getElevationStatus() {
+        return this.elevations.elevationStatus;
     }
 
     /**
@@ -103,7 +84,7 @@ export class Path {
      */
     public getGeoJSON() {
         const geoJSON = new TsGeoJSON();
-        geoJSON.addLineString({coords: this.coordinates})
+        geoJSON.addLineString(this.coordinates, this.elevations);
         return geoJSON;
     }
 
@@ -118,10 +99,13 @@ export class Path {
  * aggregated stats on each path
  */
 export class MultiPath {
+
     private paths: Array<Path> = [];
     private firstPoint: tsCoordinate;
     private geoJSON: TsGeoJSON;
     private stats: pathStats;
+    private coords: Array<tsCoordinate> = []; //flattened array of coordinates
+    private elevations: tsElevations = {elevationStatus: '', elevs: []};
 
     constructor(firstPath?: Path) {
         if (firstPath) { this.addPath(firstPath); }
@@ -142,7 +126,8 @@ export class MultiPath {
             distance: 0,
             nPoints: 0,
             elevations: 
-              { ascent: 0,
+              { elevationStatus: '',
+                ascent: 0,
                 descent: 0,
                 lumpiness: 0,
                 maxElev: 0,
@@ -183,10 +168,13 @@ export class MultiPath {
      * @param path path to add as Path instance
      */
     public addPath(path: Path) {
-        // console.log(path);
         this.paths.push(path);
+        this.coords = this.coords.concat(path.getCoords());
+        this.elevations.elevs = this.elevations.elevs.concat(path.getElevs());
+        this.elevations.elevationStatus = path.getElevationStatus() === 'A' ? 'A' : 'O';
         this.addStats(path.getPathStats());
-        this.geoJSON.addLineString(path);
+        this.geoJSON.remLineString();
+        this.geoJSON.addLineString( this.coords, this.elevations, this.getStats() );
     }
 
     /**
@@ -195,8 +183,11 @@ export class MultiPath {
      */
     public remPath(index: number = this.paths.length - 1) {
         const path = this.paths.splice(index, 1);
+        this.coords = this.paths.reduce( (a, p) => a.concat(p.getCoords()), [] );
+        this.elevations.elevs = this.paths.reduce( (a, p) => a.concat(p.getElevs()), [] );
         this.remStats(path[0].getPathStats());
-        this.geoJSON.remLineString(index);
+        this.geoJSON.remLineString();
+        this.geoJSON.addLineString( this.coords, this.elevations, this.getStats() );
     }
 
     /**
@@ -209,11 +200,11 @@ export class MultiPath {
      * specifying an index ensures that if points are clicked rapidly, the correct path is adjusted rather thaan
      * picking a new path that was added to the array in the meantime
      */
-    public addElevationsToPath(elevations: Array<number>, index: number = this.paths.length - 1) {
-        this.remStats(this.paths[index].getPathStats());
-        this.paths[index].setElevations(elevations);
-        this.addStats(this.paths[index].getPathStats());
-    }
+    // public addElevationsToPath(elevations: Array<number>, index: number = this.paths.length - 1) {
+    //     this.remStats(this.paths[index].getPathStats());
+    //     this.paths[index].setElevations(elevations);
+    //     this.addStats(this.paths[index].getPathStats());
+    // }
 
     /**
      * Add a provided pathstats object from a path instance to the pathstats on the multipath
@@ -224,6 +215,7 @@ export class MultiPath {
         this.stats.distance += pathStats.distance;
         this.stats.nPoints += pathStats.nPoints;
         if (pathStats.elevations) {
+            this.stats.elevations.elevationStatus = 'A';
             this.stats.elevations.ascent += pathStats.elevations.ascent;
             this.stats.elevations.descent += pathStats.elevations.descent;
             this.stats.elevations.maxElev += pathStats.elevations.maxElev;
@@ -243,6 +235,7 @@ export class MultiPath {
         this.stats.distance -= pathStats.distance;
         this.stats.nPoints -= pathStats.nPoints;
         if (pathStats.elevations) {
+            this.stats.elevations.elevationStatus = 'A';
             this.stats.elevations.ascent -= pathStats.elevations.ascent;
             this.stats.elevations.descent -= pathStats.elevations.descent;
             this.stats.elevations.maxElev -= pathStats.elevations.maxElev;
@@ -265,16 +258,17 @@ export class MultiPath {
     }
 
     // simplifies a multipath GeoJSON (single path defined by multiple features) into a single feature
-    public getFlatCoordsAndElevs() {
-        const coords = [].concat.apply([], this.paths.map( path => path.coordinates.map( c => [c.lng, c.lat]) ));
-        const elevs  = [].concat.apply([], this.paths.map( path => path.elevations ));
-        const elevations = {elevs, elevationStatus: 'A'}
-        return {coords, elevations};
-    }
+    // public getFlatCoordsAndElevs() {
+    //     const coords = [].concat.apply([], this.paths.map( path => path.coordinates.map( c => [c.lng, c.lat]) ));
+    //     const elevs  = [].concat.apply([], this.paths.map( path => path.elevations ));
+    //     const elevations = {elevs, elevationStatus: 'A'}
+    //     return {coords, elevations};
+    // }
 
     public getStats() {
         return this.stats;
     }
+
 }
 
 

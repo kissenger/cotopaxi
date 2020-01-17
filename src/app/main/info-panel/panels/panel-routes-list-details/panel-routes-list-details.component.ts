@@ -19,7 +19,8 @@ export class PanelRoutesListDetailsComponent implements OnInit, OnDestroy {
     distance: 0,
     nPoints: 0,
     elevations: 
-      { ascent: 0,
+      { elevationStatus: '',
+        ascent: 0,
         descent: 0,
         lumpiness: 0,
         maxElev: 0,
@@ -36,9 +37,8 @@ export class PanelRoutesListDetailsComponent implements OnInit, OnDestroy {
 
     // listen for data sent from map service
     this.pathPropsSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
-      console.log(geoJson);
       if (!geoJson.properties.stats.elevations) {
-        this.pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
+        this.pathStats.elevations = {elevationStatus: '', ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0, badElevData: false};
       }
       this.pathStats = geoJson.properties.stats;
       this.pathName = geoJson.properties.info.name;

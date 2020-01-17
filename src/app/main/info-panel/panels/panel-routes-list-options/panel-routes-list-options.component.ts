@@ -28,7 +28,8 @@ export class PanelRoutesListOptionsComponent implements OnInit {
 
   onDeleteClick() {
     
-    const activePath = this.dataService.getFromStore('activePath', true);
+    const activePath = this.dataService.getFromStore('activePath', true).pathAsGeoJson;
+    console.log(activePath);
     this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
 
       // extra guff needed to refresh the page as we are wanting to refresh the current page rather than navigate away
@@ -47,8 +48,6 @@ export class PanelRoutesListOptionsComponent implements OnInit {
   /** runs when file is selected */
   onFilePickedImport(event: Event, moreThanOneFile: boolean, pathType: string) {
 
-    document.documentElement.style.cursor = 'wait';
-    
     // Get file names
     const files = (event.target as HTMLInputElement).files;        // multiple files
     const fileData = new FormData();
@@ -57,16 +56,11 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     if ( pathType === 'route' ) {
 
       // send data to the backend and wait for response
-      this.httpService.importRoute(fileData).subscribe( (result: Object) => {
+      this.httpService.importRoute(fileData).subscribe( (result) => {
 
-        const toStore = { pathId: result['geoJson']['properties']['pathId'],
-                          info: result['geoJson']['properties']['info'] };
-                          console.log(toStore);
-        this.dataService.saveToStore('importedPathData', toStore);
-          
-        // store the returned path and navigate to the review page to view it
-        document.documentElement.style.cursor = 'default';
-        this.dataService.saveToStore('activePath', result['geoJson']);
+        const geoJson = result.geoJson;
+        geoJson.creationType = 'imported';
+        this.dataService.saveToStore('activePath', {source: 'imported', geoJson});
         this.router.navigate(['route/review/']);
 
       });

@@ -627,8 +627,6 @@ class Route extends Path {
     this.name = name;
     this.description = description;
 
-
-
   }
 }
 
