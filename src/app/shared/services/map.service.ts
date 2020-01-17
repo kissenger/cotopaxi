@@ -40,7 +40,7 @@ export class MapService{
    * @param location location on which to centre the map
    */
   initialiseMap(location?: tsCoordinate, zoom?: number) {
-    
+
     // setting the center and zoom here prevents flying animation - zoom gets over-ridden when the map bounds are set below 
     return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
       this.tsMap = new mapboxgl.Map({
@@ -73,7 +73,7 @@ export class MapService{
    * @param lineWidth width of the line
    * @param lineColor colour of the line as RGB string '#RRGGBB' or auto to pick up colors in the geojson
    */
-  plotSingleGeoJson(pathAsGeoJson: GeoJSON.FeatureCollection, styleOptions? ) {
+  plotSingleGeoJson(pathAsGeoJSON: GeoJSON.FeatureCollection, styleOptions? ) {
 
     if (!styleOptions) {
       styleOptions = {
@@ -95,7 +95,7 @@ export class MapService{
       "type": "line",
       "source": {
         "type": "geojson",
-        "data": pathAsGeoJson
+        "data": pathAsGeoJSON
       },
       "paint": {
         'line-width': styleOptions.lineWidth,
@@ -105,7 +105,7 @@ export class MapService{
     });
     
       // set the bounds
-    let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJson.bbox[0], pathAsGeoJson.bbox[1]], [pathAsGeoJson.bbox[2], pathAsGeoJson.bbox[3]]];
+    let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJSON.bbox[0], pathAsGeoJSON.bbox[1]], [pathAsGeoJSON.bbox[2], pathAsGeoJSON.bbox[3]]];
     let options = {
       padding: {top: 10, bottom: 10, left: 10, right: 10},
       linear: true
@@ -113,10 +113,10 @@ export class MapService{
     this.tsMap.fitBounds(bbox, options);
 
     // emit the pathStats to the details component (true parameter emits)
-    // this.dataService.emitAndStoreActivePath(pathAsGeoJson);
-    this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJson});
-    this.dataService.activePathEmitter.emit(pathAsGeoJson);
-    console.log(pathAsGeoJson);
+    // this.dataService.emitAndStoreActivePath(pathAsGeoJSON);
+    this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJSON});
+    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
+    console.log(pathAsGeoJSON);
 
     // share the map centre so we can use later if we want to create a new map on this position
     // IMPORTANT to wait until the map has stopped moving or this doesnt work

@@ -68,7 +68,6 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   * Request additional items in list
   */
   onMoreClick() {
-  // when the 'more_div' is clicked...
     this.listOffset++;
     this.updateList(false);
   }

@@ -49,6 +49,9 @@ export class DataService {
     return returnData;
   }
 
+  public showStore() {
+    console.log(this.dataStore);
+  }
 
 
 

@@ -42,12 +42,12 @@ export class MapCreateService extends MapService {
 
     // update the map source ( two steps per this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877 )
     const source = this.tsMap.getSource('geojson') as mapboxgl.GeoJSONSource;
-    const geoJSON = this.multiPath.getGeoJSON();
-    source.setData(geoJSON);
+    const pathAsGeoJSON = this.multiPath.getGeoJSON();
+    source.setData(pathAsGeoJSON);
 
     // emit so that the details tabs can update, save so that onSave has access to the final route
-    this.dataService.saveToStore('activePath', {source: 'created', geoJSON});
-    this.dataService.activePathEmitter.emit(geoJSON);
+    this.dataService.saveToStore('activePath', {source: 'created', pathAsGeoJSON});
+    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
 
   }
 

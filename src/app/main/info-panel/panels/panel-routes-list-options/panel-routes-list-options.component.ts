@@ -28,7 +28,7 @@ export class PanelRoutesListOptionsComponent implements OnInit {
 
   onDeleteClick() {
     
-    const activePath = this.dataService.getFromStore('activePath', true).pathAsGeoJson;
+    const activePath = this.dataService.getFromStore('activePath', true).pathAsGeoJSON;
     console.log(activePath);
     this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
 
@@ -58,9 +58,8 @@ export class PanelRoutesListOptionsComponent implements OnInit {
       // send data to the backend and wait for response
       this.httpService.importRoute(fileData).subscribe( (result) => {
 
-        const geoJson = result.geoJson;
-        geoJson.creationType = 'imported';
-        this.dataService.saveToStore('activePath', {source: 'imported', geoJson});
+        const pathAsGeoJSON = result.geoJson;
+        this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
         this.router.navigate(['route/review/']);
 
       });

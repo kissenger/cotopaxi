@@ -71,12 +71,13 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // activePath is stored from two locations - both are full geoJSON descriptions of the path:
     // - when a route is created on the map,  mapCreateService saves each time a new chunk of path is added
     // - when a route is imported, the backend sends the geoJSON, which is in turned saved by panel-routes-list-options
-    const newPath = this.dataService.getFromStore('activePath', false).geoJSON;
+    const newPath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
     const source = this.dataService.getFromStore('activePath', false).source;
+    this.dataService.showStore();
 
     // newPath.creationType is set in the appropriate components to help us distinguish
     // imported file, beackend only needs to knw the pathType, pathId, name and description, so create theis object and call http
-    if (source === 'imported') {
+    if (source === 'map') {
       const sendObj = {
         pathId: newPath.properties.pathId, 
         pathType: newPath.properties.info.pathType,

@@ -22,20 +22,20 @@ export class RoutesReviewComponent implements OnInit {
 
   ngOnInit() {
 
-    const geoJson = this.dataService.getFromStore('activePath', true);
+    const geoJSON = this.dataService.getFromStore('activePath', true).pathAsGeoJSON;
 
-    // this.geoService.getPathCoG(geoJson);
+    console.log(geoJSON);
 
-    if (typeof geoJson === 'undefined') {
+    if (typeof geoJSON === 'undefined') {
       this.router.navigate(['routes/list']);
     } else {
 
       // initialise the map 
-      this.mapService.initialiseMap(this.geoService.getPathCoG(geoJson), 10).then( () => {
+      this.mapService.initialiseMap(this.geoService.getPathCoG(geoJSON.bbox), 10).then( () => {
 
         // plot the stored route
         let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};
-        this.mapService.plotSingleGeoJson(geoJson, styleOptions);
+        this.mapService.plotSingleGeoJson(geoJSON, styleOptions);
         
       });
     }
