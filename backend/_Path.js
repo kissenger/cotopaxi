@@ -28,6 +28,7 @@ class Path  {
     this.elevs = elevations.elevs;
     this.elevationStatus = elevations.elevationStatus
     this.pathType = pathType;
+    this.points = this.getPoints(this.lngLat);
 
   }
 
@@ -38,8 +39,6 @@ class Path  {
   init() {
 
     // turn the list of lngLats into an array of Point instances, and simplify the route upfront to minimise processing effort 
-    this.points = this.getPoints(this.lngLat);
-    
     if (this.pathType === 'route') { this.points = simplify(this.points); }
 
     // update the instance variables not impacted by elevations

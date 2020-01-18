@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, ComponentFactoryResolver } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MapService } from 'src/app/shared/services/map.service';
 import { DataService } from 'src/app/shared/services/data.service';
-import { ActivatedRoute, Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { Subscription } from 'rxjs';
 import { GeoService } from 'src/app/shared/services/geo.service';
+import * as globalVars from 'src/app/shared/globals';
 
 @Component({
   selector: 'app-routes',
@@ -47,8 +47,8 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
         // as initialisation will temporarily show default location, only run it if map doesnt currently exist
         this.initialiseMapIfNeeded().then( () => {
-          let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};
-          this.mapService.plotSingleGeoJson(result.geoJson, styleOptions);
+          const plotOptions = {booReplaceExisting: true, booResizeView: true, booSaveToStore: true};
+          this.mapService.addLayerToMap(result.geoJson, globalVars.routeLineStyle, plotOptions);
         });
 
       })

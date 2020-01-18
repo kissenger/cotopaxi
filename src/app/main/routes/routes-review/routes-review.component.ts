@@ -2,9 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { MapService } from 'src/app/shared/services/map.service';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
-import { tsCoordinate } from 'src/app/shared/interfaces';
-import { Path } from 'src/app/shared/classes/path-classes';
 import { GeoService } from 'src/app/shared/services/geo.service';
+import * as globalVars from 'src/app/shared/globals';
 
 @Component({
   selector: 'app-routes-review',
@@ -34,8 +33,8 @@ export class RoutesReviewComponent implements OnInit {
       this.mapService.initialiseMap(this.geoService.getPathCoG(geoJSON.bbox), 10).then( () => {
 
         // plot the stored route
-        let styleOptions = {lineWidth: 3, lineColor: 'auto', lineOpacity: 0.5};
-        this.mapService.plotSingleGeoJson(geoJSON, styleOptions);
+        const plotOptions = {booReplaceExisting: true, booResizeView: true, booSaveToStore: true};
+        this.mapService.addLayerToMap(geoJSON, globalVars.routeLineStyle, plotOptions);
         
       });
     }

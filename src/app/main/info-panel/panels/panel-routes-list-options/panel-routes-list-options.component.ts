@@ -29,9 +29,8 @@ export class PanelRoutesListOptionsComponent implements OnInit {
   onDeleteClick() {
     
     const activePath = this.dataService.getFromStore('activePath', true).pathAsGeoJSON;
-    console.log(activePath);
-    this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
 
+    this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
       // extra guff needed to refresh the page as we are wanting to refresh the current page rather than navigate away
       this.router.routeReuseStrategy.shouldReuseRoute = () => false;
       this.router.onSameUrlNavigation = 'reload';
@@ -39,6 +38,17 @@ export class PanelRoutesListOptionsComponent implements OnInit {
       
     });
   }
+
+
+  onExportGpxClick(){
+    const pathId = this.dataService.getFromStore('activePath', false).pathAsGeoJSON.properties.pathId;
+    const pathType = 'route';
+    this.httpService.exportToGpx(pathType, pathId).subscribe( (fname) => {
+      // window.location.href = this.httpService.downloadFile(fname.fileName);
+      window.location.href = 'http://localhost:3000/download/' + fname.fileName;
+    });
+  }
+
 
   onCreateOnMapClick() {
     

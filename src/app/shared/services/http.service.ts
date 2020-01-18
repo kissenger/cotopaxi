@@ -56,4 +56,22 @@ export class HttpService {
   deletePath(id) {
     return this.http.delete<any>('http://' + this.hostName + ':3000/delete-path/' + 'route' + '/' + id);
   }
+
+  getIntersectingRoutes(bbox: Array<number>) {
+    let query = '?';
+    bbox.forEach( (coord, index) => {
+      query += 'bbox=' + coord;
+       if (index !== bbox.length-1) { query += '&'; }
+    })
+    return this.http.get<any>('http://' + this.hostName + ':3000/get-intersecting-routes/' + query);
+  }
+
+  exportToGpx(pathType: string, pathId: string) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/export-path/', {pathType, pathId});
+  }
+
+  downloadFile(fileName: string) {
+    return this.http.get<any>('http://' + this.hostName + ':3000/download-file/' + fileName);
+  }
+
 }

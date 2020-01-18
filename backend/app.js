@@ -9,11 +9,11 @@ const DEBUG = true;
 
 // Local functions
 const Route = require('./_Path').Route;
-const Path = require('./_Path').Path;
 const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
 const readGPX = require('./gpx.js').readGPX;
+const writeGpx = require('./gpx.js').writeGPX;
 const timeStamp = require('./utils.js').timeStamp;
 const getElevations = require('./upsAndDowns').upsAndDowns;
 
@@ -251,13 +251,6 @@ app.post('/flush/', (req, res) => {
 app.get('/get-paths-list/:type/:offset', (req, res) => {
 
   if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=', req.params.type, ', offset=', req.params.offset )};
-
-  /**
-   * returns only:
-   *  stats
-   *  name
-   *  */
-  // console.log('>> get-paths-list');
   const LIMIT = 10 //number of items to return in one query
 
   // ensure user is authorised
@@ -270,10 +263,9 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
   let condition = {isSaved: true};
   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
   let sort = req.params.type === 'track' ? {startTime: -1} : {creationDate: -1};
-
+    
   // the front end would like to know how many paths there are in total, so make that the first query
   mongoModel(req.params.type).countDocuments(condition).then( (count) => {
-    // then execute the full query
     mongoModel(req.params.type)
       .find(condition, filter).sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
       .then(documents => {
@@ -281,6 +273,34 @@ app.get('/get-paths-list/:type/:offset', (req, res) => {
       });
   })
 })
+
+
+/*****************************************************************
+ * 
+ *  Get a list of routes that intersect with a provided bounding box
+ * 
+ *****************************************************************/
+
+app.get('/get-intersecting-routes', (req, res) => {
+
+  if (DEBUG) { console.log(timeStamp() + ' >> get-overlay-list, pathType=', req.params.type, ', offset=', req.params.offset )};
+
+  // get the appropriate model and setup query
+  // let condition = {isSaved: true};
+  let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
+  let geometry = { 'type': 'Polygon', 'coordinates': bbox2Polygon(req.query.bbox) };
+  console.log(geometry);
+
+  mongoModel('route')
+    .find( {geometry: { $geoIntersects: { $geometry: geometry} } }, filter)
+    .then( (documents) => {
+      res.status(201).json(new ListData(documents))
+
+    })
+
+
+})
+
 
 /*****************************************************************
  *  Delete a path from database
@@ -307,6 +327,47 @@ app.delete('/delete-path/:type/:id', (req, res) => {
 
 });
 
+/*****************************************************************
+ * Export a path to file
+ *
+ *
+ *
+ *****************************************************************/
+app.post('/export-path', (req, res) => {
+
+  // ensure user is authorised
+  // if ( !req.userId ) {
+  //   res.status(401).send('Unauthorised');
+  // }
+
+
+  mongoModel(req.body.pathType).find({_id: req.body.pathId}).then(document => {
+
+    let route = new Route(
+      document[0].info.name, 
+      document[0].info.description, 
+      document[0].geometry.coordinates, 
+      document[0].params.elev);
+
+    console.log(route);
+    writeGpx(route).then( (fileName) => {
+      res.status(201).json({fileName});
+    });
+
+  });
+})
+
+  
+app.get('/download/:fname', (req, res) => {
+  res.download('../' + req.params.fname + '.gpx', (err) => {
+    if (err) {
+      console.log('error: ' + err);
+    } else {
+      console.log('success');
+    }
+  } );
+
+})
 
 
 /*****************************************************************
@@ -735,31 +796,7 @@ app.post('/save-created-route/:type', auth.verifyToken, (req, res) => {
 
 
 
-/*****************************************************************
- * Export a path to file
- *
- *
- *
- *****************************************************************/
-app.get('/export-path/:type/:id/', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  if ( !req.userId ) {
-    res.status(401).send('Unauthorised');
-  }
-
-  // Read file data & convert to geojson format
-
-  MongoPath.Routes.find({userId: req.userId, _id: req.params.id}).then(document => {
-
-    let route = new Path(document[0].geometry.coordinates, document[0].params.elev);
-    writeGpx(route).then( () => {
-      res.status(201).json({status: 'export ok'});
-    });
-
-  });
-
-})
 
 app.get('/download', (req, res) => {
   res.download('../exported_path.gpx', (err) => {

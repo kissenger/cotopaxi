@@ -10,3 +10,6 @@ export const units =
         elevation: 'm'
     }
 export const userHomeLocation: tsCoordinate = {lat: 51, lng: -4};
+
+export const overlayLineStyle = {lineWidth: 2, lineColor: 'blue', lineOpacity: 0.3};
+export const routeLineStyle = {lineWidth: 3, lineColor: 'red', lineOpacity: 0.5};

@@ -30,7 +30,7 @@ export class DataService {
   // public desiredPathEmitter = new EventEmitter();   // emits from panel-routes-list-list and subscribed to in routes-list
   public activePathEmitter = new EventEmitter();
   public pathIdEmitter = new EventEmitter();
-
+  public mapBoundsEmitter = new EventEmitter();
   /**
    * Data store
    * @param dataStore is a key/value object to store all shared dat in one place

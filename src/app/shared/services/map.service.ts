@@ -4,7 +4,7 @@ import { DataService } from './data.service';
 import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globalVars from 'src/app/shared/globals';
-import { tsCoordinate } from 'src/app/shared/interfaces';
+import { tsCoordinate, tsPlotPathOptions, tsMapboxLineStyle } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,7 @@ export class MapService{
 
   private accessToken: string = globalVars.mapboxAccessToken;
   public tsMap: mapboxgl.Map;
+  private activeLayers = [];
 
   constructor(
     public httpService: HttpService,
@@ -53,6 +54,10 @@ export class MapService{
       this.tsMap.on('load', () => {
         resolve();
       })
+
+      this.tsMap.on('moveend', (ev) => {
+        this.dataService.mapBoundsEmitter.emit(this.getMapBounds());
+      });
       
     });
 
@@ -67,31 +72,39 @@ export class MapService{
     return {centre, zoom}
   }
 
+  getMapBounds() {
+    const mapBounds = this.tsMap.getBounds();
+    return [mapBounds.getSouthWest().lng, mapBounds.getSouthWest().lat, mapBounds.getNorthEast().lng, mapBounds.getNorthEast().lat]
+  }
+
   /**
    * plots a geojson path on the map and centers the view on it
    * @param path path as geojson to view on map
    * @param lineWidth width of the line
    * @param lineColor colour of the line as RGB string '#RRGGBB' or auto to pick up colors in the geojson
    */
-  plotSingleGeoJson(pathAsGeoJSON: GeoJSON.FeatureCollection, styleOptions? ) {
+  addLayerToMap(pathAsGeoJSON, styleOptions: tsMapboxLineStyle, plotOptions: tsPlotPathOptions ) {
 
-    if (!styleOptions) {
-      styleOptions = {
-        lineWidth: 3,
-        lineColour: 'auto',
-        lineOpacity: 1
-      }
-    }
+    const pathId = pathAsGeoJSON.properties.pathId;
+    console.log(pathId);
+    console.log(plotOptions.booReplaceExisting);
 
     // remove existing layer if it exists
-    if (this.tsMap.getLayer('route')) {
-      this.tsMap.removeLayer('route');
-      this.tsMap.removeSource('route');
-    };
+
+    // var layers = this.tsMap.getStyle().layers.map((layer) => layer.id);
+    // console.log(layers);
+
+    if (plotOptions.booReplaceExisting) {
+      if (this.activeLayers.length > 0) {
+        this.tsMap.removeLayer(this.activeLayers[0]);
+        this.tsMap.removeSource(this.activeLayers[0]);
+        this.activeLayers.pop();
+      };
+    }
 
     // add the layer to the map
     this.tsMap.addLayer({
-      "id": "route",
+      "id": pathId,
       "type": "line",
       "source": {
         "type": "geojson",
@@ -103,30 +116,41 @@ export class MapService{
         'line-opacity': styleOptions.lineOpacity
       }
     });
+    this.activeLayers.push(pathId);
     
-      // set the bounds
-    let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJSON.bbox[0], pathAsGeoJSON.bbox[1]], [pathAsGeoJSON.bbox[2], pathAsGeoJSON.bbox[3]]];
-    let options = {
-      padding: {top: 10, bottom: 10, left: 10, right: 10},
-      linear: true
+    // set the bounds
+    if (plotOptions.booResizeView){
+      let bbox: [mapboxgl.LngLatLike, mapboxgl.LngLatLike] = [[pathAsGeoJSON.bbox[0], pathAsGeoJSON.bbox[1]], [pathAsGeoJSON.bbox[2], pathAsGeoJSON.bbox[3]]];
+      let options = {
+        padding: {top: 10, bottom: 10, left: 10, right: 10},
+        linear: true
+      }
+      this.tsMap.fitBounds(bbox, options);
     }
-    this.tsMap.fitBounds(bbox, options);
 
     // emit the pathStats to the details component (true parameter emits)
     // this.dataService.emitAndStoreActivePath(pathAsGeoJSON);
-    this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJSON});
-    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
-    console.log(pathAsGeoJSON);
-
+    if (plotOptions.booSaveToStore) {
+      this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJSON});
+      this.dataService.activePathEmitter.emit(pathAsGeoJSON);
+      console.log(pathAsGeoJSON);
+    }
     // share the map centre so we can use later if we want to create a new map on this position
     // IMPORTANT to wait until the map has stopped moving or this doesnt work
     this.tsMap.on('moveend', (ev) => {
       this.dataService.saveToStore('mapView', this.getMapView());
     });
 
+
+
   }
 
-
+  removeLayer(pathId: string) {
+    if (this.tsMap.getLayer(pathId)) {
+      this.tsMap.removeLayer(pathId);
+      this.tsMap.removeSource(pathId);
+    };
+  }
 
 
 }

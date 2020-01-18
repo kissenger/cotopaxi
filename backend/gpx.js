@@ -162,10 +162,12 @@ function writeGPX(path){
 
   return new Promise( (resolve, reject) => {
 
-    const creator = 'Aconcagua Beta https://kissenger.github.io/aconcagua/';
+    const creator = 'Aconcagua Beta https://kissenger.github.io/cotopaxi/';
     const xmlns = 'http://www.topografix.com/GPX/1/0';
 
-    const file = fs.createWriteStream('../exported_path.gpx');
+
+    const fileName = path.name !== "" ? path.name : path.category + ' ' + path.pathType;
+    const file = fs.createWriteStream('../' + fileName + '.gpx');
     const s = '   ';
     const eol = '\r\n'
     let i = 0;
@@ -174,7 +176,7 @@ function writeGPX(path){
     file.on('error', reject);
     file.on('open', () => {
 
-      // file.on('finish', () => { resolve(true) });
+      // file.on('finish', () => { resolve(true) }); 
       // file.on('error', reject);
 
       file.write(s.repeat(0) + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + eol);
@@ -182,10 +184,8 @@ function writeGPX(path){
       file.write(s.repeat(1) + "<rte>" + eol);
       file.write(s.repeat(2) + "<name>" + path.name + "</name>" + eol);
 
-      do {
-        //console.log(path);
-        point = path.getPoint(i);
-
+      path.points.forEach( (point) => {
+  
         if ( point.elev || point.time ) {
           // elevation or time data exists, use conventional tag
 
@@ -202,14 +202,13 @@ function writeGPX(path){
 
         }
 
-        i++;
-      } while (i <= path.pathSize)
+      });
 
       file.write(s.repeat(1) + "</rte>" + eol);
       file.write(s.repeat(0) + "</gpx>");
 
       file.finish;
-      resolve();
+      resolve(fileName);
     });
 
   })

@@ -5,6 +5,17 @@ export interface tsElevations{
     elevs: Array<number>
 }
 
+export interface tsPlotPathOptions{
+    booResizeView: Boolean,
+    booReplaceExisting: Boolean,
+    booSaveToStore: Boolean
+}
+
+export interface tsMapboxLineStyle{
+    lineWidth: number
+    lineColor: string
+    lineOpacity: number
+}
 
 export interface pathStats{
     distance: number,
@@ -61,13 +72,6 @@ export interface myElevationResults {
 //     type: 'Feature',
 //     geometry: tsLineString,
 //     properties: {}
-// }
-
-// export interface tsBoundingBox {
-//     minLng: Number,
-//     maxLng: Number,
-//     minLat: Number,
-//     maxLat: Number
 // }
 
 // export interface tsProperties{

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import {  Router } from '@angular/router';
 import * as globalVars from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 
