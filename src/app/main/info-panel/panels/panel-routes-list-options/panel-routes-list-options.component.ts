@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import * as globalVars from 'src/app/shared/globals';
 import { Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from 'src/app/shared/services/data.service';
@@ -28,15 +29,13 @@ export class PanelRoutesListOptionsComponent implements OnInit {
 
   onDeleteClick() {
     
-    const activePath = this.dataService.getFromStore('activePath', true).pathAsGeoJSON;
-
-    this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
-      // extra guff needed to refresh the page as we are wanting to refresh the current page rather than navigate away
-      this.router.routeReuseStrategy.shouldReuseRoute = () => false;
-      this.router.onSameUrlNavigation = 'reload';
-      this.router.navigate(['route/list']);
-      
-    });
+    const activePath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
+    const confirmText = "Are you sure you want to delete this route?\nThis cannot be undone..."
+    if ( window.confirm(confirmText) ) {
+      this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
+        this.reloadListComponent();
+      });
+    };
   }
 
 
@@ -63,11 +62,28 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
-    if ( pathType === 'route' ) {
+    if (files[0].size > globalVars.EXPORT_FILE_SIZE_LIMIT) {
+      const confirmText = 
+        'That\'s a big file, it\'ll take a while to process :-)\n' +
+        'It\'ll get processed in the background and  will appear in your routes list when ready.'
 
-      // send data to the backend and wait for response
+      if ( window.confirm(confirmText) ) {
+        // if the file is too large, we will only expect a brief immediate response from the backend - add field to back knows what we expect
+        fileData.append('isLarge', 'true');
+        this.httpService.importRoute(fileData).subscribe( (result) => {
+
+          console.log(result);
+          this.reloadListComponent();
+
+        });
+      } else {
+        // user pressed cancel, find a way to navigate back with all links still working
+        this.reloadListComponent();
+      }
+    } else {
+      fileData.append('isLarge', 'false');
       this.httpService.importRoute(fileData).subscribe( (result) => {
-
+        console.log(result.geoJson);
         const pathAsGeoJSON = result.geoJson;
         this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
         this.router.navigate(['route/review/']);
@@ -75,8 +91,27 @@ export class PanelRoutesListOptionsComponent implements OnInit {
       });
     }
 
+    // if ( pathType === 'route' ) {
+
+    //   // send data to the backend and wait for response
+    //   this.httpService.importRoute(fileData).subscribe( (result) => {
+
+    //     console.log(result.geoJson);
+    //     const pathAsGeoJSON = result.geoJson;
+    //     this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
+    //     this.router.navigate(['route/review/']);
+
+    //   });
+    // }
 
 
+
+  }
+
+  reloadListComponent() {
+    this.router.routeReuseStrategy.shouldReuseRoute = () => false;
+    this.router.onSameUrlNavigation = 'reload';
+    this.router.navigate(['route/list']);
   }
 
 

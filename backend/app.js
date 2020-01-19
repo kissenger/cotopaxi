@@ -115,36 +115,62 @@ app.post('/ups-and-downs/v1/', (req, res) => {
  *****************************************************************/
 
 // app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
-app.post('/import-route/', upload.single('filename'), (req, res) => {
+  app.post('/import-route/', upload.single('filename'), (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
-
-  // ensure user is authorised
-  // const userId = req.userId;
-  // if ( !userId ) {
-  //   res.status(401).send('Unauthorised');
-  // }
-
-  const userId = 0;
-
-  // Get a mongo object from the path data
-  const pathFromFile = readGPX(req.file.buffer.toString());
-  const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elevations);
-
-  // once Path is instantiated, it needs to be initialised (returns a promise)
-  path.init().then( () => {
-    const mongoPath = path.asMongoObject(userId, false);
-
-    // Save route into database with isSaved = false, and return it to the front end
-    MongoPath.Routes.create(mongoPath).then( (docs) => {
-      // MongoPath.Routes.insertMany({"x":2}).then( (docs) => {    
-        // console.log(docs);
-        res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
-        if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
+    if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
+  
+    // ensure user is authorised
+    // const userId = req.userId;
+    // if ( !userId ) {
+    //   res.status(401).send('Unauthorised');
+    // }
+  
+    const userId = 0;
+    
+    // if isLarge = true, front end expects to process the file in the background. Route will appear when db is queried from list component
+    if (req.body.isLarge === 'true') {
+      res.status(201).json({result: 'file recieved'});
+  
+      // Save route into database with isSaved = true (because we processed it in the background)
+      getMongoFromGpx().then( (mongoPath) => {
+        mongoPath.isSaved = true;
+        MongoPath.Routes.create(mongoPath).then( (docs) => {
+          if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
+        })
+  
+      });
+  
+    // if isLarge = false, front end expects to wait fot the file to be processed before returning the result 
+    } else {
+  
+      getMongoFromGpx().then( (mongoPath) => {
+  
+        // Save route into database with isSaved = false, and return it to the front end
+        MongoPath.Routes.create(mongoPath).then( (docs) => {
+          res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
+          if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
+        })
+  
+      });
+  
+    }
+  
+    function getMongoFromGpx() {
+  
+      return new Promise ( (res, rej) => {
+        // Get a mongo object from the path data
+        const pathFromFile = readGPX(req.file.buffer.toString());
+        const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elevations);
+        // once Path is instantiated, it needs to be initialised (returns a promise)
+        path.init().then( () => {
+          const mongoPath = path.asMongoObject(userId, false);
+          res(mongoPath);
+        })
       })
-    });
-
-});
+  
+    };
+  
+  })
 
 
 

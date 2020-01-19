@@ -9,13 +9,10 @@
       class="p-1 border-bottom border-left border-right" 
       [ngClass]="getCssClass(line.pathId, i)">
 
-    <div *ngIf="line.name === ''" class="name">
+    <div *ngIf="line.name === '' || !line.name; else else_div" class="name">
       {{line.category}} {{line.pathType}}
     </div>
-
-    <div *ngIf="line.name !== ''" class="name">
-      {{line.name}}
-    </div>
+    <ng-template #else_div><div class="name">{{line.name}}</div></ng-template>
 
     {{line.stats.distance | units: 'distance': units.distance}}
     {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}

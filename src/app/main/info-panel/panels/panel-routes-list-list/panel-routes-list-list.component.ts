@@ -45,8 +45,11 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
         
         // compile data and confirm if we are at the end of the list yet
         this.htmlData = this.htmlData.concat(pathsList);
-        this.numberOfRoutes = this.htmlData[0].count + 1;
-        this.numberOfLoadedRoutes = this.htmlData.length+ 1;
+        console.log(this.htmlData);
+        // if (!this.htmlData[0]['name']) { this.htmlData[0]['name'] = '' };
+        // if (!this.htmlData[0]['description']) { this.htmlData[0]['description'] = '' };
+        this.numberOfRoutes = this.htmlData[0].count;
+        this.numberOfLoadedRoutes = this.htmlData.length;
         this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes ? true : false;
 
         // emit the first id in the list and highlight that row

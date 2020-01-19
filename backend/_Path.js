@@ -2,7 +2,6 @@ const p2p = require('./geoLib.js').p2p;
 // const p2l = require('./geoLib.js').p2l;
 const Point = require('./_Point.js').Point;
 const boundingBox = require('./geoLib').boundingBox;
-const pathDistance = require('./geoLib').pathDistance;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
@@ -108,7 +107,7 @@ class Path  {
       // request each chunk in turn, waiting for the last one to resolve before moving on
       sliceArray.reduce( (promise, coords) => {
         return promise.then( (allResults) => 
-          upsAndDowns(coords, {options: {interpolate: true}}).then( (thisResult) => 
+          upsAndDowns(coords, {options: {interpolate: false}}).then( (thisResult) => 
               [...allResults, thisResult] 
             ));
         }, Promise.resolve([])).then( (result) => {
@@ -135,9 +134,12 @@ class Path  {
 
     const params = {};
     if (this.time) params.time = this.time;
-    if (this.elev) params.elev = this.elev;
+    if (this.elevs) params.elev = this.elevs;
     if (this.heartRate) params.heartRate = this.heartRate;
     if (this.cadence) params.cadence = this.cadence;
+    params.cumDistance = this.stats.cumDistance;
+
+    console.log(this.stats);
 
     return {
       userId: userId,
@@ -149,7 +151,7 @@ class Path  {
       info: {
         // direction: this.direction,
         category: this.category,
-        isNationalTrail: false,
+        isFavourite: false,
         name: this.name,
         description: this.description,
         pathType: this.pathType,
@@ -362,6 +364,7 @@ class Path  {
     let movingTime = 0;
     let movingDist = 0;
     let duration = 0;
+    let cumDistance = [0];  // cumulative distance at each point
 
     // this and last point values
     let thisFiltElev; // needs to be undefined as its checked
@@ -407,6 +410,7 @@ class Path  {
          */
         dDist = p2p(thisPoint, lastPoint);
         distance += dDist;
+        cumDistance.push(distance/1000.0);
         eDist += dDist;
         p2pMax = dDist > maxDist ? dDist : maxDist;
 
@@ -549,6 +553,7 @@ class Path  {
       duration: isTime ? duration: 0,
       bbox: this.bbox,
       distance: distance,
+      cumDistance: cumDistance,
       nPoints: this.pathSize,
       pace: isTime ? (duration/60) / (distance/1000) : 0,
       movingStats: {

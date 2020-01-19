@@ -8,6 +8,7 @@ const GeoTIFF = require('geotiff');             // https://geotiffjs.github.io/g
 const timeStamp = require('./utils.js').timeStamp;
 
 
+
 // Global variables
 // TODO: find a way to manage cache without global variables
 const TIFF_PATH = '../../__TIFF/';
@@ -151,14 +152,18 @@ function getImage(fn) {
 
     // if image is in the CACHE, the return this image
     
+    // console.log(timeStamp() + ' >> checking cache: cache size = ' + Object.keys(CACHE.images).length);
     if (fn in CACHE.images) { 
+      // console.log(timeStamp() + ' >> img found');
       rs( CACHE.images[fn] );
 
     // otherwise, load a new image from file (and store it in the CACHE)
     } else {
+      // console.log(timeStamp() + ' >> img not found, loading new');
       GeoTIFF.fromFile(TIFF_PATH + fn).then( (tiff) => {
         tiff.getImage().then( (img) => {
           CACHE.images[fn] = img;
+          // console.log(timeStamp() + ' >> img loaded');
           rs(img);
         })
       });
@@ -199,13 +204,18 @@ function readPixels(img, px, py, id, boo) {
 
   return new Promise( (rs, rj) => {
 
-    // check if we have the required data in the CACHE already; if not load it
-    if (id in CACHE.pixels) { 
-      promise = Promise.resolve( CACHE.pixels[id] )
-    } else {
+    // console.log(CACHE.pixels);
+    // console.log(timeStamp() + ' >> checking cache: cache size = ' + Object.keys(CACHE.images).length);
+    // // check if we have the required data in the CACHE already; if not load it
+    // if (id in CACHE.pixels) { 
+    //   console.log(timeStamp() + ' >> pixel found');
+    //   promise = Promise.resolve( CACHE.pixels[id] )
+    // } else {
+    //   console.log(timeStamp() + ' >> pixel not found, loading new');
       const shift = boo ? 2 : 1;
       promise = img.readRasters({ window: [px, py, px + shift, py + shift] });
-    }
+    //   console.log(timeStamp() + ' >> pixel loaded');
+    // }
 
     // when thats done, save result to CACHE if needed and return result
     promise.then( (result) => {

@@ -1,0 +1,9 @@
+/* info panel formatting needed to located the containerin the right place
+   use pointer event to ensure that map can be clicked when info-panel is minimised */
+.info-panel {
+    top: 0px;
+    right: 0px;
+    width: 225px;
+    font-size: smaller;
+    /* pointer-events: none; */
+}

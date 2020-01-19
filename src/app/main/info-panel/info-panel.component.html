@@ -23,7 +23,7 @@
             <div *ngFor="let tab of tabsArray" [ngClass]="tab.active ? 'active show' : ''" id={{tab.name}} role="tabpanel"
                  class="position-absolute panel-size-calc tab-panel fade border-left border-bottom bg-white ml-2 overflow-auto" >
                 
-                <div class="ml-2 mr-2 pr-2 pt-2">
+                <div class="ml-2 mr-1 pr-1 pt-1 overflow-hidden">
                     <app-panels-injector  panel-type={{tab.name}}></app-panels-injector>
                 </div>
 

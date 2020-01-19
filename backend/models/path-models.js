@@ -18,7 +18,8 @@ const pathSchema = mongoose.Schema({
     elev: {type: [Number]},
     time: {type: [Number]},
     heartRate: {type: [Number]},
-    cadence: {type: [Number]}
+    cadence: {type: [Number]},
+    cumDistance: {type: [Number]}
   },
 
   // user entered information to describe/tag route

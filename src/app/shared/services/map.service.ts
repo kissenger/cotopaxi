@@ -86,19 +86,22 @@ export class MapService{
   addLayerToMap(pathAsGeoJSON, styleOptions: tsMapboxLineStyle, plotOptions: tsPlotPathOptions ) {
 
     const pathId = pathAsGeoJSON.properties.pathId;
-    console.log(pathId);
-    console.log(plotOptions.booReplaceExisting);
 
     // remove existing layer if it exists
-
-    // var layers = this.tsMap.getStyle().layers.map((layer) => layer.id);
-    // console.log(layers);
+    // try/catch avoid error if we expect a route to be plotted but it isnt (eg deleted path, user reloads page)
+    // TODO this is a horrible mx of assuming there is only one layer shown, and not --> needs cleaning up
 
     if (plotOptions.booReplaceExisting) {
       if (this.activeLayers.length > 0) {
-        this.tsMap.removeLayer(this.activeLayers[0]);
-        this.tsMap.removeSource(this.activeLayers[0]);
-        this.activeLayers.pop();
+        try {
+          this.tsMap.removeLayer(this.activeLayers[0]);
+          this.tsMap.removeSource(this.activeLayers[0]);
+          this.activeLayers.pop();
+        }
+        catch(error) {
+          console.log('could not delete pathID ' + this.activeLayers[0]);
+          this.activeLayers.pop();
+        }
       };
     }
 
