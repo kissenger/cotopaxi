@@ -7,6 +7,12 @@ export const KM_TO_MILE = 0.6213711922;
 export const M_TO_FT = 3.28084;
 export const EXPORT_FILE_SIZE_LIMIT = 100000;
 
+export const links = {
+    wiki: {
+        elevations: 'https://github.com/kissenger/cotopaxi/wiki/Elevations'
+    }
+}
+
 // the following will eventually be set by user profile
 
 export const units: {distance: 'miles' | 'kms', elevation: 'm' | 'ft'} = 

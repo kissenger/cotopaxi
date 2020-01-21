@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
 import { pathStats } from 'src/app/shared/interfaces';
@@ -19,19 +19,18 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     distance: 0,
     nPoints: 0,
     elevations: 
-      { elevationStatus: '',
-        ascent: 0,
+      { ascent: 0,
         descent: 0,
         lumpiness: 0,
         maxElev: 0,
-        minElev: 0,
-        badElevData: false }
+        minElev: 0}
   };
   // private isMinimised = false;
   // private icon = '-';
-  private units = globalVars.units;
+  private units = globals.units;
   private pathName: string = '';
   private pathDescription: string = '';
+  private isElevations: boolean;
 
   constructor(
     private dataService: DataService,
@@ -49,8 +48,9 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
         this.resetPathStats();
       } else {
         this.pathStats = geoJSON.features[0].properties.stats;
-        this.pathName = geoJSON.features[0].properties.info.name ? geoJSON["properties"].info.name : "";
-        this.pathDescription =  geoJSON.features[0].properties.info.description ? geoJSON["properties"].info.description: "";
+        this.pathName = geoJSON.features[0].properties.info.name;
+        this.pathDescription =  geoJSON.features[0].properties.info.description;
+        this.isElevations = geoJSON.features[0].properties.info.isElevations;
       }
     
     })
@@ -61,7 +61,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     this.pathStats = {
       distance: 0,
       nPoints: 0,
-      elevations: { elevationStatus: '', ascent: 0, descent: 0, lumpiness: 0, maxElev: 0, minElev: 0, badElevData: false }
+      elevations: { ascent: 0, descent: 0, lumpiness: 0, maxElev: 0, minElev: 0 }
     };
   }
 
@@ -92,9 +92,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     } else if (source === 'created') {
       const sendObj = {
         coords: newPath.features[0].geometry.coordinates, 
-        elevations: {
-          elevationStatus: newPath.features[0].properties.stats.elevations.elevationStatus,
-          elevs: newPath.features[0].properties.params.elev},
+        elevs: newPath.features[0].properties.params.elev,
         name: this.pathName,
         description: this.pathDescription
       };

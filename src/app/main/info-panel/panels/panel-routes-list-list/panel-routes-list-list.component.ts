@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
 import {  Router } from '@angular/router';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 
 @Component({
@@ -16,7 +16,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   private listOffset = 0;
   private isEndOfList = false; // value is read in the html do dont be tempted to delete
   private DEBUG = false;
-  private units = globalVars.units;
+  private units = globals.units;
   private numberOfRoutes: number;
   private numberOfLoadedRoutes: number;
 
@@ -94,7 +94,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
    * @param id id of the list item being processed
    * @param i index of the list item being processed
    */
-  getCssClass(id: String, i: Number) {
+  getCssClass(id: string, i: number) {
     let cssClass = '';
     if (id === this.pathId) { cssClass += 'highlight-div '; }
     if (i === 0) { cssClass += 'border-top'; }

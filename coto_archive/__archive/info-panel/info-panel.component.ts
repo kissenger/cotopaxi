@@ -17,8 +17,8 @@ export class InfoPanelComponent implements OnInit {
 
   private page;
   private timer;
-  private isListPage: Boolean = false;
-  private isCreatePage: Boolean = false;
+  private isListPage: boolean = false;
+  private isCreatePage: boolean = false;
 
   constructor(
     private router: Router

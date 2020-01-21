@@ -26,20 +26,23 @@ const pathSchema = mongoose.Schema({
   info: {
     direction: {type: String},
     category: {type: String},
-    nationalTrail: {type: Boolean},  
+    nationalTrail: {type: Boolean},
+    favourite: {type: Boolean},  
     name: {type: String}, 
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'
     startTime: {type: String},
+    isLong: {type: Boolean},
+    isElevations: {type: Boolean}
   },
 
   // listStats: {
-  //   name: {type: String},
-  //   category: {type: String},
-  //   startTime: {type: String},
-  //   distance: {type: Number},
-  //   pathDuration: {type: Number},
-  //   matchDistance: {type: Number},
+  //   name: {type: string},
+  //   category: {type: string},
+  //   startTime: {type: string},
+  //   distance: {type: number},
+  //   pathDuration: {type: number},
+  //   matchDistance: {type: number},
   // },
 
   // statistics calculated from the device data
@@ -55,13 +58,11 @@ const pathSchema = mongoose.Schema({
     distance: {type: Number},
     pace: {type: Number},
     elevations: {
-      elevationStatus: {type: String},
       ascent: {type: Number},
       descent: {type: Number},
       maxElev: {type: Number},
       minElev: {type: Number},
-      lumpiness: {type: Number},
-      badElevData: {type: Boolean}     
+      lumpiness: {type: Number}
     },
     p2p: {
       max: {type: Number},

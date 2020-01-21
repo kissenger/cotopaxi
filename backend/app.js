@@ -160,9 +160,9 @@ app.post('/ups-and-downs/v1/', (req, res) => {
       return new Promise ( (res, rej) => {
         // Get a mongo object from the path data
         const pathFromFile = readGPX(req.file.buffer.toString());
-        const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elevations);
+        const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
         // once Path is instantiated, it needs to be initialised (returns a promise)
-        path.init().then( () => {
+        path.getElevations().then( () => {
           const mongoPath = path.asMongoObject(userId, false);
           res(mongoPath);
         })
@@ -222,7 +222,8 @@ app.post('/save-created-route/', (req, res) => {
   console.log(req.body);
   var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevations);
 
-  path.init().then( () => {
+  // get elevations wont get new ones if elevations are supplied
+  path.getElevations().then( () => {
     const mongoPath = path.asMongoObject(1, true);
     mongoModel('route').create(mongoPath).then( (document) => {
       res.status(201).json( {pathId: document._id} );  
@@ -315,7 +316,6 @@ app.get('/get-intersecting-routes', (req, res) => {
   // let condition = {isSaved: true};
   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
   let geometry = { 'type': 'Polygon', 'coordinates': bbox2Polygon(req.query.bbox) };
-  console.log(geometry);
 
   mongoModel('route')
     .find( {geometry: { $geoIntersects: { $geometry: geometry} } }, filter)
@@ -334,6 +334,8 @@ app.get('/get-intersecting-routes', (req, res) => {
  *****************************************************************/
 
 app.delete('/delete-path/:type/:id', (req, res) => {
+
+  if (DEBUG) { console.log(timeStamp() + ' >> delete-path')};
 
   // // ensure user is authorised
   // const userId = req.userId;
@@ -360,6 +362,7 @@ app.delete('/delete-path/:type/:id', (req, res) => {
  *
  *****************************************************************/
 app.post('/export-path', (req, res) => {
+  if (DEBUG) { console.log(timeStamp() + ' >> export path' )};
 
   // ensure user is authorised
   // if ( !req.userId ) {
@@ -375,7 +378,6 @@ app.post('/export-path', (req, res) => {
       document[0].geometry.coordinates, 
       document[0].params.elev);
 
-    console.log(route);
     writeGpx(route).then( (fileName) => {
       res.status(201).json({fileName});
     });

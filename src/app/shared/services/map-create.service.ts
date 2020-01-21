@@ -4,7 +4,7 @@ import { HttpService } from './http.service';
 import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
-import { tsCoordinate, tsElevations } from 'src/app/shared/interfaces';
+import { tsCoordinate } from 'src/app/shared/interfaces';
 import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
@@ -73,8 +73,8 @@ export class MapCreateService extends MapService {
 
         // get coordinates for the next chunk of path, add to the path object
         this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<tsCoordinate>) => {
-          this.geoService.getElevationsFromAPI(coords, true).then( (elevations: tsElevations) => {
-            this.multiPath.addPath(new Path(coords, elevations));
+          this.geoService.getElevationsFromAPI(coords, true).then( (elevs: Array<number>) => {
+            this.multiPath.addPath(new Path(coords, elevs));
             this.refreshMapAfterPathChange();
             this.addMarker(this.multiPath.getLastPoint());
           })
@@ -180,8 +180,8 @@ export class MapCreateService extends MapService {
 
     // get coordinates for the next chunk of path, add to the path object
     this.getNextPathCoords(startPoint, endPoint).then( (coords: Array<tsCoordinate>) => {
-      this.geoService.getElevationsFromAPI(coords, true).then( (elevations: tsElevations) => {
-        this.multiPath.addPath(new Path(coords, elevations));
+      this.geoService.getElevationsFromAPI(coords, true).then( (elevs: Array<number>) => {
+        this.multiPath.addPath(new Path(coords, elevs));
         this.refreshMapAfterPathChange();
         this.addMarker(this.multiPath.getLastPoint());
       })

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from 'src/app/shared/services/data.service';
@@ -62,7 +62,7 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
-    if (files[0].size > globalVars.EXPORT_FILE_SIZE_LIMIT) {
+    if (files[0].size > globals.EXPORT_FILE_SIZE_LIMIT) {
       const confirmText = 
         'That\'s a big file, it\'ll take a while to process :-)\n' +
         'It\'ll get processed in the background and  will appear in your routes list when ready.'

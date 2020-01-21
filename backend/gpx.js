@@ -123,26 +123,22 @@ function readGPX(data) {
 
   }
 
-  // check whether we have param data for each data point
-  // F - imported from file
-  // D - imported from file, discarded due to incomplete
-  // A - api elevations 
-  let elevationStatus = 'F';
+  // // check whether we have param data for each data point
+  // // F - imported from file
+  // // D - imported from file, discarded due to incomplete
+  // // A - api elevations 
+  // let elevationStatus = 'F';
+
+  // if elevation array is incomplete, then discard them - if necessary they'll get populated from DEM later
   for (let i = 0, n = lngLat.length - 1; i < n; i++) {
-    if (elev[i] === '') {
-      elevationStatus = elevationStatus.concat('D');
-      break;
-    }
+    elev = [];
   }
 
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX() finished') };
   return {
     name: nameOfPath,
     lngLat: lngLat,
-    elevations: {
-      elev: elev,
-      elevationStatus: elevationStatus
-    },
+    elev: elev,
     time: time,
     
   };

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service'
 import { DataService } from './data.service';
 import { GeoService } from './geo.service';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 declare var google: any;
 
 @Injectable({
@@ -22,7 +22,7 @@ export class ChartsService{
 
   plotChart(htmlElement, chartData) {
 
-    const chartTitle = 'Elevation (' + globalVars.units.elevation + ') vs distance (' + globalVars.units.distance + ')'
+    const chartTitle = 'Elevation (' + globals.units.elevation + ') vs distance (' + globals.units.distance + ')'
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(() =>{
       let chart = new google.visualization.LineChart(htmlElement);

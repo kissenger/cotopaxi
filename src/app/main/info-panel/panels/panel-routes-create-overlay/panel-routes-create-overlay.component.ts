@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
 import {  Router } from '@angular/router';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { MapCreateService } from 'src/app/shared/services/map-create.service';
 
@@ -15,9 +15,9 @@ export class PanelRoutesCreateOverlayComponent implements OnInit {
   private htmlData = [];
   private pathId: string;
   private pathIdArray: Array<string> = [];
-  private isNoPathsToPlot: Boolean = false;
+  private isNoPathsToPlot: boolean = false;
   private DEBUG = false;
-  private units = globalVars.units;
+  private units = globals.units;
 
   constructor(
     private httpService: HttpService,
@@ -81,7 +81,7 @@ export class PanelRoutesCreateOverlayComponent implements OnInit {
    * @param id id of the list item being processed
    * @param i index of the list item being processed
    */
-  getCssClass(id: string, i: Number) {
+  getCssClass(id: string, i: number) {
     let cssClass = '';
     if (this.pathIdArray.includes(id)) { cssClass += 'highlight-div '; }
     if (i === 0) { cssClass += 'border-top'; }

@@ -1,14 +1,14 @@
 
 
-export interface tsElevations{
-    elevationStatus: string,
-    elevs: Array<number>
-}
+// export interface tsElevations{
+//     elevationStatus: string,
+//     elevs: Array<number>
+// }
 
 export interface tsPlotPathOptions{
-    booResizeView: Boolean,
-    booReplaceExisting: Boolean,
-    booSaveToStore: Boolean
+    booResizeView: boolean,
+    booReplaceExisting: boolean,
+    booSaveToStore: boolean
 }
 
 export interface tsMapboxLineStyle{
@@ -21,13 +21,11 @@ export interface pathStats{
     distance: number,
     nPoints: number,
     elevations?: {
-        elevationStatus: string,
         ascent: number,
         descent: number,
         lumpiness: number,
         maxElev: number,
-        minElev: number,
-        badElevData: boolean
+        minElev: number
     };
 }
 
@@ -63,7 +61,7 @@ export interface myElevationResults {
 
 // export interface tsLineString {
 //     type: "LineString";
-//     coordinates: [[Number]];
+//     coordinates: [[number]];
 // }
 
 
@@ -78,74 +76,74 @@ export interface myElevationResults {
 //     info: tsInfo,
 //     params: tsParams,
 //     stats: tsStats,
-//     colour?: String,
-//     creationDate?: String,
-//     lastEditDate?: String,
-//     plotType?: String,
-//     userID?: String
+//     colour?: string,
+//     creationDate?: string,
+//     lastEditDate?: string,
+//     plotType?: string,
+//     userID?: string
 // }
 
 // export interface tsInfo {
-//     direction: String,
-//     category: String,
-//     nationalTrail: Boolean,  
-//     name: String, 
-//     description: String,
-//     pathType: String,           // 'route' or 'track'
-//     startTime: String,    
+//     direction: string,
+//     category: string,
+//     nationalTrail: boolean,  
+//     name: string, 
+//     description: string,
+//     pathType: string,           // 'route' or 'track'
+//     startTime: string,    
 // }
 
 // export interface tsParams {
-//     elev: Array<Number>,
-//     time: Array<Number>,
-//     heartRate: Array<Number>,
-//     cadence: Array<Number>
+//     elev: Array<number>,
+//     time: Array<number>,
+//     heartRate: Array<number>,
+//     cadence: Array<number>
 // }
 
 // export interface tsStats {
 //     bbox: {
-//         minLng: Number,
-//         minLat: Number,
-//         maxLng: Number,
-//         maxLat: Number
+//         minLng: number,
+//         minLat: number,
+//         maxLng: number,
+//         maxLat: number
 //     },
-//     nPoints: Number,
-//     duration: Number,
-//     distance: Number,
-//     pace:  Number,
+//     nPoints: number,
+//     duration: number,
+//     distance: number,
+//     pace:  number,
 //     elevations: {
-//         ascent: Number,
-//         descent: Number,
-//         maxElev: Number,
-//         minElev: Number,
-//         lumpimess: Number,
-//         distance: Number,
-//         nPoints: Number,
-//         badElevData?: Boolean
+//         ascent: number,
+//         descent: number,
+//         maxElev: number,
+//         minElev: number,
+//         lumpimess: number,
+//         distance: number,
+//         nPoints: number,
+//         badElevData?: boolean
 //     },
 //     p2p: {
-//         max: Number,
-//         ave: Number
+//         max: number,
+//         ave: number
 //     },
 //     movingStats: {
-//         movingTime: Number,
-//         movingDist: Number,
-//         movingPace: Number,
+//         movingTime: number,
+//         movingDist: number,
+//         movingPace: number,
 //     },
 //     hills: [ {
-//         dHeight: Number,
-//         dDist: Number,
-//         dTime: Number,
-//         pace: Number,
-//         ascRate: Number,
+//         dHeight: number,
+//         dDist: number,
+//         dTime: number,
+//         pace: number,
+//         ascRate: number,
 //         gradient: {
-//             max: Number,
-//             ave: Number
+//             max: number,
+//             ave: number
 //         } 
 //         } ],
 //     splits: {
-//         kmSplits: Array<Array<Number>>,
-//         mileSplits: Array<Array<Number>>
+//         kmSplits: Array<Array<number>>,
+//         mileSplits: Array<Array<number>>
 //     }
 // }
 

@@ -3,7 +3,7 @@ import { HttpService } from 'src/app/shared/services/http.service'
 import { DataService } from './data.service';
 import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { tsCoordinate, tsPlotPathOptions, tsMapboxLineStyle } from 'src/app/shared/interfaces';
 
 @Injectable({
@@ -11,7 +11,7 @@ import { tsCoordinate, tsPlotPathOptions, tsMapboxLineStyle } from 'src/app/shar
 })
 export class MapService{
 
-  private accessToken: string = globalVars.mapboxAccessToken;
+  private accessToken: string = globals.mapboxAccessToken;
   public tsMap: mapboxgl.Map;
   private activeLayers = [];
 
@@ -47,7 +47,7 @@ export class MapService{
       this.tsMap = new mapboxgl.Map({
         container: 'map', 
         style: 'mapbox://styles/mapbox/cjaudgl840gn32rnrepcb9b9g',
-        center: location ? location : globalVars.userHomeLocation,
+        center: location ? location : globals.userHomeLocation,
         zoom: zoom ? zoom : 13
       });
 

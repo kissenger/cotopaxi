@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DataService } from 'src/app/shared/services/data.service';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { Router } from '@angular/router';
 
 @Component({
@@ -20,7 +20,7 @@ export class InfoCreateRouteComponent implements OnInit {
     nPoints: 0
   };
   private icon = '-';
-  private units = globalVars.units;
+  private units = globals.units;
   private page;
   private timer;
   private isReviewPage = false;

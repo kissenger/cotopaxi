@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from './http.service';
-import { tsCoordinate, myElevationResults, myElevationQuery, tsElevations } from 'src/app/shared/interfaces';
+import { tsCoordinate, myElevationResults, myElevationQuery } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +37,7 @@ export class GeoService {
    */
   getElevationsFromAPI(coordsArray: Array<tsCoordinate>, interpolate: boolean) {
     
-    return new Promise<tsElevations>( (resolve, reject) => {
+    return new Promise<Array<number>>( (resolve, reject) => {
       
       // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
       // dont use splice as it cocks things up for reasons i dont understand.
@@ -57,7 +57,7 @@ export class GeoService {
             [...allResults, thisResult] 
           ));
       }, Promise.resolve([])).then( (result) => {
-        resolve({elevationStatus: 'A', elevs: result[0].result.map(e => e.elev)});
+        resolve(result[0].result.map(e => e.elev));
       });
 
     });
@@ -160,15 +160,13 @@ export class GeoService {
    * @param elevs simple array of elevations
    * @param distance distance to calculate lumpiness statistic
    */
-  calculateElevationStats(elevations: tsElevations, distance?: number) {
+  calculateElevationStats(elevs: Array<number>, distance?: number) {
 
     let ascent: number = 0;
     let descent: number = 0;
     let dElev: number;
     let minElev = 9999;
     let maxElev = -9999;
-    let badElevData: boolean = false;
-    let elevs = elevations.elevs;
 
     for (let i = 0; i < elevs.length; i++) {
       if (elevs[i] !== -9999 && elevs[i-1] !== -9999) {
@@ -178,19 +176,16 @@ export class GeoService {
         maxElev = elevs[i] > maxElev ? elevs[i] : maxElev;
         minElev = elevs[i] < minElev ? elevs[i] : minElev;
       } else {
-        badElevData = true;
-        console.log('Bad elevation data');
+        // some data was invalid - TODO
       }
     }
 
     return {
-        elevationStatus: elevations.elevationStatus,
-        ascent: ascent,
-        descent: descent,
+        ascent,
+        descent,
         lumpiness: distance ? (ascent - descent) / distance : -9999,
-        maxElev: maxElev,
-        minElev: minElev,
-        badElevData: badElevData
+        maxElev,
+        minElev
         }
       }
 

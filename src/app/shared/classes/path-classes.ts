@@ -1,4 +1,4 @@
-import { tsCoordinate, pathStats, tsElevations } from 'src/app/shared/interfaces';
+import { tsCoordinate, pathStats } from 'src/app/shared/interfaces';
 import { GeoService } from 'src/app/shared/services/geo.service';
 import { TsGeoJSON } from 'src/app/shared/classes/geo-json'
 import { Injector } from '@angular/core';
@@ -13,9 +13,9 @@ export class Path {
     private stats: pathStats = {distance: 0, nPoints: 0};
     private geoService: GeoService;
     private coordinates: Array<tsCoordinate>;
-    private elevations: tsElevations;
+    private elevs: Array<number>;
     
-    constructor(coords: Array<tsCoordinate>, elevations: tsElevations) {
+    constructor(coords: Array<tsCoordinate>, elevs: Array<number>) {
 
         //TODO: dont understand what this is!! 
         const injector = Injector.create({ providers: [ { provide: GeoService, deps: [] } ] });
@@ -23,20 +23,19 @@ export class Path {
 
         // class variables
         this.coordinates = coords;
-        this.elevations = elevations;
+        this.elevs = elevs;
         this.stats.distance = this.geoService.calculatePathDistance(this.coordinates);
         this.stats.nPoints = this.coordinates.length;
-        this.stats.elevations = this.geoService.calculateElevationStats(this.elevations, this.stats.distance);
-        console.log(this.stats.elevations);
+        this.stats.elevations = this.geoService.calculateElevationStats(this.elevs, this.stats.distance);
     }
 
     /**
      * Allows elevations to be set after the class has be instantiated
      * @param elevs elevations array
      */
-    public setElevations(elevations: tsElevations) {
-            this.elevations = elevations;
-            this.stats.elevations = this.geoService.calculateElevationStats(this.elevations, this.stats.distance);
+    public setElevations(elevs: Array<number>) {
+            this.elevs = elevs;
+            this.stats.elevations = this.geoService.calculateElevationStats(this.elevs, this.stats.distance);
     }
 
     /**
@@ -57,11 +56,7 @@ export class Path {
      * Returns the elevations array for the instance
      */
     public getElevs() {
-        return this.elevations.elevs ? this.elevations.elevs : []
-    }
-
-    public getElevationStatus() {
-        return this.elevations.elevationStatus;
+        return this.elevs ? this.elevs : []
     }
 
     /**
@@ -84,7 +79,7 @@ export class Path {
      */
     public getGeoJSON() {
         const geoJSON = new TsGeoJSON();
-        geoJSON.addLineString(this.coordinates, this.elevations);
+        geoJSON.addLineString(this.coordinates, this.elevs);
         return geoJSON;
     }
 
@@ -105,7 +100,7 @@ export class MultiPath {
     private geoJSON: TsGeoJSON;
     private stats: pathStats;
     private coords: Array<tsCoordinate> = []; //flattened array of coordinates
-    private elevations: tsElevations = {elevationStatus: '', elevs: []};
+    private elevs: Array<number> = [];
 
     constructor(firstPath?: Path) {
         if (firstPath) { this.addPath(firstPath); }
@@ -126,13 +121,11 @@ export class MultiPath {
             distance: 0,
             nPoints: 0,
             elevations: 
-              { elevationStatus: '',
-                ascent: 0,
+              { ascent: 0,
                 descent: 0,
                 lumpiness: 0,
                 maxElev: 0,
-                minElev: 0,
-                badElevData: false }
+                minElev: 0 }
           };
     }
 
@@ -170,11 +163,10 @@ export class MultiPath {
     public addPath(path: Path) {
         this.paths.push(path);
         this.coords = this.coords.concat(path.getCoords());
-        this.elevations.elevs = this.elevations.elevs.concat(path.getElevs());
-        this.elevations.elevationStatus = path.getElevationStatus() === 'A' ? 'A' : 'O';
+        this.elevs = this.elevs.concat(path.getElevs());
         this.addStats(path.getPathStats());
         this.geoJSON.remLineString();
-        this.geoJSON.addLineString( this.coords, this.elevations, this.getStats() );
+        this.geoJSON.addLineString( this.coords, this.elevs, this.getStats() );
     }
 
     /**
@@ -184,10 +176,10 @@ export class MultiPath {
     public remPath(index: number = this.paths.length - 1) {
         const path = this.paths.splice(index, 1);
         this.coords = this.paths.reduce( (a, p) => a.concat(p.getCoords()), [] );
-        this.elevations.elevs = this.paths.reduce( (a, p) => a.concat(p.getElevs()), [] );
+        this.elevs = this.paths.reduce( (a, p) => a.concat(p.getElevs()), [] );
         this.remStats(path[0].getPathStats());
         this.geoJSON.remLineString();
-        this.geoJSON.addLineString( this.coords, this.elevations, this.getStats() );
+        this.geoJSON.addLineString( this.coords, this.elevs, this.getStats() );
     }
 
     /**
@@ -215,13 +207,11 @@ export class MultiPath {
         this.stats.distance += pathStats.distance;
         this.stats.nPoints += pathStats.nPoints;
         if (pathStats.elevations) {
-            this.stats.elevations.elevationStatus = 'A';
             this.stats.elevations.ascent += pathStats.elevations.ascent;
             this.stats.elevations.descent += pathStats.elevations.descent;
             this.stats.elevations.maxElev += pathStats.elevations.maxElev;
             this.stats.elevations.minElev += pathStats.elevations.minElev;
             this.stats.elevations.lumpiness = (this.stats.elevations.ascent - this.stats.elevations.descent) / this.stats.distance;
-            this.stats.elevations.badElevData = !(pathStats.elevations.badElevData || this.stats.elevations.badElevData);
         }
         
     }
@@ -235,7 +225,6 @@ export class MultiPath {
         this.stats.distance -= pathStats.distance;
         this.stats.nPoints -= pathStats.nPoints;
         if (pathStats.elevations) {
-            this.stats.elevations.elevationStatus = 'A';
             this.stats.elevations.ascent -= pathStats.elevations.ascent;
             this.stats.elevations.descent -= pathStats.elevations.descent;
             this.stats.elevations.maxElev -= pathStats.elevations.maxElev;
@@ -244,9 +233,6 @@ export class MultiPath {
             this.paths.forEach( path => {
                 // if (path) avoids an error which clicking map too fast for elevs to keep up - not sure of result but doesnt throw error!!
                 const pathElevs = path.getPathStats().elevations;
-                if (pathElevs) {
-                    this.stats.elevations.badElevData = !(pathElevs.badElevData || this.stats.elevations.badElevData);
-                }
             })
         }
         

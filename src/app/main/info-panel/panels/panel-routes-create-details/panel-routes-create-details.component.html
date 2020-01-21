@@ -17,23 +17,31 @@
 
 <div class="row mt-3 mb-0 text-center">
     <div class="col-6">Points</div>
-    <div class="col-6">Lumpiness</div>
+    <!-- <div class="col-6">Lumpiness</div> -->
 </div>                    
 <div class="row mt-0 mb-3 text-center">
     <div class="col-6">{{pathStats.nPoints | number: '1.0-0'}}</div>
-    <div class="col-6">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+    <!-- <div class="col-6">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div> -->
 </div>
 
 
-<div class="row mt-3 mb-0 text-center">
-    <div class="col-6">Max Elev</div>
-    <div class="col-6">Min Elev</div>
-</div>                    
+<div *ngIf="isElevations; else else_div">
+    <div class="row mt-3 mb-0 text-center">
+        <div class="col-4">Max Elev</div>
+        <div class="col-4">Min Elev</div>
+        <div class="col-4">Lumpiness</div>
+    </div>                
 
-<div class="row mt-0 mb-3 text-center">
-    <div class="col-6">{{pathStats.elevations.maxElev | units: 'elevation': units.elevation}}</div>
-    <div class="col-6">{{pathStats.elevations.minElev | units: 'elevation': units.elevation}}</div>
+    <div class="row mt-0 mb-3 text-center">
+        <div class="col-4">{{pathStats.elevations.maxElev | units: 'elevation': units.elevation}}</div>
+        <div class="col-4">{{pathStats.elevations.minElev | units: 'elevation': units.elevation}}</div>
+        <div class="col-6">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
+    </div>
 </div>
+<ng-template #else_div>
+    <div class="name">Elevation data is not stored for 'long' routes. Find out more <a href="">here</a></div>
+</ng-template>
+
 
 <div class="d-flex justify-content-center mb-2 flex-grow-1" >
     <button (click)="onSave()" type="button" class="btn btn-primary btn-sm" type="submit">Save</button>

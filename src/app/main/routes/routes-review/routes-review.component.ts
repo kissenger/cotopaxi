@@ -3,7 +3,7 @@ import { MapService } from 'src/app/shared/services/map.service';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
 import { GeoService } from 'src/app/shared/services/geo.service';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 
 @Component({
   selector: 'app-routes-review',
@@ -34,7 +34,7 @@ export class RoutesReviewComponent implements OnInit {
 
         // plot the stored route
         const plotOptions = {booReplaceExisting: false, booResizeView: true, booSaveToStore: true};
-        this.mapService.addLayerToMap(geoJSON, globalVars.routeLineStyle, plotOptions);
+        this.mapService.addLayerToMap(geoJSON, globals.routeLineStyle, plotOptions);
         
       });
     }

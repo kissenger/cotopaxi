@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MapCreateService } from 'src/app/shared/services/map-create.service'
 import { DataService } from 'src/app/shared/services/data.service';
-import * as globalVars from 'src/app/shared/globals';
+import * as globals from 'src/app/shared/globals';
 import { Subscription } from 'rxjs';
 import { HttpService } from 'src/app/shared/services/http.service';
 
@@ -27,7 +27,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
 
     // centre map on the currently loading route if it exists, otherwise take users home location
     let mapView = this.dataService.getFromStore('mapView', true);
-    let startPosition = mapView ? mapView.centre : globalVars.userHomeLocation;
+    let startPosition = mapView ? mapView.centre : globals.userHomeLocation;
     let startZoom = mapView ? mapView.zoom : 5;
 
     // initialise the map and launch createroute
@@ -54,7 +54,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
       if (!this.overlaidPaths.includes(pathId)){
         this.httpService.getPathById('route', pathId).subscribe( (result) => {
           const plotOptions = {booReplaceExisting: false, booResizeView: false, booSaveToStore: false};
-          this.mapCreateService.addLayerToMap(result.geoJson, globalVars.overlayLineStyle, plotOptions);
+          this.mapCreateService.addLayerToMap(result.geoJson, globals.overlayLineStyle, plotOptions);
           this.overlaidPaths.push(pathId);
         })
 

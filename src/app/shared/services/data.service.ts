@@ -19,9 +19,9 @@ export class DataService {
   public menuClickEmitter = new EventEmitter();          // from map service to info panel
   public pathStatsEmitter = new EventEmitter();   // from map-create to panel-create-detail 
   // stored by map-create-service, accessed by panel-routes-create-details
-  // public createdPathData: {coords: Array<tsCoordinate>, elevations: {elevs: Array<Number>, elevationStatus: String}}; 
+  // public createdPathData: {coords: Array<tsCoordinate>, elevations: {elevs: Array<number>, elevationStatus: string}}; 
   // stored by panel-routes-list-options, accessed by panel-routes-create-details
-  // public importedPathData: {pathId: String, info: {}};
+  // public importedPathData: {pathId: string, info: {}};
 
   /**
    * Collection of variables and methods to enable emission, storage and retrieval of the 
@@ -43,7 +43,7 @@ export class DataService {
   }
 
   // returns the current value of a named key, setting the value to null if {{clearKey}} is true
-  public getFromStore(keyName: string, clearKey: Boolean) {
+  public getFromStore(keyName: string, clearKey: boolean) {
     const returnData = this.dataStore[keyName];
     if (clearKey) { delete this.dataStore[keyName] };
     return returnData;
@@ -75,7 +75,7 @@ export class DataService {
 // export class dataStore {
 
 //   private 
-//   constructor(storeName: String, emit: Boolean) {
+//   constructor(storeName: string, emit: boolean) {
 //   }
   
 //   save() {

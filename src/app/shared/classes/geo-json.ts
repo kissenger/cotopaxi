@@ -1,4 +1,4 @@
-import { tsCoordinate, pathStats, tsElevations } from 'src/app/shared/interfaces';
+import { tsCoordinate, pathStats } from 'src/app/shared/interfaces';
 import { Path } from 'src/app/shared/classes/path-classes';
 
 
@@ -28,7 +28,7 @@ export class TsGeoJSON {
     //  * @param path list of cooordinates either as a Path instance, or just a list of coordinates in an object
     //  */
 
-    public addLineString(path: Path | Array<tsCoordinate>, elevations: tsElevations, pathStats?: pathStats) {
+    public addLineString(path: Path | Array<tsCoordinate>, elevs: Array<number>, pathStats?: pathStats) {
 
         let coordsList: Array<tsCoordinate> = path instanceof Path ? path.getCoords() : path;
 
@@ -40,7 +40,7 @@ export class TsGeoJSON {
             },
             "properties": {
                 "params": {
-                    "elev": elevations.elevs
+                    "elev": elevs
                 },
                 "stats": pathStats,
                 "info": {

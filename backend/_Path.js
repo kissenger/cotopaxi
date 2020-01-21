@@ -7,119 +7,90 @@ const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
 const upsAndDowns = require('./upsAndDowns.js').upsAndDowns;
 const DEBUG = true;
+const LONG_PATH_THRESHOLD = 2000;  // number of points (before simplification) above which the path will be treated as long
 
 /**
  * Path Class
  * Use where data specific to a route/track is not of interest (eg simplification)
  * Otherwise use Route and Track classes, which extend the Path class
  * @param {*} lngLat array of [lng, lat] coordinates
- * @param {*} elevations object in the form {elevs: <ARRAY>, elevationStatus: <STRING>}
+ * @param {*} elevs array of elevations
  * @param {*} pathType string 'route' or 'track'
  */
 
 
 class Path  {
 
-  constructor(lngLat, elevations, pathType) {
+  constructor(lngLat, elevs, pathType) {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
-    this.lngLat = lngLat;
-    this.elevs = elevations.elevs;
-    this.elevationStatus = elevations.elevationStatus
+
+    // populate class variables
+    this.elevs = elevs;
     this.pathType = pathType;
-    this.points = this.getPoints(this.lngLat);
+    this.points = this.getPoints(lngLat);
+    this.isLong = this.points.length > LONG_PATH_THRESHOLD ? true : false;
+    this.isElevations = false; // assume that elevations do not exist until the getElevations function has been called
+
+    // auto simplify a route - user does not get a choice
+    if (this.pathType === 'route') { 
+      this.points = simplify(this.points); 
+    }
+
+    // update remaining class variables after simplification
+    this.bbox = boundingBox(this.points);
+    this.pathSize = this.points.length - 1;
+    this.category = this.category();
+    this.stats = this.getPathStats(); //effectively called again from getElevations() but unavoidable 
+}
+
+  /**
+   * 
+   */
+  getElevations() {
+
+    return new Promise((resolve, reject) => {
+
+      // if the path is not 'long' and elevs do not already exist, then we want elevations
+      if (!this.isLong && this.elevs.length === 0) {
+        const options = {interpolate: false, writeResultsToFile: false };
+        upsAndDowns(this.points, options).then( (newElevs) => {
+          this.elevs = this.smoothElevations(newElevs.map(e => e.elev));
+          this.points = this.addElevationsToPointsArray(this.points, this.elevs);
+          this.stats = this.getPathStats();
+          this.isElevations = true;
+          resolve();
+        })
+
+      // if the path is long (checking that the path is a route), then we want to remove elevations if we have them and return nothing
+      } else {
+        // its a long route so whatever happens, discard the elevations
+        if (this.pathType = 'route') {
+          this.elevs = [];
+          this.isElevations = false
+        // its a track so keep elevations if they are present.
+        // completeness of supplied elevations is not checked, although there is a check in readGPX()
+        } else {
+          this.isElevations = this.elevs.length !== 0 ? true : false
+        }
+        resolve();
+      }
+    })
 
   }
 
   /**
-   * Initialise the instance - basically required to remove the promise (needed because elevations
-   * takes some time) out of the constructor
+   * Apply low pass filter to elevation data
+   * @param {} elevs elevations as an array of numbers
    */
-  init() {
-
-    // turn the list of lngLats into an array of Point instances, and simplify the route upfront to minimise processing effort 
-    if (this.pathType === 'route') { this.points = simplify(this.points); }
-
-    // update the instance variables not impacted by elevations
-    this.bbox = boundingBox(this.points);
-    this.pathSize = this.points.length - 1;
-    this.category = this.category();
-    // this.direction = this.direction();  // not currently working
-
-    // check status of elevations, if need to be replaced return the new ones
-    return new Promise((res, rej) => {
-      
-      this.checkElevations(this.elevs, this.points).then( elevs => {
-
-        // update the instance elevations and points, and anlayse the final path
-        this.elevs = elevs;
-        this.points = this.addElevationsToPointsArray(this.points, this.elevs);
-        this.stats = this.analysePath();
-
-        // resolve the promise when complete
-        res();
-
-      })
-    })
-
+  smoothElevations(elevs) {
+    const ALPHA = 0.1;
+    const smoothedElevs = [elevs[0]];
+    for (let i = 1, max = elevs.length - 1; i < max; i++) {
+      smoothedElevs.push( elevs[i] * ALPHA + smoothedElevs[i-1] * ( 1 - ALPHA ) );
+    }
+    return smoothedElevs;
   }
-
-
-  // /**
-  //  * Allows insertion of a property onto the class object from an external user
-  //  * @param {object} obj is the key-value pair to insert {object: key}
-  //  */
-  // injectKeyValuePair(obj) {
-  //   this[Object.keys(obj)[0]] = Object.values(obj)[0];
-  // }
-
-  checkElevations(elevs, coords) {
-    if (DEBUG) { console.log(timeStamp() + ' >> Checking Elevations '); }
-    return new Promise( (resolve, reject) => {
-      if (this.elevationStatus.indexOf('D') > -1) {
-        // imported elevations were discarded, so we need to replace them
-        this.getElevations(coords).then( (e) => {
-          resolve(e);
-        });
-        
-      } else {
-        // delete flag not found, so dont get new ones
-        resolve(elevs);
-      }
-    })
-  }
-
-  getElevations(coordsArray) {
-    if (DEBUG) { console.log(timeStamp() + ' >> Getting Elevations '); }
-    return new Promise( (resolve, reject) => {
-      
-      // this divides the incoming coords array into an array of chunks no longer than MAX_LEN
-      // dont use splice as it cocks things up for reasons i dont understand.
-      const MAX_LEN = 2000;
-      let sliceArray = [];
-      let i = 0;
-      do {
-        const start = i * MAX_LEN
-        sliceArray.push(coordsArray.slice(start, start + MAX_LEN));
-        i++;
-      } while ( i * MAX_LEN < coordsArray.length);
-
-      // request each chunk in turn, waiting for the last one to resolve before moving on
-      sliceArray.reduce( (promise, coords) => {
-        return promise.then( (allResults) => 
-          upsAndDowns(coords, {options: {interpolate: false}}).then( (thisResult) => 
-              [...allResults, thisResult] 
-            ));
-        }, Promise.resolve([])).then( (result) => {
-          resolve(result[0].map(e => e.elev));
-        });
-
-    });
-    
-  }
-
-
-
 
   /**
    * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
@@ -139,8 +110,6 @@ class Path  {
     if (this.cadence) params.cadence = this.cadence;
     params.cumDistance = this.stats.cumDistance;
 
-    console.log(this.stats);
-
     return {
       userId: userId,
       isSaved: isSaved,
@@ -152,10 +121,13 @@ class Path  {
         // direction: this.direction,
         category: this.category,
         isFavourite: false,
+        isNationalTrail: false,
         name: this.name,
         description: this.description,
         pathType: this.pathType,
-        startTime: this.startTime
+        startTime: this.startTime,
+        isLong: this.isLong,
+        isElevations: this.isElevations
       },
       params: params,
       stats: this.stats,
@@ -338,25 +310,26 @@ class Path  {
   /**
    * Create path statistics and parameters
    */
-  analysePath() {
+  getPathStats() {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Analyse Path '); }
 
     const KM_TO_MILE = 0.6213711922;
-    const ALPHA = 0.3;             //low pass filter constant, to higher the number the quicker the response, used for smoothing gradient
+    // const ALPHA = 0.3;             //low pass filter constant, to higher the number the quicker the response, used for smoothing gradient
     const GRAD_THRESHOLD = 2;      // gradient in % above which is considered a climb/descent
     const HILL_THRESHOLD = 20;     // hills of less height gain will not be considered
     const SPEED_THRESHOLD = 1.4;   // km/h
+    const ASCENT_THRESHOLD = 15;   // threshold below which changes in ascent/descent are ignored  
 
     let maxDist = 0;
     let p2pMax = 0;
 
     // increments from last point
     let dDist = 0;
-    let dElev = 0;
 
     // cumulative counters
     let distance = 0;
+    let deltaSum = 0; // cumulative change in elevation 
     let ascent = 0;
     let descent = 0;
     let maxElev = -9999;
@@ -367,9 +340,9 @@ class Path  {
     let cumDistance = [0];  // cumulative distance at each point
 
     // this and last point values
-    let thisFiltElev; // needs to be undefined as its checked
-    let lastFiltElev;
-    let lastPoint;
+    let thisElev; // needs to be undefined as its checked
+    let lastElev;
+    let delta; // change in elevation from previous loop
     let lastSlopeType;
     let thisSlopeType;              // 0 = flat, 1 = ascending, -1 = descending
     let lastKmStartTime = 0;        // time at which previous km marker was reached
@@ -399,10 +372,11 @@ class Path  {
     let index = 0;
     do  {
 
-      const thisPoint = this.points[index];
-
       // skipping the first point, compare this point to the previous one
       if (index !== 0) {
+
+        const lastPoint = this.points[index-1];
+        const thisPoint = this.points[index];
 
         /**
          * Distance
@@ -466,84 +440,91 @@ class Path  {
         if ( isElev ) {
           // elevation data exists on this point
 
-          dElev = thisPoint.elev - lastPoint.elev;
-          ascent = dElev > 0 ? ascent + dElev : ascent;
-          descent = dElev < 0 ? descent + dElev : descent;
-          maxElev = thisPoint.elev > maxElev ? thisPoint.elev : maxElev;
-          minElev = thisPoint.elev < minElev ? thisPoint.elev : minElev;
+          lastElev = lastPoint.elev;
+          thisElev = thisPoint.elev;
+          delta = thisElev - lastElev;
 
-          if ( dElev != 0 ) {
-            // elevation has changed since the last loop
+          maxElev = thisElev > maxElev ? thisElev : maxElev;
+          minElev = thisElev < minElev ? thisElev : minElev;
 
-            lastFiltElev = thisFiltElev;
+          // if the sign of the last change in elevation is the same as the sum, add it on, otherwise dont
+          if (Math.sign(deltaSum) === Math.sign(delta)) {
+            deltaSum += delta;
 
-            // filter the elevation using LP filter : newValue = measuredValue * alpha + oldValue * (1 - alpha)
-            thisFiltElev = thisPoint.elev * ALPHA + thisFiltElev * ( 1 - ALPHA );
-            const gradient = (thisFiltElev - lastFiltElev) / eDist * 100;
-
-            // determine type of slope based on gradient
-            if ( gradient < (-GRAD_THRESHOLD) ) { thisSlopeType = -1; }
-            else if ( gradient > GRAD_THRESHOLD ) { thisSlopeType = 1; }
-            else { thisSlopeType = 0; };
-
-            // max gradient; gets reset if slopetype changes
-            gradM = Math.abs(gradient) > gradM ? Math.abs(gradient) : gradM;
-
-            // reset distance each time elevation changes
-            eDist = 0;
-            //console.log(thisPoint.elev, dElev, gradient, thisSlopeType);
-          }
-
-          if ( typeof lastSlopeType === 'undefined' ) {
-            // slopeType has not been initialised: do so
-            lastSlopeType = thisSlopeType;
-            e0 = thisFiltElev;
-            gradM = 0;
-
+          // sign of the delta has changed so add to ascent/descent if over threshold and reset the sum
           } else {
-            // slopeType exists
-
-            if ( thisSlopeType !== lastSlopeType  || index === this.pathSize) {
-              // slopetype has changed
-
-              const de = thisFiltElev - e0;
-              if ( Math.abs(de) > HILL_THRESHOLD ) {
-
-                const dd = distance - d0;
-                const dt = (duration - t0);
-
-                hills.push({
-                  dHeight: de,
-                  dDist: dd,
-                  dTime: isTime ? dt : 0,
-                  pace: isTime ? (dt/60)/(dd/1000) : 0,
-                  ascRate: isTime ? de/(dt/60) : 0,
-                  gradient: {
-                    max: lastSlopeType === 1 ? gradM : -gradM,
-                    ave: de / dd * 100
-                  }
-                });
-
+            if (Math.abs(deltaSum) > ASCENT_THRESHOLD) {
+              if (deltaSum > 0) {
+                ascent += deltaSum;
+              } else {
+                descent += deltaSum;
               }
-              d0 = distance;
-              t0 = duration;
-              e0 = thisFiltElev;
-              gradM = 0;
-              lastSlopeType = thisSlopeType;
             }
+            deltaSum = delta;
+          } 
+
+          // determine type of slope based on gradient
+          const gradient = (thisElev - lastElev) / eDist * 100;
+          if ( gradient < (-GRAD_THRESHOLD) ) { thisSlopeType = -1; }
+          else if ( gradient > GRAD_THRESHOLD ) { thisSlopeType = 1; }
+          else { thisSlopeType = 0; };
+
+          // max gradient; gets reset if slopetype changes
+          gradM = Math.abs(gradient) > gradM ? Math.abs(gradient) : gradM;
+
+          // reset distance each time elevation changes
+          eDist = 0;
+        }
+
+        if ( typeof lastSlopeType === 'undefined' ) {
+          // slopeType has not been initialised: do so
+          lastSlopeType = thisSlopeType;
+          e0 = thisElev;
+          gradM = 0;
+
+        } else {
+          // slopeType exists
+
+          if ( thisSlopeType !== lastSlopeType  || index === this.pathSize) {
+            // slopetype has changed
+
+            const de = thisElev - e0;
+            if ( Math.abs(de) > HILL_THRESHOLD ) {
+
+              const dd = distance - d0;
+              const dt = (duration - t0);
+
+              hills.push({
+                dHeight: de,
+                dDist: dd,
+                dTime: isTime ? dt : 0,
+                pace: isTime ? (dt/60)/(dd/1000) : 0,
+                ascRate: isTime ? de/(dt/60) : 0,
+                gradient: {
+                  max: lastSlopeType === 1 ? gradM : -gradM,
+                  ave: de / dd * 100
+                }
+              });
+
+            }
+            d0 = distance;
+            t0 = duration;
+            e0 = thisElev;
+            gradM = 0;
+            lastSlopeType = thisSlopeType;
           }
 
         } // if (point.elev)
 
       } else {
         // index === 0
-        if ( isElev) thisFiltElev = this.points[index].elev;
+        if ( isElev) thisElev = this.points[index].elev;
       }
 
       /**
      * Keep track of previous points for next loop
      */
-      lastPoint = thisPoint;
+      // lastPoint = thisPoint;
       index++;
 
     } while (index <= this.pathSize)
