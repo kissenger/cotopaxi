@@ -1,0 +1,18 @@
+.input{
+  font-size: 12px;
+  padding: 3px 6px;
+}
+
+.inner {
+  /* border: 1px red dotted; */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* .outer {
+  border: 1px blue solid;
+}
+
+.buttons {
+  border: 1px green dashed;
+} */

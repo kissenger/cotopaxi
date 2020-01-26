@@ -4,10 +4,12 @@
     width: 225px;
     font-size: smaller;
     /* pointer-events: none; */
+    /* border: orange 1px solid; */
 }
 
 .outer-container {
     background: rgba(255,255,255,0.5); /* newer browsers */
+    /* border: purple 1px dashed; */
 }
 
 /* this is needed to ensure that the tabs which are hidden and overlay

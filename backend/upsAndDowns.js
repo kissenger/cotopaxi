@@ -41,6 +41,16 @@ function upsAndDowns(points, options) {
       resolve(result);
     });
 
+    // test version that does not care about the order returned - does not seem to be any quicker
+    // let promises = [];
+    // points.forEach( point=> {
+    //   promises.push(getElevation(point, options.interpolate));
+    // })
+
+    // Promise.all(promises).then( (results) => {
+    //   console.log(results);
+    //   resolve(results);
+    // })
   });
 
 }

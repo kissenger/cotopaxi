@@ -20,18 +20,43 @@ export class ChartsService{
     
   }
 
-  plotChart(htmlElement, chartData) {
+  plotChart(htmlElement, chartData) {      
+    
+    let frigFlag = false;
+    if (chartData[0].length === 0) {
+      chartData = [[0.1],[0.1]];
+      frigFlag = true;
+    } else {
+      chartData = this.processChartData(chartData);
+    }
 
-    const chartTitle = 'Elevation (' + globals.units.elevation + ') vs distance (' + globals.units.distance + ')'
+    console.log(chartData);
+    
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(() =>{
+
       let chart = new google.visualization.LineChart(htmlElement);
-      let data = this.transposeArray(chartData);
+      let data = google.visualization.arrayToDataTable(this.transposeArray(chartData), true);
+      let maxX = chartData[0][chartData[0].length-1];
+
       let options = {
-        title: chartTitle,
+        series: frigFlag ? {0: {color: 'transparent'}} : {},
+        title: 'Elevation (' + globals.units.elevation + ') vs distance (' + globals.units.distance + ')',
         hAxis: {
+          textPosition: frigFlag ? 'none' : '',
+          format: maxX > 10 ? '0' : '0.0',
+          ticks: frigFlag ? [0] : this.getHorzTicks(maxX),
+          viewWindowMode:'explicit',
+          viewWindow:{
+            min: 0
+          }
+        },
+        vAxis: {
           format: '0',
-          ticks: this.getHorzTicks(chartData[0][chartData[0].length-1])
+          viewWindowMode:'explicit',
+          viewWindow:{
+            min: 0
+          }
         },
         legend: 'none',
         chartArea: {
@@ -39,8 +64,9 @@ export class ChartsService{
           width: '160'
         }
       };
+   
+      return chart.draw(data, options); 
 
-      return chart.draw(google.visualization.arrayToDataTable(data, true), options); 
     });
 
   }
@@ -52,14 +78,37 @@ export class ChartsService{
 
   //TODO there should be a cleaver way to do this more succinctly
   getHorzTicks(maxValue) {
-    const nInternalTicks = 4;
-    let nIntervals = nInternalTicks + 1;
-    let tickArray = [];
-    for (let i = 0; i < nInternalTicks+1; i++) {
-      tickArray.push(i * Math.ceil(maxValue / nIntervals))
-    }
-    tickArray.push( Math.ceil(maxValue) );
-    return tickArray
+    let nIntervals = maxValue === 0.1 ? 1 : 5;
+    let factor = maxValue > 10 ? 1 : 10;
+    let ticks = [];
+    let tickValue = 0;
+
+    do {
+      tickValue += Math.ceil(maxValue / nIntervals * factor) / factor;
+      ticks.push(tickValue);
+    } while (tickValue < maxValue)
+
+    return ticks
+  }
+
+  processChartData(chData) {
+    
+      // arrange elevation data for plttoing on charts - first step convert to dsired units
+      if (globals.units.distance === 'miles') {
+        var dist = chData[0].map( (m) => m / 1000.0 * globals.KM_TO_MILE);
+      } else {
+        var dist = chData[0].map( (m) => m / 1000.0);
+      }
+
+      if (globals.units.elevation === 'ft' ) {
+        var elevs = chData[1].map( (m) => m * globals.M_TO_FT);
+      } else {
+        var elevs = chData[1];
+      }
+
+      // console.log(dist, elevs)
+      return [dist, elevs]
+
   }
 
 }

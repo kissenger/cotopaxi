@@ -132,6 +132,15 @@ export class GeoService {
     return R * c * 1000.0;  // distance in metres
   
   }
+
+  smoothElevations(elevs: Array<number>) {
+    const ALPHA = 0.3;
+    const smoothedElevs = [elevs[0]];
+    for (let i = 1, max = elevs.length - 1; i < max; i++) {
+      smoothedElevs.push( elevs[i] * ALPHA + smoothedElevs[i-1] * ( 1 - ALPHA ) );
+    }
+    return smoothedElevs;
+  }
   
   /**
   * Simple utility function to convert degrees to radians 
@@ -152,6 +161,16 @@ export class GeoService {
       distance += this.p2p(coords[i-1], coords[i])
     }
     return distance;
+  }
+
+  getCumDistance(coords: Array<tsCoordinate>) {
+    let cumDist = [0];
+    let distance = 0;
+    for (let i = 1; i < coords.length; i++) {
+      distance += this.p2p(coords[i-1], coords[i])
+      cumDist.push(distance);
+    }    
+  return cumDist;
   }
 
   

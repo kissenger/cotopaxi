@@ -5,7 +5,7 @@ import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
 import { tsCoordinate } from 'src/app/shared/interfaces';
-import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
+// import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
   providedIn: 'root'
@@ -16,11 +16,13 @@ import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
  */
 export class MapCreateService extends MapService {
 
-  private multiPath: MultiPath; // used for undo
+  // private multiPath: MultiPath; // used for undo
   private markers: Array<mapboxgl.Marker> = [];
   private options = {
     snapProfile: 'driving'
   };
+  private coordsArray: Array<tsCoordinate> = [];
+  private geoJSON;
 
   constructor(
     httpService: HttpService,
@@ -28,7 +30,7 @@ export class MapCreateService extends MapService {
     dataService: DataService
   ) { 
     super(httpService, geoService, dataService);
-    this.multiPath = new MultiPath();
+    // this.multiPath = new MultiPath();
   }
 
   public getOptions() {
@@ -42,12 +44,13 @@ export class MapCreateService extends MapService {
 
     // update the map source ( two steps per this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877 )
     const source = this.tsMap.getSource('geojson') as mapboxgl.GeoJSONSource;
-    const pathAsGeoJSON = this.multiPath.getGeoJSON();
-    source.setData(pathAsGeoJSON);
+    source.setData(this.geoJSON);
 
     // emit so that the details tabs can update, save so that onSave has access to the final route
-    this.dataService.saveToStore('activePath', {source: 'created', pathAsGeoJSON});
-    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
+    console.log(this.geoJSON);
+
+    this.dataService.saveToStore('activePath', {source: 'created', pathAsGeoJSON: this.geoJSON});
+    this.dataService.activePathEmitter.emit(this.geoJSON);
 
   }
 
@@ -61,22 +64,26 @@ export class MapCreateService extends MapService {
     this.tsMap.on('click', (e) => {
 
       const clickedPoint: tsCoordinate = { lat: e.lngLat.lat, lng: e.lngLat.lng }; 
-      
+
       // First loop (if firstPoint parameter on multiPath instance has not been set)
-      if (!this.multiPath.getFirstPoint()) { 
-        this.multiPath.setFirstPoint(clickedPoint);
+      if (this.coordsArray.length === 0) {
+        this.coordsArray.push(clickedPoint);
         this.addMarker(clickedPoint);
 
       // Subsequent loops
       } else {
-        const startPoint: tsCoordinate = this.multiPath.getLastPoint();
+        // const startPoint: tsCoordinate = this.multiPath.getLastPoint();
+        const startPoint = this.coordsArray[this.coordsArray.length-1];
 
         // get coordinates for the next chunk of path, add to the path object
         this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<tsCoordinate>) => {
-          this.geoService.getElevationsFromAPI(coords, true).then( (elevs: Array<number>) => {
-            this.multiPath.addPath(new Path(coords, elevs));
+          this.coordsArray = this.coordsArray.concat(coords);
+          const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
+          this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
+            this.geoJSON = result.geoJson;
             this.refreshMapAfterPathChange();
-            this.addMarker(this.multiPath.getLastPoint());
+            if( this.markers.length>1) { this.popMarker();}
+            this.addMarker(this.coordsArray[this.coordsArray.length-1]);
           })
         })
       }
@@ -145,27 +152,30 @@ export class MapCreateService extends MapService {
   */
   undo() {
 
+//NEEDS REWRITE
+
     // if there are no paths on the array 
-    if (this.multiPath.nPaths() === 0) { 
+    // if (this.multiPath.nPaths() === 0) { 
       
-      // if there are markers, then delete them and reset multiPath, otherwise do nothing
-      if (this.markers.length > 0) {
-        this.popMarker();
-        this.multiPath.setFirstPoint(null);
-        this.multiPath.resetPathStats();
-      }
+    //   // if there are markers, then delete them and reset multiPath, otherwise do nothing
+    //   if (this.markers.length > 0) {
+    //     this.popMarker();
+    //     this.multiPath.setFirstPoint(null);
+    //     this.multiPath.resetPathStats();
+    //   }
     
-    // there are paths on the array so remove the most recent one
-    } else {
-      this.multiPath.remPath()
-      this.refreshMapAfterPathChange();
-      this.popMarker();
-    }
+    // // there are paths on the array so remove the most recent one
+    // } else {
+    //   this.multiPath.remPath()
+    //   this.refreshMapAfterPathChange();
+    //   this.popMarker();
+    // }
   }
 
   public clearPath() {
     this.clearAllMarkers();
-    this.multiPath = new MultiPath();
+    this.coordsArray = [];
+    this.geoJSON = this.resetGeoJSON();
     this.refreshMapAfterPathChange(); 
   }
 
@@ -175,15 +185,18 @@ export class MapCreateService extends MapService {
    * Called directly from component, so needs ot be public
    */
   public closePath() {
-    let startPoint: tsCoordinate = this.multiPath.getLastPoint();
-    let endPoint: tsCoordinate = this.multiPath.getFirstPoint();
+    let startPoint: tsCoordinate = this.coordsArray[this.coordsArray.length-1];
+    let endPoint: tsCoordinate = this.coordsArray[0];
 
     // get coordinates for the next chunk of path, add to the path object
     this.getNextPathCoords(startPoint, endPoint).then( (coords: Array<tsCoordinate>) => {
-      this.geoService.getElevationsFromAPI(coords, true).then( (elevs: Array<number>) => {
-        this.multiPath.addPath(new Path(coords, elevs));
+      this.coordsArray = this.coordsArray.concat(coords);
+      const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
+      this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
+        this.geoJSON = result.geoJson;
         this.refreshMapAfterPathChange();
-        this.addMarker(this.multiPath.getLastPoint());
+        if( this.markers.length>1) { this.popMarker();}
+        this.addMarker(this.coordsArray[this.coordsArray.length-1]);
       })
     })
   }
@@ -199,9 +212,17 @@ export class MapCreateService extends MapService {
   }
 
   addMarker(pos: tsCoordinate) {
-    const newMarker = new mapboxgl.Marker().setLngLat(pos).addTo(this.tsMap);
+    const newMarker = new mapboxgl.Marker()
+      .setLngLat(pos)
+      .addTo(this.tsMap);
     this.markers.push(newMarker);
     return newMarker;
+  }
+
+  kill() {
+    this.coordsArray =[];
+    this.geoJSON = null;
+    this.clearAllMarkers();
   }
 
   setUpMap() {
@@ -232,4 +253,39 @@ export class MapCreateService extends MapService {
       });
   }
 
+  resetGeoJSON() {
+
+    return {
+    "type": "FeatureCollection",
+    "features": [{      
+      "type": "Feature",
+      "geometry": {
+          "type": "LineString",
+          "coordinates": []
+      },
+      "properties": {
+          "params": {
+              "elev": [],
+              "cumDistance": []
+          },
+          "stats": {
+            "distance": 0,
+            "nPoints": 0,
+            "elevations": {
+              "ascent": 0,
+              "descent": 0,
+              "lumpiness": 0,
+              "maxElev": 0,
+              "minElev": 0
+            },
+          },
+          "info": {
+              "name": "",
+              "description": "",
+              "isLong": false
+          
+          }
+        }
+      }]
+    }}
 }

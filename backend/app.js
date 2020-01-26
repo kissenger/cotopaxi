@@ -9,6 +9,7 @@ const DEBUG = true;
 
 // Local functions
 const Route = require('./_Path').Route;
+const Point = require('./_Point').Point;
 const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
@@ -16,6 +17,7 @@ const readGPX = require('./gpx.js').readGPX;
 const writeGpx = require('./gpx.js').writeGPX;
 const timeStamp = require('./utils.js').timeStamp;
 const getElevations = require('./upsAndDowns').upsAndDowns;
+const simplify = require('./geoLib.js').simplify;
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
 const mongoose = require('mongoose');
@@ -218,12 +220,14 @@ app.post('/save-created-route/', (req, res) => {
   //   res.status(401).send('Unauthorised');
   // }
 
-  if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
   console.log(req.body);
-  var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevations);
 
+  if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
+  var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevs);
+console.log(path);
   // get elevations wont get new ones if elevations are supplied
   path.getElevations().then( () => {
+    console.log(path);
     const mongoPath = path.asMongoObject(1, true);
     mongoModel('route').create(mongoPath).then( (document) => {
       res.status(201).json( {pathId: document._id} );  
@@ -246,6 +250,7 @@ app.get('/get-path-by-id/:type/:id', (req, res) => {
 
   // query the database and return result to front end
   getPathDocFromId(req.params.id, req.params.type).then( path => {
+    console.log(path);
       res.status(201).json({geoJson: new GeoJSON(path, 'route')});
   })
 })
@@ -394,6 +399,48 @@ app.get('/download/:fname', (req, res) => {
       console.log('success');
     }
   } );
+
+})
+
+
+
+
+
+/*****************************************************************
+ *
+ *  Simplify a path provided by the front end, and return it.
+ *  Does this by simply creating a route object on the as this
+ *  automatically invokes simplification algorithm
+ *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
+ *****************************************************************/
+// app.post('/simplify-path/', (req, res) => {
+
+//   if (DEBUG) { console.log(timeStamp() + '>> simplify-path') };
+
+//   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]); 
+//   const points = lngLats.map(coord => new Point([coord]))
+//   res.status(201).json( simplify(points) );
+
+// })
+
+/*****************************************************************
+ *
+ *  Simplify a path provided by the front end, and return it.
+ *  Does this by simply creating a route object on the as this
+ *  automatically invokes simplification algorithm
+ *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
+ *****************************************************************/
+app.post('/process-points/', (req, res) => {
+
+  if (DEBUG) { console.log(timeStamp() + '>> process-points-from-front') };
+
+  const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
+  
+  var path = new Route('', '', lngLats, req.body.elevs);
+  // console.log(req.body);
+  path.getElevations().then( () => {
+    res.status(201).json( {geoJson: path.asGeoJSON()} );
+  });
 
 })
 
@@ -562,30 +609,6 @@ app.get('/reverse-path/:type/:id', auth.verifyToken, (req, res) => {
 });
 
 
-
-
-
-/*****************************************************************
- *
- *  Simplify a path provided by the front end, and return it.
- *  Does this by simply creating a route object on the as this
- *  automatically invokes simplification algorithm
- *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
- *****************************************************************/
-app.post('/simplify-path/', auth.verifyToken, (req, res) => {
-
-  if (DEBUG) { console.log('-->simplify-path: req.body = ', req.body); }
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-  }
-
-  var path = new Route('', '', req.body.geometry.coordinates, []);
-  res.status(201).json(path);
-
-})
 
 
 /*****************************************************************

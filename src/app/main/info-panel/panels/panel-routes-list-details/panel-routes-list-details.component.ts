@@ -15,11 +15,12 @@ export class PanelRoutesListDetailsComponent implements OnInit, OnDestroy {
   private pathPropsSubscription: Subscription;
   private pathName: string = "";
   private pathDescription: string = "";
-  private chartDataArray: Array<Array<number>>
-  private isElevations: boolean;
   private wikiLink: string = globals.links.wiki.elevations;
   private pathCategory: string;
   private pathType: string;
+  private isElevations: boolean = false;
+  private isLong: boolean = false;
+
 
   private pathStats: pathStats = {
     distance: 0,
@@ -50,24 +51,13 @@ export class PanelRoutesListDetailsComponent implements OnInit, OnDestroy {
       this.pathCategory = geoJson.properties.info.category;
       this.pathType = geoJson.properties.info.pathType;
       this.pathDescription = geoJson.properties.info.description;
-      this.isElevations = geoJson.properties.info.isElevations;
-
-      // arrange elevation data for plttoing on charts - first step convert to dsired units
-      if (globals.units.distance === 'miles') {
-        var dist = geoJson.properties.params.cumDistance.map( (km) => km * globals.KM_TO_MILE);
-      } else {
-        var dist = geoJson.properties.params.cumDistance;
-      }
-
-      if (globals.units.elevation === 'ft' ) {
-        var elevs = geoJson.properties.params.elev.map( (m) => m * globals.M_TO_FT);
-      } else {
-        var elevs = geoJson.properties.params.elev;
-      }
+      this.isLong = geoJson.properties.info.isLong;
+      this.isElevations = (geoJson.properties.info.isElevations && !this.isLong) ? true : false;
+      console.log(this.isLong, this.isElevations);
 
       // then plot the chart
-      this.chartDataArray = [dist, elevs];
-      this.chartsService.plotChart(document.getElementById('chart_div'), this.chartDataArray);
+      const chartDataArray = [geoJson.properties.params.cumDistance, geoJson.properties.params.elev];
+      this.chartsService.plotChart(document.getElementById('chart_div'), chartDataArray);
     })
 
 

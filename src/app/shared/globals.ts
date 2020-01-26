@@ -6,6 +6,7 @@ export const mapboxAccessToken: string = 'pk.eyJ1Ijoia2lzc2VuZ2VyIiwiYSI6ImNrMWY
 export const KM_TO_MILE = 0.6213711922;
 export const M_TO_FT = 3.28084;
 export const EXPORT_FILE_SIZE_LIMIT = 100000;
+export const LONG_PATH_THRESHOLD = 1000;
 
 export const links = {
     wiki: {
@@ -22,6 +23,5 @@ export const units: {distance: 'miles' | 'kms', elevation: 'm' | 'ft'} =
     }
 
 export const userHomeLocation: tsCoordinate = {lat: 51, lng: -4};
-
 export const overlayLineStyle = {lineWidth: 2, lineColor: 'blue', lineOpacity: 0.3};
 export const routeLineStyle = {lineWidth: 3, lineColor: 'red', lineOpacity: 0.5};

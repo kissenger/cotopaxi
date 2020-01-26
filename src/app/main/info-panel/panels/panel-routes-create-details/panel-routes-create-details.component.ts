@@ -4,8 +4,8 @@ import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
 import { pathStats } from 'src/app/shared/interfaces';
 import { HttpService } from 'src/app/shared/services/http.service';
-import { MultiPath } from 'src/app/shared/classes/path-classes';
 import { Subscription } from 'rxjs';
+import { ChartsService } from 'src/app/shared/services/charts-service';
 
 @Component({
   selector: 'app-panel-routes-create-details',
@@ -30,16 +30,23 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   private units = globals.units;
   private pathName: string = '';
   private pathDescription: string = '';
-  private isElevations: boolean;
+  private isElevations: boolean = false;
+  private wikiLink: string = globals.links.wiki.elevations;
+  private pathCategory: string;
+  private pathType: string;
+  private isLong: boolean;
 
   constructor(
     private dataService: DataService,
     private httpService: HttpService,
-    private router: Router
+    private router: Router,
+    private chartsService: ChartsService
   ) {}
 
 
   ngOnInit() {
+
+    this.chartsService.plotChart(document.getElementById('chart_div'), [[],[]]);
 
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
     this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJSON) => {
@@ -47,12 +54,25 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       if (geoJSON.features.length === 0) {
         this.resetPathStats();
       } else {
+        // console.log('inoibg3irog');
+        // console.log(geoJSON);
         this.pathStats = geoJSON.features[0].properties.stats;
         this.pathName = geoJSON.features[0].properties.info.name;
         this.pathDescription =  geoJSON.features[0].properties.info.description;
-        this.isElevations = geoJSON.features[0].properties.info.isElevations;
+        this.pathCategory = geoJSON.features[0].properties.info.category;
+        this.pathType = geoJSON.features[0].properties.info.pathType;
+        this.isLong = geoJSON.features[0].properties.info.isLong;
+        this.isElevations = (geoJSON.features[0].properties.info.isElevations && !this.isLong) ? true : false;
+        
       }
     
+      
+      // then plot the chart
+      const chartDataArray = [geoJSON.features[0].properties.params.cumDistance, geoJSON.features[0].properties.params.elev];
+      // console.log(chartDataArray);
+      // console.log(this.isElevations);
+      this.chartsService.plotChart(document.getElementById('chart_div'), chartDataArray);
+
     })
 
   }

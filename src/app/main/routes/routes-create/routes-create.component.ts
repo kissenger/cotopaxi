@@ -70,6 +70,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.menuSubscription.unsubscribe();
     this.pathIdSubscription.unsubscribe();
+    this.mapCreateService.kill();
   }
 
   

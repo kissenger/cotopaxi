@@ -19,7 +19,8 @@ const pathSchema = mongoose.Schema({
     time: {type: [Number]},
     heartRate: {type: [Number]},
     cadence: {type: [Number]},
-    cumDistance: {type: [Number]}
+    cumDistance: {type: [Number]},
+    smoothedElev: {type: [Number]}
   },
 
   // user entered information to describe/tag route
@@ -27,7 +28,7 @@ const pathSchema = mongoose.Schema({
     direction: {type: String},
     category: {type: String},
     nationalTrail: {type: Boolean},
-    favourite: {type: Boolean},  
+    isFavourite: {type: Boolean},  
     name: {type: String}, 
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'

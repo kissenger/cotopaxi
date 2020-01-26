@@ -74,4 +74,8 @@ export class HttpService {
     return this.http.get<any>('http://' + this.hostName + ':3000/download-file/' + fileName);
   }
 
+  processPoints(coords: Array<tsCoordinate>, elevs?: Array<number> ) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/process-points/', {coords, elevs});
+  }
+
 }

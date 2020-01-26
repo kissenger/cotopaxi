@@ -26,7 +26,7 @@ export interface pathStats{
         lumpiness: number,
         maxElev: number,
         minElev: number
-    };
+    }
 }
 
 
