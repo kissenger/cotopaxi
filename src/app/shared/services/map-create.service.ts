@@ -4,7 +4,7 @@ import { HttpService } from './http.service';
 import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
-import { tsCoordinate } from 'src/app/shared/interfaces';
+import { tsCoordinate, tsPlotPathOptions, tsLineStyle } from 'src/app/shared/interfaces';
 // import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
@@ -17,12 +17,19 @@ import { tsCoordinate } from 'src/app/shared/interfaces';
 export class MapCreateService extends MapService {
 
   // private multiPath: MultiPath; // used for undo
-  private markers: Array<mapboxgl.Marker> = [];
+  // private markers: Array<mapboxgl.Marker> = [];
   private options = {
     snapProfile: 'driving'
   };
   private coordsArray: Array<tsCoordinate> = [];
   private geoJSON;
+  private plotOptions: tsPlotPathOptions = {
+    booReplaceExisting: true, 
+    booResizeView: false, 
+    booSaveToStore: true,
+    booPlotMarkers: true
+  }
+  private styleOptions: tsLineStyle = {}
 
   constructor(
     httpService: HttpService,
@@ -30,28 +37,11 @@ export class MapCreateService extends MapService {
     dataService: DataService
   ) { 
     super(httpService, geoService, dataService);
-    // this.multiPath = new MultiPath();
   }
 
+  // Returns the options object - called from routes-create component
   public getOptions() {
     return this.options;
-  }
-
-  /**
-   * Handles the task of creating a geoJson and setting it onto the map
-   */
-  private refreshMapAfterPathChange() {
-
-    // update the map source ( two steps per this thread https://github.com/DefinitelyTyped/DefinitelyTyped/issues/14877 )
-    const source = this.tsMap.getSource('geojson') as mapboxgl.GeoJSONSource;
-    source.setData(this.geoJSON);
-
-    // emit so that the details tabs can update, save so that onSave has access to the final route
-    console.log(this.geoJSON);
-
-    this.dataService.saveToStore('activePath', {source: 'created', pathAsGeoJSON: this.geoJSON});
-    this.dataService.activePathEmitter.emit(this.geoJSON);
-
   }
 
   /**
@@ -68,7 +58,7 @@ export class MapCreateService extends MapService {
       // First loop (if firstPoint parameter on multiPath instance has not been set)
       if (this.coordsArray.length === 0) {
         this.coordsArray.push(clickedPoint);
-        this.addMarker(clickedPoint);
+        this.addMarkerToMap(clickedPoint);
 
       // Subsequent loops
       } else {
@@ -78,12 +68,13 @@ export class MapCreateService extends MapService {
         // get coordinates for the next chunk of path, add to the path object
         this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<tsCoordinate>) => {
           this.coordsArray = this.coordsArray.concat(coords);
-          const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
+          const elevs = this.geoJSON ? this.geoJSON.properties.params.elev : [];
           this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
-            this.geoJSON = result.geoJson;
-            this.refreshMapAfterPathChange();
-            if( this.markers.length>1) { this.popMarker();}
-            this.addMarker(this.coordsArray[this.coordsArray.length-1]);
+            this.geoJSON = result.hills;
+            this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
+            if ( Object.keys(this.activeLayers).length > 1) { 
+              this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1])
+            }
           })
         })
       }
@@ -173,10 +164,11 @@ export class MapCreateService extends MapService {
   }
 
   public clearPath() {
-    this.clearAllMarkers();
+    this.removeLayersFromMap();
     this.coordsArray = [];
     this.geoJSON = this.resetGeoJSON();
-    this.refreshMapAfterPathChange(); 
+    console.log(this.geoJSON);
+    this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
   }
 
 
@@ -193,36 +185,20 @@ export class MapCreateService extends MapService {
       this.coordsArray = this.coordsArray.concat(coords);
       const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
       this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
-        this.geoJSON = result.geoJson;
-        this.refreshMapAfterPathChange();
-        if( this.markers.length>1) { this.popMarker();}
-        this.addMarker(this.coordsArray[this.coordsArray.length-1]);
+        this.geoJSON = result.hills;
+        this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
+        if ( Object.keys(this.activeLayers).length > 1) { 
+          this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1])
+        }
       })
     })
   }
 
-  popMarker() {
-    let thisMarker: mapboxgl.Marker = this.markers.pop();
-    thisMarker.remove();
-  }
-
-  clearAllMarkers() {
-    this.markers.forEach(marker => marker.remove());
-    this.markers = [];
-  }
-
-  addMarker(pos: tsCoordinate) {
-    const newMarker = new mapboxgl.Marker()
-      .setLngLat(pos)
-      .addTo(this.tsMap);
-    this.markers.push(newMarker);
-    return newMarker;
-  }
-
   kill() {
-    this.coordsArray =[];
+    this.activeLayers = {};
+    this.coordsArray = [];
     this.geoJSON = null;
-    this.clearAllMarkers();
+    this.removeMarkersFromMap();
   }
 
   setUpMap() {
@@ -245,10 +221,10 @@ export class MapCreateService extends MapService {
           'line-cap': 'round',
           'line-join': 'round'
         },
-        paint: {
-          'line-color': '#000',
-          'line-width': 2.5
-        },
+        // paint: {
+        //   'line-color': '#000',
+        //   'line-width': 2.5
+        // },
         filter: ['in', '$type', 'LineString']
       });
   }
@@ -256,36 +232,39 @@ export class MapCreateService extends MapService {
   resetGeoJSON() {
 
     return {
-    "type": "FeatureCollection",
-    "features": [{      
-      "type": "Feature",
-      "geometry": {
-          "type": "LineString",
-          "coordinates": []
-      },
-      "properties": {
-          "params": {
-              "elev": [],
-              "cumDistance": []
+      type: "FeatureCollection",
+      features: [
+      //   {
+      //   geometry: {
+      //     type: "LineString",
+      //     coordinates: []
+      //   }
+      // }
+    ],
+      properties:{
+          pathId: "geojson-created-from-Path-instance",
+          params: {
+              elev: [],
+              cumDistance: []
           },
-          "stats": {
-            "distance": 0,
-            "nPoints": 0,
-            "elevations": {
-              "ascent": 0,
-              "descent": 0,
-              "lumpiness": 0,
-              "maxElev": 0,
-              "minElev": 0
+          stats: {
+            distance: 0,
+            nPoints: 0,
+            elevations: {
+              ascent: 0,
+              descent: 0,
+              lumpiness: 0,
+              maxElev: 0,
+              minElev: 0
             },
           },
-          "info": {
-              "name": "",
-              "description": "",
-              "isLong": false
-          
+          info: {
+              name: "",
+              description: "",
+              isLong: false,
+              isElevations: false
           }
         }
-      }]
-    }}
+      }
+  }
 }

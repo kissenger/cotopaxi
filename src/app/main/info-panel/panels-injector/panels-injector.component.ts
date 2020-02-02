@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolver, Input, ComponentRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolver, Input, ComponentRef, ViewChildren } from '@angular/core';
 import { DataService } from 'src/app/shared/services/data.service'
 import { InfoPanelService } from 'src/app/shared/services/info-panel.service'
 
@@ -9,6 +9,7 @@ import { InfoPanelService } from 'src/app/shared/services/info-panel.service'
 })
 export class PanelsInjectorComponent implements OnInit {
   @ViewChild('AppInfoPanel', {static: true, read: ViewContainerRef}) infoPanel;
+  // @ViewChildren('AppInfoPanel', {read: ViewContainerRef}) infoPanels;
   @Input('panel-type') panelType: string;
   
   constructor(
@@ -26,9 +27,14 @@ export class PanelsInjectorComponent implements OnInit {
   }
 
   
-  ngAfterViewInit() {
-
-  }
+  // ngAfterViewInit() {
+  //   console.log(this.infoPanel);
+  //   console.log(this.infoPanels.first);
+  //     this.infoPanels.changes.subscribe( (changes) => {
+  //      console.log("something changed!!0;")
+  //      console.log(changes);
+  //    })
+  // }
   
 
   /** 

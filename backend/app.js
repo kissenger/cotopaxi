@@ -10,7 +10,9 @@ const DEBUG = true;
 // Local functions
 const Route = require('./_Path').Route;
 const Point = require('./_Point').Point;
-const GeoJSON = require('./_GeoJson.js').GeoJSON;
+const GeoRoute = require('./_GeoJson.js').GeoRoute;
+const GeoHills = require('./_GeoJson.js').GeoHills;
+
 const ListData = require('./_ListData.js').ListData;
 const auth = require('./auth.js');
 const readGPX = require('./gpx.js').readGPX;
@@ -148,8 +150,8 @@ app.post('/ups-and-downs/v1/', (req, res) => {
       getMongoFromGpx().then( (mongoPath) => {
   
         // Save route into database with isSaved = false, and return it to the front end
-        MongoPath.Routes.create(mongoPath).then( (docs) => {
-          res.status(201).json({geoJson: new GeoJSON(docs, 'route')});
+        MongoPath.Routes.create(mongoPath).then( (doc) => {
+          res.status(201).json({geoJson: new GeoRoute(doc)});
           if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
         })
   
@@ -220,14 +222,14 @@ app.post('/save-created-route/', (req, res) => {
   //   res.status(401).send('Unauthorised');
   // }
 
-  console.log(req.body);
+  // console.log(req.body);
 
   if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
   var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevs);
-console.log(path);
+// console.log(path);
   // get elevations wont get new ones if elevations are supplied
   path.getElevations().then( () => {
-    console.log(path);
+    // console.log(path);
     const mongoPath = path.asMongoObject(1, true);
     mongoModel('route').create(mongoPath).then( (document) => {
       res.status(201).json( {pathId: document._id} );  
@@ -250,8 +252,11 @@ app.get('/get-path-by-id/:type/:id', (req, res) => {
 
   // query the database and return result to front end
   getPathDocFromId(req.params.id, req.params.type).then( path => {
-    console.log(path);
-      res.status(201).json({geoJson: new GeoJSON(path, 'route')});
+    // console.log(path);
+      res.status(201).json({
+        geoJson: new GeoRoute(path),
+        hills: new GeoHills(path)
+      });
   })
 })
 
@@ -439,7 +444,10 @@ app.post('/process-points/', (req, res) => {
   var path = new Route('', '', lngLats, req.body.elevs);
   // console.log(req.body);
   path.getElevations().then( () => {
-    res.status(201).json( {geoJson: path.asGeoJSON()} );
+    res.status(201).json({
+      geoJson: new GeoRoute(path),
+      hills: new GeoHills(path)
+    });
   });
 
 })
@@ -535,10 +543,10 @@ app.post('/add-elev-to-path/:type/:id', auth.verifyToken, (req, res) => {
     // replace the entry in the db and tell the front end that we're done
     const mPath = path.mongoFormat(req.userId, true);
     mongoModel(req.params.type)
-      .replaceOne(filter, mPath, {writeConcern: {j: true}})
+      .replaceOne(filter, doc, {writeConcern: {j: true}})
       .then( () => {
 
-        res.status(201).json({geoJson: new GeoJson(mPath, 'route')});
+        res.status(201).json({geoJson: new GeoRoute(doc)});
         // respond to the front end
         // res.status(201).json( {'path': mPath} );
 
@@ -592,11 +600,11 @@ app.get('/reverse-path/:type/:id', auth.verifyToken, (req, res) => {
     // replace the entry in the db and tell the front end that we're done
     const mPath = newPath.mongoFormat(req.userId, true);
     mongoModel(req.params.type)
-      .replaceOne(filter, mPath, {writeConcern: {j: true}})
+      .replaceOne(filter, doc, {writeConcern: {j: true}})
       .then( () => {
 
         // make a geoJSON object and inject the pathID
-        newPath = {geoJson: new GeoJson(mPath, 'route')};
+        newPath = {geoJson: new GeoRoute(doc)};
         newPath.geoJson.properties['pathId'] = req.params.id
 
         // and return to the front end

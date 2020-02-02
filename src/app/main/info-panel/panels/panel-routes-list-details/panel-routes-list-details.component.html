@@ -6,20 +6,15 @@
     <!-- Inner container contains scrollabel content -->
     <div  class="inner h-100">
 
-        <div *ngIf="!pathName; else else_div1" class="h5 mt-1 text-center">
+        <!-- Name and Description Block -->
+        <div *ngIf="!pathName; else else_div1" class="h5 mt-1 text-center border-bottom">
             {{pathCategory}} {{pathType}}
         </div>
         <ng-template #else_div1><div class="h5 mt-1 text-center">{{pathName}}</div></ng-template>
         <div class="mt-1 mb-2">{{pathDescription}}</div>
+        <!-- End of Name and Description Block -->
 
-        <hr>
-
-
-
-
-    
-
-
+        <!-- Basic stats (distance, nPoints) Block -->
         <div class="py-1 border-bottom w-100 mx-auto">
             <div class="row mx-auto text-left">
                 <div class="ml-2 col-6 p-0 m-0">Distance </div>
@@ -32,12 +27,11 @@
                 <div class="ml-2 col-4 p-0 m-0">{{pathCategory}}</div>
             </div>
         </div>
+        <!-- End of basic stats (distance, nPoints) Block -->
 
 
+        <!-- Basic elevations block (ascent, descent etc) -->
         <div *ngIf="isElevations" class="py-1 border-bottom w-100 mx-auto">
-
-
-            
             <div class="row mx-auto text-left">
                 <div class="ml-2 col-6 p-0 m-0">Ascent</div>
                 <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.ascent | units: 'elevation': units.elevation}}</div>
@@ -50,18 +44,46 @@
                 <div class="ml-2 col-6 p-0 m-0">Lumpiness</div>
                 <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
             </div>
+        </div>
+        <!-- End of basic elevations block (ascent, descent etc) -->
 
+
+        <!-- Plot elevations -->
+        <div class="border-bottom w-100 small">
+            <!-- <div class="text-center border">{{chartTitle}}</div> -->
+            <div [hidden]="!isElevations" class="w-100" id="chart_div"></div>
+            <!-- <div class="" id="chart_div"></div> -->
+        </div>
+        <!-- End of plot elevations-->
+
+        <!-- Hills table -->
+        <div *ngIf="isElevations" class="pt-2 w-100 mx-auto text-center small">
+
+            <table class='table thead-dark table-bordered table-striped table-sm'>
+                <thead>
+                    <tr>
+                        <th>Height Gain<br>[m]</th>
+                        <th>Grad Ave<br>[%]</th>
+                        <th>Grad Max<br>[%]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of pathStats.hills">
+                        <td>{{row.dHeight | number: '1.0-0'}}</td>
+                        <td>{{row.aveGrad| number: '1.0-1'}}</td>
+                        <td>{{row.maxGrad | number: '1.0-1'}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <!-- End of hills table -->
             
         </div>
+        <!-- End of elevations block -->
 
         <div *ngIf="isLong">
-        <!-- <ng-template #else_div> -->
             <div class="name">Elevation data are not stored for 'long' routes. <br></div>
             <div class="text-center">Find out why <a href={{wikiLink}}>here.</a></div>
         </div>
-        <!-- </ng-template> -->
-
-        <div [hidden]="!isElevations" class="w-100" id="chart_div"></div>
 
     </div> <!-- close "inner"  div-->
 

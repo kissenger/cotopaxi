@@ -254,7 +254,7 @@ function simplify(points) {
     
   if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
-  const TOLERANCE = 8;     // tolerance value in metres; the higher the value to greater the simplification
+  const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
   const origLength = points.length;
   
   // j is an array of indexes - the index of removed points are removed from this array
@@ -283,6 +283,7 @@ function simplify(points) {
   return j.map( x => points[x] );
 
 }
+
 
 
 // /**

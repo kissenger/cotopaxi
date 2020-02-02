@@ -46,10 +46,8 @@ export class PanelRoutesCreateOverlayComponent implements OnInit {
   updateList(currentBbox: Array<number>) {
 
     this.httpService.getIntersectingRoutes(currentBbox).subscribe( pathsList => {
-
       this.isNoPathsToPlot = pathsList.length === 0 ? true : false;
       this.htmlData = pathsList;
-
     });
 
   }

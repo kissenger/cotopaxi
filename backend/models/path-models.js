@@ -77,13 +77,14 @@ const pathSchema = mongoose.Schema({
     hills: {type: [
       { dHeight: {type: Number},
         dDist: {type: Number},
+        startDist: {type: Number},
+        startPoint: {type: Number},
+        endPoint: {type: Number},
         dTime: {type: Number},
         pace:  {type: Number},
         ascRate: {type: Number},
-        gradient: {
-          max: {type: Number},
-          ave: {type: Number}
-        }
+        maxGrad: {type: Number},
+        aveGrad: {type: Number}
       }
     ]},
     splits: {

@@ -6,15 +6,16 @@
 // }
 
 export interface tsPlotPathOptions{
-    booResizeView: boolean,
-    booReplaceExisting: boolean,
-    booSaveToStore: boolean
+    booResizeView?: boolean,
+    booReplaceExisting?: boolean,
+    booSaveToStore?: boolean,
+    booPlotMarkers?: boolean
 }
 
-export interface tsMapboxLineStyle{
-    lineWidth: number
-    lineColor: string
-    lineOpacity: number
+export interface tsLineStyle{
+    lineWidth?: number
+    lineColour?: string
+    lineOpacity?: number
 }
 
 export interface pathStats{

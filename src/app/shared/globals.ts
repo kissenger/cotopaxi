@@ -23,5 +23,7 @@ export const units: {distance: 'miles' | 'kms', elevation: 'm' | 'ft'} =
     }
 
 export const userHomeLocation: tsCoordinate = {lat: 51, lng: -4};
-export const overlayLineStyle = {lineWidth: 2, lineColor: 'blue', lineOpacity: 0.3};
-export const routeLineStyle = {lineWidth: 3, lineColor: 'red', lineOpacity: 0.5};
+
+// lineStyles are defined here and on geoJSON - when specified locally they will override the geoJSON lineStyle
+// export const overlayLineStyle = {lineWidth: 2, lineColour: 'blue', lineOpacity: 0.3};
+export const routeLineStyle = {lineWidth: 4, lineColour: 'red', lineOpacity: 0.1};

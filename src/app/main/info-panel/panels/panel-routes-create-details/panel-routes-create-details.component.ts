@@ -35,6 +35,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   private pathCategory: string;
   private pathType: string;
   private isLong: boolean;
+  private chartData;
+  private colourArray;
 
   constructor(
     private dataService: DataService,
@@ -46,32 +48,44 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    this.chartsService.plotChart(document.getElementById('chart_div'), [[],[]]);
+    this.chartsService.plotChart(document.getElementById('chart_div'), [[],[]], []);
 
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
-    this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJSON) => {
+    this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
 
-      if (geoJSON.features.length === 0) {
+      if (geoJson.features.length === 0) {
         this.resetPathStats();
       } else {
-        // console.log('inoibg3irog');
-        // console.log(geoJSON);
-        this.pathStats = geoJSON.features[0].properties.stats;
-        this.pathName = geoJSON.features[0].properties.info.name;
-        this.pathDescription =  geoJSON.features[0].properties.info.description;
-        this.pathCategory = geoJSON.features[0].properties.info.category;
-        this.pathType = geoJSON.features[0].properties.info.pathType;
-        this.isLong = geoJSON.features[0].properties.info.isLong;
-        this.isElevations = (geoJSON.features[0].properties.info.isElevations && !this.isLong) ? true : false;
-        
+        this.pathStats = geoJson.properties.stats;
+        this.pathName = geoJson.properties.info.name;
+        this.pathDescription =  geoJson.properties.info.description;
+        this.pathCategory = geoJson.properties.info.category;
+        this.pathType = geoJson.properties.info.pathType;
+        this.isLong = geoJson.properties.info.isLong;
+        this.isElevations = (geoJson.properties.info.isElevations && !this.isLong) ? true : false;
+        console.log(geoJson.properties.info, this.isLong);
       }
-    
+          // work out the data to plot on chart
+      // loops through the features, creating an array of the form:
+      // [[x1, x2, x3, x4, x5, ....],
+      //  [e1, e2,   ,   ,   , ....],
+      //  [  ,   , e3, e4, e5, ....]]
+      // where x is cumDist, e is elevation point, and spaces are null points
+      this.chartData = [geoJson.properties.params.cumDistance];
+      this.colourArray = [];
+      let x = 0;
+
+      geoJson.features.forEach( feature => {
+        const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
+        this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
+        x += feature.properties.params.elev.length - 1;
+        this.colourArray.push(feature.properties.lineColour);
+      });
       
       // then plot the chart
-      const chartDataArray = [geoJSON.features[0].properties.params.cumDistance, geoJSON.features[0].properties.params.elev];
       // console.log(chartDataArray);
       // console.log(this.isElevations);
-      this.chartsService.plotChart(document.getElementById('chart_div'), chartDataArray);
+      this.chartsService.plotChart(document.getElementById('chart_div'), this.chartData, this.colourArray);
 
     })
 
@@ -83,6 +97,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       nPoints: 0,
       elevations: { ascent: 0, descent: 0, lumpiness: 0, maxElev: 0, minElev: 0 }
     };
+    this.isElevations = false;
+    this.isLong = false;
   }
 
   onSave() {
@@ -111,8 +127,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
     } else if (source === 'created') {
       const sendObj = {
-        coords: newPath.features[0].geometry.coordinates, 
-        elevs: newPath.features[0].properties.params.elev,
+        coords: newPath.geometry.coordinates, 
+        elevs: newPath.properties.params.elev,
         name: this.pathName,
         description: this.pathDescription
       };

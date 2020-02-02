@@ -1,6 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ContentChildren, QueryList, ViewChildren, ViewContainerRef } from '@angular/core';
 import { InfoPanelService } from 'src/app/shared/services/info-panel.service';
 import { DataService } from 'src/app/shared/services/data.service';
+import { PanelsInjectorComponent } from './panels-injector/panels-injector.component';
 
 @Component({
   selector: 'app-info-panel',
@@ -9,6 +10,8 @@ import { DataService } from 'src/app/shared/services/data.service';
 })
 
 export class InfoPanelComponent implements OnInit {
+  // @ViewChildren("injector") divs: QueryList<any>;
+  // @ViewChildren('injector', {read: ViewContainerRef}) viewContainerRefs: QueryList<any>;
 
   private tabsArray: Array<{}>;
 
@@ -17,10 +20,22 @@ export class InfoPanelComponent implements OnInit {
     private dataService: DataService
    ) { }
 
+  //  ngAfterViewInit() {
+  //   this.viewContainerRefs.changes.subscribe(item => {
+  //     if(this.viewContainerRefs.toArray().length) {
+  //       // shown
+  //     }
+  //   })
+  //  }
+
   ngOnInit() {
     this.dataService.getPageName().then( pageName => {
       this.tabsArray = this.infoPanelService.getTabs(pageName);
     });
+  }
+
+  onClick(e) {
+    this.dataService.activeTabEmitter.emit(e.target.id);
   }
 
 

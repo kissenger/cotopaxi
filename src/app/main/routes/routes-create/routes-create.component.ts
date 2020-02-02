@@ -4,6 +4,7 @@ import { DataService } from 'src/app/shared/services/data.service';
 import * as globals from 'src/app/shared/globals';
 import { Subscription } from 'rxjs';
 import { HttpService } from 'src/app/shared/services/http.service';
+import { tsPlotPathOptions, tsLineStyle } from 'src/app/shared/interfaces';
 
 
 @Component({
@@ -16,6 +17,17 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
   private menuSubscription: Subscription;
   private pathIdSubscription: Subscription;
   private overlaidPaths = [];
+  private overlayPlotOptions: tsPlotPathOptions = {
+    booReplaceExisting: false, 
+    booResizeView: false, 
+    booSaveToStore: false,
+    booPlotMarkers: false
+  };
+  private overlayLineStyle: tsLineStyle = {
+    lineWidth: 2, 
+    lineColour: 'blue', 
+    lineOpacity: 0.3
+  }
 
   constructor(
     private dataService: DataService,
@@ -53,14 +65,14 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
       // if pathId is not in overlaidPaths then add it
       if (!this.overlaidPaths.includes(pathId)){
         this.httpService.getPathById('route', pathId).subscribe( (result) => {
-          const plotOptions = {booReplaceExisting: false, booResizeView: false, booSaveToStore: false};
-          this.mapCreateService.addLayerToMap(result.geoJson, globals.overlayLineStyle, plotOptions);
+          
+          this.mapCreateService.addLayerToMap(result.geoJson, this.overlayLineStyle, this.overlayPlotOptions);
           this.overlaidPaths.push(pathId);
         })
 
       // otherwise pathID is present, so remove from map and delete key from object
       } else {
-        this.mapCreateService.removeLayer(pathId);
+        this.mapCreateService.removeLayerFromMap(pathId);
         this.overlaidPaths.splice(this.overlaidPaths.indexOf(pathId),1);
       } 
 

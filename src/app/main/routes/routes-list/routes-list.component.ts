@@ -3,8 +3,9 @@ import { MapService } from 'src/app/shared/services/map.service';
 import { DataService } from 'src/app/shared/services/data.service';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { Subscription } from 'rxjs';
-import { GeoService } from 'src/app/shared/services/geo.service';
 import * as globals from 'src/app/shared/globals';
+import { tsLineStyle, tsPlotPathOptions } from 'src/app/shared/interfaces';
+import { GeoService } from 'src/app/shared/services/geo.service';
 
 @Component({
   selector: 'app-routes',
@@ -16,12 +17,21 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
   private pathIdSubscription: Subscription;
   private geoJSON;
+  private plotOptions: tsPlotPathOptions = {
+    booReplaceExisting: true, 
+    booResizeView: true, 
+    booSaveToStore: true,
+    booPlotMarkers: true
+  };
+  private lineStyle: tsLineStyle = {}; // take lineStyle from geoJSON
+  
 
   constructor(
     private dataService: DataService,
     private mapService: MapService,
     private httpService: HttpService,
     private geoService: GeoService
+
     ) { } 
 
   /**
@@ -43,12 +53,11 @@ export class RoutesListComponent implements OnInit, OnDestroy {
       this.httpService.getPathById('route', pathId).subscribe( (result) => {
 
         // put on the class to avoid passing to functions
-        this.geoJSON = result.geoJson;
-
+        this.geoJSON = result.hills;
+        console.log(result.hills);
         // as initialisation will temporarily show default location, only run it if map doesnt currently exist
         this.initialiseMapIfNeeded().then( () => {
-          const plotOptions = {booReplaceExisting: true, booResizeView: true, booSaveToStore: true};
-          this.mapService.addLayerToMap(result.geoJson, globals.routeLineStyle, plotOptions);
+          this.mapService.addLayerToMap(this.geoJSON, this.lineStyle, this.plotOptions);
         });
 
       })
@@ -62,6 +71,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
     return new Promise( (resolve, reject) => {
       if (!this.mapService.isMap()) {
+        console.log(this.mapService.isMap());
         this.mapService.initialiseMap(this.geoService.getPathCoG(this.geoJSON.bbox), 10).then( () => {
           resolve();
         })
