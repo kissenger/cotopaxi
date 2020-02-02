@@ -18,7 +18,7 @@ class GeoJSON {
       this.lngLats = docOrPath.points.map( c => [c.lng, c.lat]);
       this.elevs = docOrPath.elevs;
       this.properties = { 
-        pathId: 'geojson-created-from-Path-instance',
+        pathId: '0000',
         params: {
           cumDistance: docOrPath.cumDistance,
           elev: docOrPath.elevs

@@ -24,7 +24,6 @@ export class MapCreateService extends MapService {
   private coordsArray: Array<tsCoordinate> = [];
   private geoJSON;
   private plotOptions: tsPlotPathOptions = {
-    booReplaceExisting: true, 
     booResizeView: false, 
     booSaveToStore: true,
     booPlotMarkers: true
@@ -58,7 +57,7 @@ export class MapCreateService extends MapService {
       // First loop (if firstPoint parameter on multiPath instance has not been set)
       if (this.coordsArray.length === 0) {
         this.coordsArray.push(clickedPoint);
-        this.addMarkerToMap(clickedPoint);
+        this.addMarkerToPath(clickedPoint, '0000');
 
       // Subsequent loops
       } else {
@@ -71,9 +70,10 @@ export class MapCreateService extends MapService {
           const elevs = this.geoJSON ? this.geoJSON.properties.params.elev : [];
           this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
             this.geoJSON = result.hills;
+            this.removeLayerFromMap('0000');
             this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
             if ( Object.keys(this.activeLayers).length > 1) { 
-              this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1])
+              this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1], '0000')
             }
           })
         })
@@ -164,10 +164,9 @@ export class MapCreateService extends MapService {
   }
 
   public clearPath() {
-    this.removeLayersFromMap();
+    this.removeLayerFromMap('0000');
     this.coordsArray = [];
     this.geoJSON = this.resetGeoJSON();
-    console.log(this.geoJSON);
     this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
   }
 
@@ -186,9 +185,10 @@ export class MapCreateService extends MapService {
       const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
       this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
         this.geoJSON = result.hills;
+        this.removeLayerFromMap('0000');
         this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
         if ( Object.keys(this.activeLayers).length > 1) { 
-          this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1])
+          this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1], '0000')
         }
       })
     })
@@ -242,7 +242,7 @@ export class MapCreateService extends MapService {
       // }
     ],
       properties:{
-          pathId: "geojson-created-from-Path-instance",
+          pathId: '0000',
           params: {
               elev: [],
               cumDistance: []

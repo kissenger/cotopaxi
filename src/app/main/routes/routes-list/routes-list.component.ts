@@ -17,8 +17,8 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
   private pathIdSubscription: Subscription;
   private geoJSON;
+  private oldPathId: string;
   private plotOptions: tsPlotPathOptions = {
-    booReplaceExisting: true, 
     booResizeView: true, 
     booSaveToStore: true,
     booPlotMarkers: true
@@ -48,17 +48,24 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     // if we come into list component from eg delet route, the map exists and is causing trouble, so delete it and start afresh
     if (this.mapService.isMap()) { this.mapService.killMap(); }
   
-    // listen for pathID emission from panel-routes-list-list, and get the path from the backend
+    // OVERLAY PATH listen for pathID emission from panel-routes-list-list, and get the path from the backend
     this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId) => {
       this.httpService.getPathById('route', pathId).subscribe( (result) => {
 
         // put on the class to avoid passing to functions
         this.geoJSON = result.hills;
-        console.log(result.hills);
+
         // as initialisation will temporarily show default location, only run it if map doesnt currently exist
         this.initialiseMapIfNeeded().then( () => {
+
+          this.mapService.removeLayerFromMap(this.oldPathId);
           this.mapService.addLayerToMap(this.geoJSON, this.lineStyle, this.plotOptions);
+
+          // store the current pathId so we can remove it on the next click
+          this.oldPathId = pathId;
         });
+
+
 
       })
     })

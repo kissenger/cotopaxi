@@ -7,7 +7,6 @@
 
 export interface tsPlotPathOptions{
     booResizeView?: boolean,
-    booReplaceExisting?: boolean,
     booSaveToStore?: boolean,
     booPlotMarkers?: boolean
 }

@@ -18,7 +18,6 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
   private pathIdSubscription: Subscription;
   private overlaidPaths = [];
   private overlayPlotOptions: tsPlotPathOptions = {
-    booReplaceExisting: false, 
     booResizeView: false, 
     booSaveToStore: false,
     booPlotMarkers: false
@@ -65,7 +64,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
       // if pathId is not in overlaidPaths then add it
       if (!this.overlaidPaths.includes(pathId)){
         this.httpService.getPathById('route', pathId).subscribe( (result) => {
-          
+          this.mapCreateService.removeLayerFromMap(pathId);
           this.mapCreateService.addLayerToMap(result.geoJson, this.overlayLineStyle, this.overlayPlotOptions);
           this.overlaidPaths.push(pathId);
         })

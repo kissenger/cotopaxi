@@ -17,7 +17,7 @@ export class MapService{
   // if a path is plotted its pathId will be present as a key in the object.  The value of the objects is an array of the associated markers
   // this is public because it is acccessed by map-create, which extends map
   public activeLayers: {[pathId: string]: Array<mapboxgl.Marker>} = {};
-  public markers: Array<mapboxgl.Marker> = [];
+  // public markers: Array<mapboxgl.Marker> = [];
   
   constructor(
     public httpService: HttpService,
@@ -97,12 +97,10 @@ export class MapService{
    */
   addLayerToMap(pathAsGeoJSON, styleOptions?: tsLineStyle, plotOptions?: tsPlotPathOptions ) {
 
-    
-    
-    // remove existing layer if it exists
-    if (plotOptions.booReplaceExisting) {
-      this.removeLayerFromMap();
-    }
+    // // remove existing layer if it exists
+    // if (plotOptions.booReplaceExisting) {
+    //   this.removeLayerFromMap();
+    // }
 
     // keep a track of what layers are active by pushing current id to activelayers array
     const pathId = pathAsGeoJSON.properties.pathId;
@@ -110,13 +108,13 @@ export class MapService{
 
     // add the layer to the map
     this.tsMap.addLayer({
-      "id": pathId,
-      "type": "line",
-      "source": {
-        "type": "geojson",
-        "data": pathAsGeoJSON
+      id: pathId,
+      type: "line",
+      source: {
+        type: "geojson",
+        data: pathAsGeoJSON
       },
-      "paint": {
+      paint: {
         // if property is defined in style options then use it, otherwise use what is provided on the geoJson
         'line-width': styleOptions.lineWidth ? styleOptions.lineWidth : ['get', 'lineWidth'],
         'line-color': styleOptions.lineColour ? styleOptions.lineColour : ['get', 'lineColour'],
@@ -168,24 +166,44 @@ export class MapService{
    * @param pid string defining the desire path Id
    * If pathId is not specified defaults to layer [0] - if that doesnt exist will throw an error
    */
-  removeLayerFromMap(pid: string = Object.keys(this.activeLayers)[0]) {
+  removeLayerFromMap(pid: string) {
+    // check that the path we think we are deleting exists on the map
     if (this.tsMap.getLayer(pid)) {
       this.tsMap.removeLayer(pid);
       this.tsMap.removeSource(pid);
+    } else {
+      console.log('removeLayerFromMap: pathId ' + pid + ' not found.')
+    }
+
+    // if the pid exists then also delete any markers 
+    if (pid in this.activeLayers) {
       this.removeMarkersFromPath(pid);
       delete this.activeLayers[pid];
     }
   }
 
+  // removeLayersFromMap() {
+  //   for (var key in this.activeLayers) {
+  //     if (!this.activeLayers.hasOwnProperty(key)) continue;
+  //     this.tsMap.removeLayer(key);
+  //     this.tsMap.removeSource(key);
+  //   }
+  //   this.removeMarkersFromMap();
+  //   this.activeLayers = {};
+  // }
+
+
   /**
    * Loop through each marker in a given path and remove all markers from the map
    * @param pid string defining the desired path Id
    */
-  removeMarkersFromPath(pid: string = Object.keys(this.activeLayers)[0]) {
+  removeMarkersFromPath(pid: string) {
+    console.log(this.activeLayers);
     this.activeLayers[pid].forEach( (marker: mapboxgl.Marker) => {
-      marker.remove();
-    });
+      console.log(marker);
+      marker.remove() });
     this.activeLayers[pid] = [];
+    console.log(this.activeLayers);
   }
 
   /**
@@ -197,20 +215,9 @@ export class MapService{
       this.activeLayers[key].forEach( (marker: mapboxgl.Marker) => marker.remove());
       this.activeLayers[key] = [];
     }
-    // also delete any markers set on the map that are not associated with paths
-    this.markers.forEach( (marker: mapboxgl.Marker) => marker.remove() );
-    this.markers = [];
   }
 
-  removeLayersFromMap() {
-    for (var key in this.activeLayers) {
-      if (!this.activeLayers.hasOwnProperty(key)) continue;
-      this.tsMap.removeLayer(key);
-      this.tsMap.removeSource(key);
-    }
-    this.removeMarkersFromMap();
-    this.activeLayers = {};
-  }
+
 
   /***************************************************************************
    * ADD OR REPLACE STUFF
@@ -222,40 +229,26 @@ export class MapService{
    * @param pid string defining the desire path Id
    * If pathId is not specified defaults to layer [0] - if that doesnt exist will throw an error
    */
-  addMarkerToPath(pos: tsCoordinate, pid: string = Object.keys(this.activeLayers)[0]) {
-    // deals with the specific case of creating a point before line is created (create route)
-    // if (!pid) { 
-    //   pid = 'geojson-created-from-Path-instance';
-    //   this.activeLayers[pid] = []; 
-    // }
+  addMarkerToPath(pos: tsCoordinate, pid: string) {
+    // deals with the specific case of creating a point before line is created, eg when creating a route
+    if (!(pid in this.activeLayers)) { this.activeLayers[pid] = []; }
     const newMarker = new mapboxgl.Marker()
       .setLngLat(pos)
       .addTo(this.tsMap);
     this.activeLayers[pid].push(newMarker);
+    console.log(this.activeLayers);
   }
   
-    /**
-   * Add a marker to the map 
-   * @param pos tsCoordinate defining the desired position of the marker
-   * If pathId is not specified defaults to layer [0] - if that doesnt exist will throw an error
-   */
-  addMarkerToMap(pos: tsCoordinate) {
-    const newMarker = new mapboxgl.Marker()
-      .setLngLat(pos)
-      .addTo(this.tsMap);
-    this.markers.push(newMarker);
-  }
   /**
    * Remove the last marker in the marker array for a given path id, and replace it with new one
    * If there isnt already a marker it will just add a new one, no worries
    * @param pos tsCoordinate defining the desired position of the marker
    * @param pid string defining the desire path Id
-   * If pathId is not specified defaults to layer [0] - if that doesnt exist will throw an error
    */
-  replaceLastMarkerOnPath(pos: tsCoordinate, pid: string = Object.keys(this.activeLayers)[0]) {
+  replaceLastMarkerOnPath(pos: tsCoordinate, pid: string) {
     let thisMarker: mapboxgl.Marker = this.activeLayers[pid].pop();
     thisMarker.remove();
-    this.addMarkerToPath(pos);
+    this.addMarkerToPath(pos, pid);
   }
 
   /***************************************************************************
@@ -266,16 +259,6 @@ export class MapService{
   isMap(){
     return !!this.tsMap;
   }
-
-  // reset the map
-  clearMap() {
-    // this.initialiseMap();
-    this.removeLayersFromMap();
-    // this.activeLayers = {};
-  }
-
-
-  
 
   // function to destroy the map - called in onDestroy of routes-list component
   killMap() {
