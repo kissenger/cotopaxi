@@ -288,7 +288,7 @@ app.post('/flush/', (req, res) => {
 app.get('/get-paths-list/:type/:offset', (req, res) => {
 
   if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=', req.params.type, ', offset=', req.params.offset )};
-  const LIMIT = 10 //number of items to return in one query
+  const LIMIT = 9 //number of items to return in one query
 
   // ensure user is authorised
   // const userId = req.userId;

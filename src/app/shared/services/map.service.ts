@@ -126,6 +126,8 @@ export class MapService{
     const nFeatures = pathAsGeoJSON.features.length;
     if (nFeatures > 0 && plotOptions.booPlotMarkers) {
       const nPoints = pathAsGeoJSON.features[nFeatures-1].geometry.coordinates.length;
+      console.log(pathAsGeoJSON);
+      console.log(pathAsGeoJSON.features[nFeatures-1].geometry.coordinates[nPoints-1]);
       this.addMarkerToPath(pathAsGeoJSON.features[0].geometry.coordinates[0], pathId);
       this.addMarkerToPath(pathAsGeoJSON.features[nFeatures-1].geometry.coordinates[nPoints-1], pathId);
     }

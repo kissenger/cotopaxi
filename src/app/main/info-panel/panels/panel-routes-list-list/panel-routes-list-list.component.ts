@@ -50,7 +50,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
         // if (!this.htmlData[0]['description']) { this.htmlData[0]['description'] = '' };
         this.numberOfRoutes = this.htmlData[0].count;
         this.numberOfLoadedRoutes = this.htmlData.length;
-        this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes ? true : false;
+        this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes;
 
         // emit the first id in the list and highlight that row
         if (booAutoSelectPathId) {
