@@ -12,5 +12,13 @@ Create a new route:<br>
 
 <!-- This is a hidden element activated by the 'Load from file' link above -->
 <div class="file-selector">
-  <input type="file" id="file-select-single" (change)="onFilePickedImport($event, 'false', 'route')" single>
+  <form id="file_form">
+    <input type="file" id="file-select-single" (change)="onFilePickedImport($event, 'false', 'route')" single>
+  </form>
 </div>
+
+<!-- <div *ngIf="showSpinner">
+  <app-spinner></app-spinner>
+</div> -->
+
+<!-- <alert-box message="bottoms">bottoms</alert-box> -->

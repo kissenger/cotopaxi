@@ -72,6 +72,8 @@ class Path  {
           this.isElevations = true;           // must set before getting stats or elevs wont be calculated
           this.stats = this.getPathStats();
           resolve();
+        }).catch( () => {
+          reject(new Error('Error getting elevations'))
         })
 
       // if the path is long (checking that the path is a route) or we have the right number of elevs

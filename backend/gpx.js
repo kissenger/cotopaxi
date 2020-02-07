@@ -11,7 +11,7 @@ function readGPX(data) {
 
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX()') };
   
-  // write to file - only for debugging
+  // write to file - only for debugging  throw 'error';
   // const fs = require('fs');
   // const file = fs.createWriteStream("../check.txt");}
 
@@ -132,6 +132,10 @@ function readGPX(data) {
   // if elevation array is incomplete, then discard them - if necessary they'll get populated from DEM later
   for (let i = 0, n = lngLat.length - 1; i < n; i++) {
     elev = [];
+  }
+
+  if (lngLat.length === 0) {
+    throw new Error('Error reading .gpx file');
   }
 
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX() finished') };

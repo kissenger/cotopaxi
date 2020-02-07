@@ -1,48 +1,63 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Injector } from '@angular/core';
 import * as globals from 'src/app/shared/globals';
 import { Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from 'src/app/shared/services/data.service';
 import { MapService } from 'src/app/shared/services/map.service';
+import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
+import { Subscription } from 'rxjs';
+import { AlertService } from 'src/app/shared/services/alert.service';
+import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box.component';
+import { createCustomElement } from '@angular/elements';
+import { SpinnerService } from 'src/app/shared/services/spinner.service';
 
 @Component({
   selector: 'app-panel-routes-list-options',
   templateUrl: './panel-routes-list-options.component.html',
   styleUrls: ['./panel-routes-list-options.component.css']
 })
-export class PanelRoutesListOptionsComponent implements OnInit {
+export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
+
+  private subscription: Subscription;
 
   constructor(
     private router: Router,
     private httpService: HttpService,
     private dataService: DataService,
-    private mapService: MapService
-  ) { }
+    private alert: AlertService,
+    private spinner: SpinnerService
+  ) {
+
+   }
 
   ngOnInit() {
+    
   }
 
   /** virtually clicks the hidden form element to launch the select file dialogue */
   onLoadFileClick() {
     document.getElementById('file-select-single').click(); 
+    
   }
 
   onDeleteClick() {
-    
+
     const activePath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
-    const confirmText = "Are you sure you want to delete this route?\nThis cannot be undone..."
-    if ( window.confirm(confirmText) ) {
-      this.httpService.deletePath(activePath.properties.pathId).subscribe( (response) => {
-        this.reloadListComponent();
-      });
-    };
+    this.alert.showAsElement('Are you sure?', 'Cannot undo delete!', true, true).subscribe( (alertBoxResponse: boolean) => {
+      if (alertBoxResponse) {
+        this.httpService.deletePath(activePath.properties.pathId).subscribe( () => {
+          this.reloadListComponent();
+        });
+      }
+    });
+    
   }
 
 
   onExportGpxClick(){
     const pathId = this.dataService.getFromStore('activePath', false).pathAsGeoJSON.properties.pathId;
     const pathType = 'route';
-    this.httpService.exportToGpx(pathType, pathId).subscribe( (fname) => {
+    this.subscription = this.httpService.exportToGpx(pathType, pathId).subscribe( (fname) => {
       // window.location.href = this.httpService.downloadFile(fname.fileName);
       window.location.href = 'http://localhost:3000/download/' + fname.fileName;
     });
@@ -50,61 +65,34 @@ export class PanelRoutesListOptionsComponent implements OnInit {
 
 
   onCreateOnMapClick() {
-    
     this.router.navigate(['/route/create']);
   }
 
   /** runs when file is selected */
   onFilePickedImport(event: Event, moreThanOneFile: boolean, pathType: string) {
 
+    // show the spinner
+    this.spinner.showAsElement();
+    
     // Get file names
     const files = (event.target as HTMLInputElement).files;        // multiple files
     const fileData = new FormData();
     fileData.append('filename', files[0], files[0].name);
 
-    if (files[0].size > globals.EXPORT_FILE_SIZE_LIMIT) {
-      const confirmText = 
-        'That\'s a big file, it\'ll take a while to process :-)\n' +
-        'It\'ll get processed in the background and  will appear in your routes list when ready.'
+    this.subscription = this.httpService.importRoute(fileData).subscribe( (result) => {
+      const pathAsGeoJSON = result.geoJson;
+      this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
+      this.spinner.removeElement();
+      this.router.navigate(['route/review/']);
 
-      if ( window.confirm(confirmText) ) {
-        // if the file is too large, we will only expect a brief immediate response from the backend - add field to back knows what we expect
-        fileData.append('isLarge', 'true');
-        this.httpService.importRoute(fileData).subscribe( (result) => {
-
-          console.log(result);
-          this.reloadListComponent();
-
-        });
-      } else {
-        // user pressed cancel, find a way to navigate back with all links still working
-        this.reloadListComponent();
-      }
-    } else {
-      fileData.append('isLarge', 'false');
-      this.httpService.importRoute(fileData).subscribe( (result) => {
-        console.log(result.geoJson);
-        const pathAsGeoJSON = result.geoJson;
-        this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
-        this.router.navigate(['route/review/']);
-
-      });
-    }
-
-    // if ( pathType === 'route' ) {
-
-    //   // send data to the backend and wait for response
-    //   this.httpService.importRoute(fileData).subscribe( (result) => {
-
-    //     console.log(result.geoJson);
-    //     const pathAsGeoJSON = result.geoJson;
-    //     this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
-    //     this.router.navigate(['route/review/']);
-
-    //   });
-    // }
-
-
+    }, (error) => {
+      this.alert.showAsElement('Something went wrong :(', error.status + ': ' + error.error, true, false).subscribe( () => {
+        // reset the form otherwise if you do the same action again, the change event wont fire
+        (<HTMLFormElement>document.getElementById('file_form')).reset();
+        this.spinner.removeElement();
+      })
+      
+    });
 
   }
 
@@ -114,5 +102,9 @@ export class PanelRoutesListOptionsComponent implements OnInit {
     this.router.navigate(['route/list']);
   }
 
+  ngOnDestroy() {
+    console.log('destroy optinos')
+    if(this.subscription) { this.subscription.unsubscribe(); };
+  }
 
 }

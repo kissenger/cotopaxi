@@ -99,7 +99,7 @@ app.post('/ups-and-downs/v1/', (req, res) => {
   if (!options) {
     options = {
       interpolate: false,
-      writeResultsToFile: false
+      writeResultsToFile: false 
     }
   }
 
@@ -118,7 +118,6 @@ app.post('/ups-and-downs/v1/', (req, res) => {
  *
  *****************************************************************/
 
-// app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
   app.post('/import-route/', upload.single('filename'), (req, res) => {
 
     if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
@@ -130,46 +129,43 @@ app.post('/ups-and-downs/v1/', (req, res) => {
     // }
   
     const userId = 0;
-    
-    // if isLarge = true, front end expects to process the file in the background. Route will appear when db is queried from list component
-    if (req.body.isLarge === 'true') {
-      res.status(201).json({result: 'file recieved'});
   
-      // Save route into database with isSaved = true (because we processed it in the background)
-      getMongoFromGpx().then( (mongoPath) => {
-        mongoPath.isSaved = true;
-        MongoPath.Routes.create(mongoPath).then( (docs) => {
-          if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
-        })
-  
+    getMongoFromGpx().then( (mongoPath) => {
+
+      MongoPath.Routes.create(mongoPath).then( (doc) => {
+        res.status(201).json({geoJson: new GeoRoute(doc)});
+        if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
+      }).catch( (err) => { 
+        throw err // catch error in the outside catch rather than handle twice
+        // res.status(500).json(err);
+        // if (DEBUG) { console.log(' >> ERROR:' + err); }
       });
-  
-    // if isLarge = false, front end expects to wait fot the file to be processed before returning the result 
-    } else {
-  
-      getMongoFromGpx().then( (mongoPath) => {
-  
-        // Save route into database with isSaved = false, and return it to the front end
-        MongoPath.Routes.create(mongoPath).then( (doc) => {
-          res.status(201).json({geoJson: new GeoRoute(doc)});
-          if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
-        })
-  
-      });
-  
-    }
+
+    }).catch( (err) => { 
+      res.status(500).json(err.toString());
+      if (DEBUG) { console.log(' >> ERROR:' + err); }
+     });
+
   
     function getMongoFromGpx() {
-  
+
       return new Promise ( (res, rej) => {
         // Get a mongo object from the path data
-        const pathFromFile = readGPX(req.file.buffer.toString());
-        const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
+        try {
+          const pathFromFile = readGPX(req.file.buffer.toString());
+          var path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
+        } catch(error) {
+          rej(error);
+        }
+          
         // once Path is instantiated, it needs to be initialised (returns a promise)
         path.getElevations().then( () => {
           const mongoPath = path.asMongoObject(userId, false);
           res(mongoPath);
+        }).catch( (err) => {
+          rej(err);
         })
+        
       })
   
     };

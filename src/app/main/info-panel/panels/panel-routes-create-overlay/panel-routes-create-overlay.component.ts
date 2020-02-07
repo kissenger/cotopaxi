@@ -4,20 +4,22 @@ import {  Router } from '@angular/router';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { MapCreateService } from 'src/app/shared/services/map-create.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-panel-routes-create-overlay',
   templateUrl: './panel-routes-create-overlay.component.html',
   styleUrls: ['./panel-routes-create-overlay.component.css']
 })
-export class PanelRoutesCreateOverlayComponent implements OnInit {
+export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
 
-  private htmlData = [];
+  private htmlData: Array<number> = [];
   private pathId: string;
   private pathIdArray: Array<string> = [];
   private isNoPathsToPlot: boolean = false;
   private DEBUG = false;
   private units = globals.units;
+  private subscription: Subscription;
 
   constructor(
     private httpService: HttpService,
@@ -45,7 +47,7 @@ export class PanelRoutesCreateOverlayComponent implements OnInit {
   */
   updateList(currentBbox: Array<number>) {
 
-    this.httpService.getIntersectingRoutes(currentBbox).subscribe( pathsList => {
+    this.subscription = this.httpService.getIntersectingRoutes(currentBbox).subscribe( pathsList => {
       this.isNoPathsToPlot = pathsList.length === 0 ? true : false;
       this.htmlData = pathsList;
     });
@@ -91,6 +93,7 @@ export class PanelRoutesCreateOverlayComponent implements OnInit {
    * Actions to do when component is destroyed
    */
   ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 
 

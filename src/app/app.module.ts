@@ -14,23 +14,25 @@ import { FooterComponent } from './footer/footer.component';
 import { MainComponent } from './main/main.component';
 import { InfoPanelComponent } from './main/info-panel/info-panel.component';
 import { MenuBarComponent } from './main/menu-bar/menu-bar.component';
-
 import { PanelsInjectorComponent } from './main/info-panel/panels-injector/panels-injector.component';
 import { PanelRoutesCreateDetailsComponent } from './main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
 import { PanelRoutesCreateOverlayComponent } from './main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
 import { PanelRoutesListListComponent } from './main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
 import { PanelRoutesListDetailsComponent } from './main/info-panel/panels/panel-routes-list-details/panel-routes-list-details.component';
 import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
+import { SpinnerComponent } from './shared/components/spinner/spinner.component';
+import { AlertBoxComponent } from './shared/components/alert-box/alert-box.component';
+import { RoutesReviewComponent } from './main/routes/routes-review/routes-review.component';
 
 //Services
 import { HttpService } from './shared/services/http.service';
 import { MapService } from './shared/services/map.service';
 import { MapCreateService } from './shared/services/map-create.service';
+import { AlertService } from './shared/services/alert.service';
+import { SpinnerService } from './shared/services/spinner.service';
 
 //Pipes
 import { UnitPipe } from './shared/unit.pipe';
-import { RoutesReviewComponent } from './main/routes/routes-review/routes-review.component';
-
 
 //Directives
 // import { InfoPanelDirective } from './__archive/app-directives/info-panel.directive';
@@ -54,7 +56,9 @@ import { RoutesReviewComponent } from './main/routes/routes-review/routes-review
     PanelRoutesListListComponent,
     PanelRoutesListDetailsComponent,
     PanelRoutesListOptionsComponent,
-    RoutesReviewComponent
+    RoutesReviewComponent,
+    SpinnerComponent,
+    AlertBoxComponent
   ],
   imports: [
     BrowserModule,
@@ -65,7 +69,9 @@ import { RoutesReviewComponent } from './main/routes/routes-review/routes-review
   providers: [
     HttpService,
     MapService,
-    MapCreateService
+    MapCreateService,
+    AlertService,
+    SpinnerService
   ],
   bootstrap: [AppComponent],
   entryComponents: [
@@ -73,7 +79,9 @@ import { RoutesReviewComponent } from './main/routes/routes-review/routes-review
     PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
     PanelRoutesListDetailsComponent,
-    PanelRoutesListOptionsComponent
+    PanelRoutesListOptionsComponent,
+    AlertBoxComponent,
+    SpinnerComponent
     ]
 })
 export class AppModule { }

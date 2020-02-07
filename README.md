@@ -72,4 +72,8 @@ got into last time when trying to develop on a different computer.<br>
         <td>npm install @mapbox/tilebelt</td>
         <td>library to identify raster tile locations for mapbox elevation query</td>
     </tr>    
+    <tr>
+    <td> ng add @angular/elements</td>
+    <td> allows creation of custom DOM elements</td>
+    </tr>
 </table>

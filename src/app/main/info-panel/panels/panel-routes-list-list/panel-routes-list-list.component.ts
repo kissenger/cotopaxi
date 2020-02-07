@@ -3,6 +3,7 @@ import { HttpService } from 'src/app/shared/services/http.service';
 import {  Router } from '@angular/router';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-panel-routes-list-list',
@@ -19,6 +20,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   private units = globals.units;
   private numberOfRoutes: number;
   private numberOfLoadedRoutes: number;
+  private subscription: Subscription;
 
   constructor(
     private httpService: HttpService,
@@ -38,7 +40,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   updateList(booAutoSelectPathId: boolean) {
 
     // get list of paths
-    this.httpService.getPathsList('route', this.listOffset).subscribe( pathsList => {
+    this.subscription = this.httpService.getPathsList('route', this.listOffset).subscribe( pathsList => {
 
       // query returned data, so process it
       if ( typeof pathsList[0] !== 'undefined' ) {
@@ -105,6 +107,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
    * Actions to do when component is destroyed
    */
   ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 
 

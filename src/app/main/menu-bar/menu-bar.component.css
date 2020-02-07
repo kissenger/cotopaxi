@@ -27,7 +27,7 @@
 }
 .radio-btns  {
     border-top-left-radius: none;
-    border-top-right-radius: 15px;
+    border-top-right-radius: none;
     border-bottom-right-radius: none;
     border-bottom-right-radius: none;
 }

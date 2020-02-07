@@ -45,7 +45,6 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     private chartsService: ChartsService
   ) {}
 
-
   ngOnInit() {
 
     this.chartsService.plotChart(document.getElementById('chart_div'), [[],[]], []);
