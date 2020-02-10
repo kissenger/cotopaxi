@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpService } from '../shared/services/http.service';
+import { AuthService } from '../shared/services/auth.service';
 
 @Component({
   selector: 'app-main',
@@ -9,26 +8,19 @@ import { HttpService } from '../shared/services/http.service';
 })
 export class MainComponent implements OnInit, OnDestroy {
 
-  private paramSubs: any;
-  private id: string;
-  private timer;
-  private page: string;
-
   constructor(
-    private activatedRouter: ActivatedRoute,
-    private httpService: HttpService,
-    private router: Router
+    private auth: AuthService   // dont remove, used in html
   ) { }
 
   ngOnInit() {
 
     // gets the url - delay needed to ensure page has loaded - not neat but can't find a better way
-    this.timer = setInterval( () => {
-      if (this.router.url !== '/') { 
-        this.page = this.router.url.split('/')[2];
-        clearInterval(this.timer); 
-      } 
-    }, 1);
+    // this.timer = setInterval( () => {
+    //   if (this.router.url !== '/') { 
+    //     this.page = this.router.url.split('/')[2];
+    //     clearInterval(this.timer); 
+    //   } 
+    // }, 1);
 
   }
 
@@ -39,6 +31,6 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    clearInterval(this.timer);
+    // clearInterval(this.timer);
   }
 }

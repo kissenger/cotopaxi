@@ -78,4 +78,25 @@ export class HttpService {
     return this.http.post<any>('http://' + this.hostName + ':3000/process-points/', {coords, elevs});
   }
 
+  registerUser(userData) {
+    return this.http.post<any>('http://localhost:3000/register/', userData);
+  }
+
+  loginUser(userData) {
+    return this.http.post<any>('http://localhost:3000/login/', userData);
+  }
+
+  logoutUser() {
+    localStorage.removeItem('token');
+  }
+
+  loggedIn() {
+    return !!localStorage.getItem('token');   // double ! casts result to boolean
+  }
+
+  getToken() {
+    return localStorage.getItem('token');
+  }
+
+
 }

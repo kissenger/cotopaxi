@@ -30,13 +30,13 @@ export class RoutesReviewComponent implements OnInit {
     } else {
 
       // initialise the map 
-      // this.mapService.initialiseMap(this.geoService.getPathCoG(geoJSON.bbox), 10).then( () => {
+      this.mapService.initialiseMap(this.geoService.getPathCoG(geoJSON.bbox), 10).then( () => {
 
         // plot the stored route
         const plotOptions = {booReplaceExisting: false, booResizeView: true, booSaveToStore: true};
         this.mapService.addLayerToMap(geoJSON, globals.routeLineStyle, plotOptions);
         
-      // });
+      });
     }
 
   }

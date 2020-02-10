@@ -23,7 +23,7 @@ export class SpinnerService {
 
     // Create element    
     // const spinner: NgElement & WithProperties<SpinnerComponent> = document.createElement('spinner-spinner') as any;
-    this.spinner = document.createElement('spinner-spinner') as any;
+    this.spinner = document.createElement('bootstrap-spinner') as any;
 
     // Add to the DOM
     document.body.appendChild(this.spinner);

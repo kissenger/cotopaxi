@@ -21,11 +21,22 @@
   <div class="collapse navbar-collapse " id="navbarNav">
       <ul class="navbar-nav ml-auto">
         <li class="nav-item active">
-          <a [routerLink]="['/route/list/']" class="nav-link" href="#">Routes<span class="sr-only">(current)</span></a>
+          <a *ngIf='auth.isLoggedIn()' [routerLink]="['/route/list/']" class="nav-link">Routes<span class="sr-only">(current)</span></a>
+          <!-- <a *ngIf='!auth.isLoggedIn()' [routerLink]="[{ outlets: { loggedIn: ['route', 'list'] }}]" class="nav-link" href="#">Routes<span class="sr-only">(current)</span></a> -->
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Blog</a>
+          <a *ngIf='auth.isLoggedIn()' class="nav-link">Blog</a>
         </li>
+        <li class="nav-item">
+          <a *ngIf='auth.isLoggedIn()' (click)="onLogoutClick()" class="nav-link">Logout</a>
+        </li>        
+        <li class="nav-item">
+          <a *ngIf='!auth.isLoggedIn()' (click)="onRegisterClick()" class="nav-link">Register</a>
+        </li>       
+        <li class="nav-item">
+          <a *ngIf='!auth.isLoggedIn()' (click)="onLoginClick()" class="nav-link">Login</a>
+          <!-- <a *ngIf='!auth.isLoggedIn()' [routerLink]="[{ outlets: { loggedOut: ['login'] }}]" class="nav-link" href="#">Login</a> -->
+        </li>   
       </ul>
   </div>
 
