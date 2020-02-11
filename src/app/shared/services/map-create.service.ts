@@ -262,8 +262,7 @@ export class MapCreateService extends MapService {
               name: "",
               description: "",
               isLong: false,
-              isElevations: false
-          }
+              isElevations: false          }
         }
       }
   }

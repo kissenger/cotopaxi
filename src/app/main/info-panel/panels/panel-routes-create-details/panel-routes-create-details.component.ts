@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ViewChild, TemplateRef } from '@angular/core';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { ChartsService } from 'src/app/shared/services/charts-service';
 })
 export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
+  @Input() callingPage: string;
   private activePathSubscription: Subscription;
   private pathStats: pathStats = {
     distance: 0,
@@ -37,6 +38,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   private isLong: boolean;
   private chartData;
   private colourArray;
+  private isListPage: boolean;
 
   constructor(
     private dataService: DataService,
@@ -46,6 +48,11 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+
+    // show form inputs and buttons only for review or create pages, not for list
+    this.isListPage = this.callingPage === 'list';
+    // console.log(this.callingPage);
+    // console.log(this.isListPage);
 
     this.chartsService.plotChart(document.getElementById('chart_div'), [[],[]], []);
 
@@ -63,6 +70,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
         this.isLong = geoJson.properties.info.isLong;
         this.isElevations = (geoJson.properties.info.isElevations && !this.isLong) ? true : false;
         console.log(geoJson.properties.info, this.isLong);
+        
       }
           // work out the data to plot on chart
       // loops through the features, creating an array of the form:
@@ -90,6 +98,45 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   }
 
+
+
+    // listen for data sent from map service
+    // this.pathPropsSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
+    //   if (!geoJson.properties.stats.elevations) {
+    //     this.pathStats.elevations = {ascent: 0, descent: 0, maxElev: 0, minElev: 0, lumpiness: 0};
+    //   }
+    //   this.pathStats = geoJson.properties.stats;
+    //   this.pathName = geoJson.properties.info.name;
+    //   this.pathCategory = geoJson.properties.info.category;
+    //   this.pathType = geoJson.properties.info.pathType;
+    //   this.pathDescription = geoJson.properties.info.description;
+    //   this.isLong = geoJson.properties.info.isLong;
+    //   this.isElevations = (geoJson.properties.info.isElevations && !this.isLong) ? true : false;
+
+    //   // work out the data to plot on chart
+    //   // loops through the features, creating an array of the form:
+    //   // [[x1, x2, x3, x4, x5, ....],
+    //   //  [e1, e2,   ,   ,   , ....],
+    //   //  [  ,   , e3, e4, e5, ....]]
+    //   // where x is cumDist, e is elevation point, and spaces are null points
+    //   this.chartData = [geoJson.properties.params.cumDistance];
+    //   this.colourArray = [];
+    //   let x = 0;
+
+    //   geoJson.features.forEach( feature => {
+    //     const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
+    //     this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
+    //     x += feature.properties.params.elev.length - 1;
+    //     this.colourArray.push(feature.properties.lineColour);
+    //   });
+      
+      // console.log(this.col)
+    
+    // })
+
+
+
+
   resetPathStats() {
     this.pathStats = {
       distance: 0,
@@ -107,12 +154,21 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // - when a route is created on the map,  mapCreateService saves each time a new chunk of path is added
     // - when a route is imported, the backend sends the geoJSON, which is in turned saved by panel-routes-list-options
     const newPath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
-    const source = this.dataService.getFromStore('activePath', false).source;
-    this.dataService.showStore();
 
-    // newPath.creationType is set in the appropriate components to help us distinguish
+    // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs    
+    if (newPath.properties.pathId === '0000') {    // pathId for created route is set to 0000 in the backend
+      const sendObj = {
+        coords: newPath.features[0].geometry.coordinates, 
+        elevs: newPath.features[0].properties.params.elev,
+        name: this.pathName,
+        description: this.pathDescription
+      };
+      this.httpService.saveCreatedRoute(sendObj).subscribe( () => {
+        this.router.navigate(['/route/list/']);
+      }) 
+      
     // imported file, beackend only needs to knw the pathType, pathId, name and description, so create theis object and call http
-    if (source === 'map') {
+    } else {
       const sendObj = {
         pathId: newPath.properties.pathId, 
         pathType: newPath.properties.info.pathType,
@@ -122,18 +178,6 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       this.httpService.saveImportedPath(sendObj).subscribe( () => {
         this.router.navigate(['/route/list/']);
       })
-
-    // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
-    } else if (source === 'created') {
-      const sendObj = {
-        coords: newPath.geometry.coordinates, 
-        elevs: newPath.properties.params.elev,
-        name: this.pathName,
-        description: this.pathDescription
-      };
-      this.httpService.saveCreatedRoute(sendObj).subscribe( () => {
-        this.router.navigate(['/route/list/']);
-      })      
     }
 
   }

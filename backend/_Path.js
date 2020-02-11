@@ -148,7 +148,8 @@ class Path  {
         coordinates: this.points.map( x => [x.lng, x.lat])
       },
       info: {
-        direction: this.direction(),
+        // direction: this.direction(),
+        direction: "",
         category: this.category,
         isFavourite: false,
         isNationalTrail: false,

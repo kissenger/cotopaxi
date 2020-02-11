@@ -10,33 +10,22 @@ import { PanelsInjectorComponent } from './panels-injector/panels-injector.compo
 })
 
 export class InfoPanelComponent implements OnInit {
-  // @ViewChildren("injector") divs: QueryList<any>;
-  // @ViewChildren('injector', {read: ViewContainerRef}) viewContainerRefs: QueryList<any>;
 
-  private tabsArray: Array<{}>;
+  // bind to property in parent to determine which page called the info panel
+  @Input() callingPage: string;
+  private tabsArray: Array<{}>;   // dont delete - used in html
 
   constructor( 
     private infoPanelService: InfoPanelService,
     private dataService: DataService
    ) { }
 
-  //  ngAfterViewInit() {
-  //   this.viewContainerRefs.changes.subscribe(item => {
-  //     if(this.viewContainerRefs.toArray().length) {
-  //       // shown
-  //     }
-  //   })
-  //  }
-
   ngOnInit() {
-    this.dataService.getPageName().then( pageName => {
-      this.tabsArray = this.infoPanelService.getTabs(pageName);
-    });
+    this.tabsArray = this.infoPanelService.getTabs(this.callingPage);
   }
 
   onClick(e) {
     this.dataService.activeTabEmitter.emit(e.target.id);
   }
-
 
 }

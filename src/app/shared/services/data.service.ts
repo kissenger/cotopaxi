@@ -59,16 +59,16 @@ export class DataService {
 
 
 
-  getPageName() {
-    return new Promise<string>( (resolve, rej) => {
-      let timer = setInterval( () => {
-        if (this.router.url !== '/') { 
-          clearInterval(timer); 
-          resolve(this.router.url.split('/')[2]);
-        } 
-      }, 1);
-    });
-  }
+  // getPageName() {
+  //   return new Promise<string>( (resolve, rej) => {
+  //     let timer = setInterval( () => {
+  //       if (this.router.url !== '/') { 
+  //         clearInterval(timer); 
+  //         resolve(this.router.url.split('/')[2]);
+  //       } 
+  //     }, 1);
+  //   });
+  // }
   
   
 }

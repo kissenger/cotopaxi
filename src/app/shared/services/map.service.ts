@@ -5,6 +5,7 @@ import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globals from 'src/app/shared/globals';
 import { tsCoordinate, tsPlotPathOptions, tsLineStyle } from 'src/app/shared/interfaces';
+import { MapCreateService } from './map-create.service';
 
 @Injectable({
   providedIn: 'root'
@@ -126,8 +127,6 @@ export class MapService{
     const nFeatures = pathAsGeoJSON.features.length;
     if (nFeatures > 0 && plotOptions.booPlotMarkers) {
       const nPoints = pathAsGeoJSON.features[nFeatures-1].geometry.coordinates.length;
-      console.log(pathAsGeoJSON);
-      console.log(pathAsGeoJSON.features[nFeatures-1].geometry.coordinates[nPoints-1]);
       this.addMarkerToPath(pathAsGeoJSON.features[0].geometry.coordinates[0], pathId);
       this.addMarkerToPath(pathAsGeoJSON.features[nFeatures-1].geometry.coordinates[nPoints-1], pathId);
     }
@@ -144,7 +143,16 @@ export class MapService{
 
     // emit the pathStats to the details component 
     if (plotOptions.booSaveToStore) {
-      this.dataService.saveToStore('activePath', {source: 'map', pathAsGeoJSON});
+      // const source = this instanceof MapCreateService ? 'created': 'map';
+      // const source = 'map';
+
+
+
+      // need to find a way to distinguish between created and uploaded route - maybe embed something in geoJSON template
+
+
+
+      // this.dataService.saveToStore('activePath', {source, pathAsGeoJSON});
       this.dataService.activePathEmitter.emit(pathAsGeoJSON);
       // always useful to see the active geoJson in the console
       console.log(pathAsGeoJSON);

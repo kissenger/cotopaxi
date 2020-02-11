@@ -181,8 +181,9 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
 
   // construct query based on incoming payload
   if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
+  console.log(req.body);
 
-  let condition = {_id: req.body.pathId};
+  let condition = {_id: req.body.pathId, userId: userId};
   let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
 
   // query database, updating changed data and setting isSaved to true

@@ -18,7 +18,6 @@ import { PanelsInjectorComponent } from './main/info-panel/panels-injector/panel
 import { PanelRoutesCreateDetailsComponent } from './main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
 import { PanelRoutesCreateOverlayComponent } from './main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
 import { PanelRoutesListListComponent } from './main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
-import { PanelRoutesListDetailsComponent } from './main/info-panel/panels/panel-routes-list-details/panel-routes-list-details.component';
 import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 import { SpinnerComponent } from './shared/components/spinner/spinner.component';
 import { AlertBoxComponent } from './shared/components/alert-box/alert-box.component';
@@ -36,11 +35,12 @@ import { SpinnerService } from './shared/services/spinner.service';
 import { AuthService } from './shared/services/auth.service';
 import { LoginService } from './shared/services/login.service';
 import { RegisterService } from './shared/services/register.service';
+import { TokenInterceptorService } from './shared/services/token-interceptor.service';
+import { AuthGuard } from './auth.guard';
 
 //Pipes
 import { UnitPipe } from './shared/unit.pipe';
-import { TokenInterceptorService } from './shared/services/token-interceptor.service';
-import { AuthGuard } from './auth.guard';
+
 
 
 
@@ -64,7 +64,6 @@ import { AuthGuard } from './auth.guard';
     PanelRoutesCreateDetailsComponent,
     PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
-    PanelRoutesListDetailsComponent,
     PanelRoutesListOptionsComponent,
     RoutesReviewComponent,
     SpinnerComponent,
@@ -100,7 +99,6 @@ import { AuthGuard } from './auth.guard';
     PanelRoutesCreateDetailsComponent, 
     PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
-    PanelRoutesListDetailsComponent,
     PanelRoutesListOptionsComponent,
     AlertBoxComponent,
     SpinnerComponent,

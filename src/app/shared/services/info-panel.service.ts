@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { PanelRoutesCreateDetailsComponent } from 'src/app/main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
 import { PanelRoutesCreateOverlayComponent } from 'src/app/main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
 import { PanelRoutesListListComponent } from 'src/app/main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
-import { PanelRoutesListDetailsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-details/panel-routes-list-details.component';
 import { PanelRoutesListOptionsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 
 @Injectable({
@@ -31,7 +30,7 @@ export class InfoPanelService {
           component: PanelRoutesListListComponent },
         { active: false,
           name: 'details',
-          component: PanelRoutesListDetailsComponent },
+          component: PanelRoutesCreateDetailsComponent },
         { active: false,
           name: 'options',
           component: PanelRoutesListOptionsComponent } ]

@@ -4,11 +4,33 @@
     <div  class="inner h-100">
 
         <!-- Name and Description Block -->
-        <!-- <div *ngIf="!pathName; else else_div1" class="h5 mt-1 text-center border-bottom">
-            {{pathCategory}} {{pathType}}
+        <!-- String Type -->
+        <div *ngIf="isListPage; else showForm">
+
+            <div *ngIf="!pathName; else makeUpName" class="h5 mt-1 text-center border-bottom">
+                {{pathCategory}} {{pathType}}
+            </div>
+
+            <ng-template #makeUpName>
+                <div class="h5 mt-1 text-center">{{pathName}}</div>
+            </ng-template>
+
+            <div class="mt-1 mb-2">{{pathDescription}}</div>
+
         </div>
-        <ng-template #else_div1><div class="h5 mt-1 text-center">{{pathName}}</div></ng-template>
-        <div class="mt-1 mb-2">{{pathDescription}}</div> -->
+
+        <!-- Form type -->
+        <ng-template #showForm>
+
+            <div class="input-group input-group-sm my-1">
+                <input class='form-control' type='text' placeholder='Give your route a name' [(ngModel)]="pathName" name="first">
+            </div>
+
+            <div class="input-group input-group-sm my-1">
+                <textarea class='form-control' placeholder='Give your route a description' [(ngModel)]="pathDescription"></textarea>
+            </div>
+
+        </ng-template>
         <!-- End of Name and Description Block -->
 
         <!-- Basic stats (distance, nPoints) Block -->
@@ -84,10 +106,11 @@
 
     </div> <!-- close "inner"  div-->
 
-      <!-- buttons stay at the bottom regarldess of amount of content -->
-      <div class="buttons d-flex mb-2 justify-content-center" >
-        <button (click)="onSave()" type="button" class="btn btn-primary btn-sm" type="submit">Save</button>
-        <button (click)="onCancel()" type="button" class="btn btn-secondary btn-sm ml-1" type="cancel">Cancel</button>
+    <!-- buttons stay at the bottom regarldess of amount of content -->
+    <!-- String Type -->
+    <div *ngIf="!isListPage" class="buttons d-flex mb-2 mt-2 justify-content-center" >
+        <button (click)="onSave()" type="button" class="btn btn-primary btn-sm mt-1" type="submit">Save</button>
+        <button (click)="onCancel()" type="button" class="btn btn-secondary btn-sm ml-1 mt-1" type="cancel">Cancel</button>
     </div>
 
 </div>
