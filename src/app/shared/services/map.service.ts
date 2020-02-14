@@ -143,19 +143,8 @@ export class MapService{
 
     // emit the pathStats to the details component 
     if (plotOptions.booSaveToStore) {
-      // const source = this instanceof MapCreateService ? 'created': 'map';
-      // const source = 'map';
-
-
-
-      // need to find a way to distinguish between created and uploaded route - maybe embed something in geoJSON template
-
-
-
-      // this.dataService.saveToStore('activePath', {source, pathAsGeoJSON});
       this.dataService.activePathEmitter.emit(pathAsGeoJSON);
-      // always useful to see the active geoJson in the console
-      console.log(pathAsGeoJSON);
+      console.log(pathAsGeoJSON);    // always useful to see the active geoJson in the console
     }
 
     // share the map centre so we can use later if we want to create a new map on this position
