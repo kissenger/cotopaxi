@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
-import {  Router } from '@angular/router';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { MapCreateService } from 'src/app/shared/services/map-create.service';
 import { Subscription } from 'rxjs';
+import { TsUnits, TsListData } from 'src/app/shared/interfaces';
 
 @Component({
   selector: 'app-panel-routes-create-overlay',
@@ -13,17 +13,17 @@ import { Subscription } from 'rxjs';
 })
 export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
 
-  private htmlData: Array<number> = [];
-  private pathId: string;
-  private pathIdArray: Array<string> = [];
-  private isNoPathsToPlot: boolean = false;
-  private DEBUG = false;
-  private units = globals.units;
   private subscription: Subscription;
+  private pathIdArray: Array<string> = [];
+
+  public listData: TsListData;
+  public pathId: string;
+  public isNoPathsToPlot = false;
+  public units: TsUnits = globals.units;
+
 
   constructor(
     private httpService: HttpService,
-    private router: Router,
     private dataService: DataService,
     private mapCreateService: MapCreateService
     ) {}
@@ -35,10 +35,10 @@ export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
     this.updateList(bbox);
 
     // then subscripe to emitter, which is sent from map-service when any movement of the map has finished
-    this.dataService.mapBoundsEmitter.subscribe( (bbox) => {
-      this.updateList(bbox);
-    })
-  } 
+    this.dataService.mapBoundsEmitter.subscribe( (bb) => {
+      this.updateList(bb);
+    });
+  }
 
 
   /**
@@ -49,7 +49,7 @@ export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
 
     this.subscription = this.httpService.getIntersectingRoutes(currentBbox).subscribe( pathsList => {
       this.isNoPathsToPlot = pathsList.length === 0 ? true : false;
-      this.htmlData = pathsList;
+      this.listData = pathsList;
     });
 
   }
@@ -66,15 +66,8 @@ export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
     } else {
       this.pathIdArray.push(idFromClick);
     }
-    
-  }
 
-  /**
-  * Request additional items in list
-  */
-//  onRefreshClick() {
-//   this.updateList(false);
-// }
+  }
 
   /**
    * function used in html template - returns the css classes according to some conditions
@@ -85,7 +78,7 @@ export class PanelRoutesCreateOverlayComponent implements OnInit, OnDestroy {
     let cssClass = '';
     if (this.pathIdArray.includes(id)) { cssClass += 'highlight-div '; }
     if (i === 0) { cssClass += 'border-top'; }
-    
+
     return cssClass;
   }
 

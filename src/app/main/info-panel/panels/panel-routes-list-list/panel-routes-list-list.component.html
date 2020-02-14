@@ -4,15 +4,15 @@
 
   <div *ngFor="let line of htmlData; let i = index">
 
-    <div id={{line.pathId}} 
-      (click)="onLineClick(line.pathId)" 
-      class="p-1 border-bottom border-left border-right" 
+    <div id={{line.pathId}}
+      (click)="onLineClick(line.pathId)"
+      class="p-1 border-bottom border-left border-right"
       [ngClass]="getCssClass(line.pathId, i)">
 
     <div *ngIf="line.name === '' || !line.name; else else_div" class="name">
       {{line.category}} {{line.pathType}}
     </div>
-    <ng-template #else_div><div class="name">{{line.name}}</div></ng-template>
+    <ng-template #else_div ><div class="name">{{line.name}}</div></ng-template>
 
     {{line.stats.distance | units: 'distance': units.distance}}
     {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}

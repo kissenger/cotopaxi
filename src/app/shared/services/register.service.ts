@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NgElement, WithProperties } from '@angular/elements';
-import { RegisterComponent } from 'src/app/login-forms/register/register.component';
+import { RegisterComponent } from 'src/app/shared/components/register/register.component';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -36,6 +36,6 @@ export class RegisterService {
         document.body.removeChild(this.register);
         return observer.next(true);
       });
-    })
+    });
   }
 }

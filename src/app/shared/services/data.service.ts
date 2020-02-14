@@ -1,6 +1,5 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { tsCoordinate } from '../interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -9,23 +8,23 @@ export class DataService {
 
   constructor(
     private router: Router
-  ) { 
+  ) {
   }
 
   /**
-   * Collection of variables and methods to enable emission, storage and retrieval of the 
+   * Collection of variables and methods to enable emission, storage and retrieval of the
    * CREATED OR IMPORTED PATHS BEFORE RECALL FROM DB
    */
   public menuClickEmitter = new EventEmitter();          // from map service to info panel
-  public pathStatsEmitter = new EventEmitter();   // from map-create to panel-create-detail 
+  public pathStatsEmitter = new EventEmitter();   // from map-create to panel-create-detail
   public activeTabEmitter = new EventEmitter();          // from map service to info panel
   // stored by map-create-service, accessed by panel-routes-create-details
-  // public createdPathData: {coords: Array<tsCoordinate>, elevations: {elevs: Array<number>, elevationStatus: string}}; 
+  // public createdPathData: {coords: Array<TsCoordinate>, elevations: {elevs: Array<number>, elevationStatus: string}};
   // stored by panel-routes-list-options, accessed by panel-routes-create-details
   // public importedPathData: {pathId: string, info: {}};
 
   /**
-   * Collection of variables and methods to enable emission, storage and retrieval of the 
+   * Collection of variables and methods to enable emission, storage and retrieval of the
    * CURRENTLY ACTIVE PATH RECALLED FROM DATABASE
    */
   // public desiredPathEmitter = new EventEmitter();   // emits from panel-routes-list-list and subscribed to in routes-list
@@ -36,8 +35,8 @@ export class DataService {
    * Data store
    * @param dataStore is a key/value object to store all shared dat in one place
    */
-  private dataStore: Object = {}
-  
+  private dataStore: Object = {};
+
   // saves a key/value pair to the data store, also emitting the same data if {{emit}} is true
   public saveToStore(keyName: string, value: any) {
     this.dataStore[keyName] = value;
@@ -46,7 +45,7 @@ export class DataService {
   // returns the current value of a named key, setting the value to null if {{clearKey}} is true
   public getFromStore(keyName: string, clearKey: boolean) {
     const returnData = this.dataStore[keyName];
-    if (clearKey) { delete this.dataStore[keyName] };
+    if (clearKey) { delete this.dataStore[keyName]; }
     return returnData;
   }
 
@@ -62,28 +61,28 @@ export class DataService {
   // getPageName() {
   //   return new Promise<string>( (resolve, rej) => {
   //     let timer = setInterval( () => {
-  //       if (this.router.url !== '/') { 
-  //         clearInterval(timer); 
+  //       if (this.router.url !== '/') {
+  //         clearInterval(timer);
   //         resolve(this.router.url.split('/')[2]);
-  //       } 
+  //       }
   //     }, 1);
   //   });
   // }
-  
-  
+
+
 }
 
 // export class dataStore {
 
-//   private 
+//   private
 //   constructor(storeName: string, emit: boolean) {
 //   }
-  
+
 //   save() {
 
 //   }
 
 //   get() {
-//     return 
+//     return
 //   }
 // }

@@ -11,30 +11,31 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 })
 export class AlertBoxComponent {
   // private state: 'opened' | 'closed' = 'closed';
-  private _message: string;
-  private _title: string;
-  public _okBtn: boolean;
-  public _cancelBtn: boolean;
+  // public _message: string;
+  // public _title: string;
+  // public _okBtn: boolean;
+  // public _cancelBtn: boolean;
 
   @Input()
-  set message(message: string) { this._message = message;}
-  get message(): string { return this._message; }
+  set message(message: string) { this.message = message; }
+  get message(): string { return this.message; }
 
   @Input()
-  set title(title: string) { this._title = title; }
-  get title(): string { return this._title; }
+  set title(title: string) { this.title = title; }
+  get title(): string { return this.title; }
 
   @Input()
-  set okBtn(okBtn: boolean) { this._okBtn = okBtn;}
-  get okBtn(): boolean { return this._okBtn; }
+  set okBtn(okBtn: boolean) { this.okBtn = okBtn; }
+  get okBtn(): boolean { return this.okBtn; }
 
   @Input()
-  set cancelBtn(cancelBtn: boolean) { this._cancelBtn = cancelBtn; }
-  get cancelBtn(): boolean { return this._cancelBtn; }
+  set cancelBtn(cancelBtn: boolean) { this.cancelBtn = cancelBtn; }
+  get cancelBtn(): boolean { return this.cancelBtn; }
 
   @Output()
   cancel = new EventEmitter();
 
   @Output()
   ok = new EventEmitter();
+
 }

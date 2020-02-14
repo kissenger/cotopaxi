@@ -1,9 +1,9 @@
 import { Component, Injector } from '@angular/core';
 import { createCustomElement } from '@angular/elements';
-import { AlertBoxComponent } from './shared/components/alert-box/alert-box.component';
-import { SpinnerComponent } from './shared/components/spinner/spinner.component';
-import { LoginComponent } from './login-forms/login/login.component';
-import { RegisterComponent } from './login-forms/register/register.component';
+import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box.component';
+import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
+import { LoginComponent } from 'src/app/shared/components/login/login.component';
+import { RegisterComponent } from 'src/app/shared/components/register/register.component';
 
 @Component({
   selector: 'app-root',

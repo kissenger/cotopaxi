@@ -5,50 +5,122 @@
 //     elevs: Array<number>
 // }
 
-export interface tsPlotPathOptions{
-    booResizeView?: boolean,
-    booSaveToStore?: boolean,
-    booPlotMarkers?: boolean
+export interface TsUnits {
+    distance: 'miles' | 'kms';
+    elevation: 'm' | 'ft';
 }
 
-export interface tsLineStyle{
-    lineWidth?: number
-    lineColour?: string
-    lineOpacity?: number
+export interface TsPlotPathOptions {
+    booResizeView?: boolean;
+    booSaveToStore?: boolean;
+    booPlotMarkers?: boolean;
 }
 
-export interface pathStats{
-    distance: number,
-    nPoints: number,
-    elevations?: {
-        ascent: number,
-        descent: number,
-        lumpiness: number,
-        maxElev: number,
-        minElev: number
-    }
+export interface TsLineStyle {
+    lineWidth?: number;
+    lineColour?: string;
+    lineOpacity?: number;
+}
+
+export interface TsPathStats {
+    // distance: number;
+    // nPoints: number;
+    // elevations?: {
+    //     ascent: number;
+    //     descent: number;
+    //     lumpiness: number;
+    //     maxElev: number;
+    //     minElev: number;
+    // };
+    // hills?: Array<TsHill>;
+
+      bbox?: {
+        minLng: number;
+        minLat: number;
+        maxLng: number;
+        maxLat: number;
+      };
+      nPoints?: number;
+      duration?: number;
+      distance: number;
+      pace?: number;
+      elevations?: {
+        ascent: number;
+        descent: number;
+        maxElev: number;
+        minElev: number;
+        lumpiness: number;
+      };
+      p2p?: {
+        max: number;
+        ave: number;
+      };
+      movingStats?: {
+        movingTime: number;
+        movingDist: number;
+        movingPace: number;
+      };
+      hills?: Array<TsHill>;
+      splits?: {
+        kmSplits: number;
+        mileSplits: number;
+      };
+
+  }
+
+interface TsHill {
+  dHeight: number;
+  dDist: number;
+  startDist: number;
+  startPoint: number;
+  endPoint: number;
+  dTime: number;
+  pace: number;
+  ascRate: number;
+  maxGrad: number;
+  aveGrad: number;
+}
+
+export interface TsListData {
+  name: string;
+  stats: TsPathStats;
+  category: string;
+  direction: string;
+  pathType: string;
+  startTime: string;
+  creationDate: string;
+  pathId: string;
+  count: number;
 }
 
 
-export interface tsCoordinate {
-    lat: number,
-    lng: number,
-    elev?: number
+export interface TsCoordinate {
+  lat: number;
+  lng: number;
+  elev?: number;
 }
 
 
-export interface myElevationQuery {
+interface TsTab {
+  active: boolean;
+  name: string;
+  component: any;
+}
+
+export interface TsTabsArray extends Array<TsTab> {}
+
+export interface TsElevationQuery {
     options?: {
         interpolate?: boolean,
         writeResultsToFile?: boolean
-    },
-    coordsArray: Array<tsCoordinate>
+    };
+    coords: Array<TsCoordinate>;
 }
 
 
-export interface myElevationResults {
-    result: Array<tsCoordinate>
-}
+export interface TsElevationResults extends Array<TsCoordinate> {}
+    // result: Array<TsCoordinate>;
+
 
 // export interface tsFeatureCollection {
 //     bbox: tsBoundingBox,
@@ -86,11 +158,11 @@ export interface myElevationResults {
 // export interface tsInfo {
 //     direction: string,
 //     category: string,
-//     nationalTrail: boolean,  
-//     name: string, 
+//     nationalTrail: boolean,
+//     name: string,
 //     description: string,
 //     pathType: string,           // 'route' or 'track'
-//     startTime: string,    
+//     startTime: string,
 // }
 
 // export interface tsParams {
@@ -139,7 +211,7 @@ export interface myElevationResults {
 //         gradient: {
 //             max: number,
 //             ave: number
-//         } 
+//         }
 //         } ],
 //     splits: {
 //         kmSplits: Array<Array<number>>,

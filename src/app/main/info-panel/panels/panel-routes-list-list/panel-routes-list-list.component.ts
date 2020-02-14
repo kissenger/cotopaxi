@@ -4,6 +4,7 @@ import {  Router } from '@angular/router';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Subscription } from 'rxjs';
+import { TsUnits } from 'src/app/shared/interfaces';
 
 @Component({
   selector: 'app-panel-routes-list-list',
@@ -12,25 +13,24 @@ import { Subscription } from 'rxjs';
 })
 export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
-  private htmlData = [];
-  private pathId: string;
-  private listOffset = 0;
-  private isEndOfList = false; // value is read in the html do dont be tempted to delete
-  private DEBUG = false;
-  private units = globals.units;
-  private numberOfRoutes: number;
-  private numberOfLoadedRoutes: number;
   private subscription: Subscription;
+  private listOffset = 0;
+
+  public htmlData = [];
+  public pathId: string;
+  public isEndOfList = false; // value is read in the html do dont be tempted to delete
+  public units: TsUnits = globals.units;
+  public numberOfRoutes: number;
+  public numberOfLoadedRoutes: number;
 
   constructor(
     private httpService: HttpService,
-    private router: Router,
     private dataService: DataService
     ) {}
 
   ngOnInit() {
     this.updateList(true);
-  } 
+  }
 
 
   /**
@@ -44,12 +44,9 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
       // query returned data, so process it
       if ( typeof pathsList[0] !== 'undefined' ) {
-        
+
         // compile data and confirm if we are at the end of the list yet
         this.htmlData = this.htmlData.concat(pathsList);
-        console.log(this.htmlData);
-        // if (!this.htmlData[0]['name']) { this.htmlData[0]['name'] = '' };
-        // if (!this.htmlData[0]['description']) { this.htmlData[0]['description'] = '' };
         this.numberOfRoutes = this.htmlData[0].count;
         this.numberOfLoadedRoutes = this.htmlData.length;
         this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes;
@@ -57,12 +54,12 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
         // emit the first id in the list and highlight that row
         if (booAutoSelectPathId) {
           this.pathId = this.htmlData[0].pathId;
-          this.dataService.pathIdEmitter.emit(this.pathId); 
+          this.dataService.pathIdEmitter.emit(this.pathId);
         }
-        
+
       } else {
         // no data in query, so navigate back with path id = 0 (ensures that  map loads)
-        
+
       }
 
     });

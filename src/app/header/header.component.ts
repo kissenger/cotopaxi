@@ -10,12 +10,12 @@ import { Router } from '@angular/router';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent implements OnInit {
-  
+
   constructor(
-    private auth: AuthService,  // do not delete - used in html
-    private login: LoginService,
-    private register: RegisterService,
-    private router: Router
+    public auth: AuthService,  // do not delete - used in html
+    public login: LoginService,
+    public register: RegisterService,
+    public router: Router
   ) { }
 
   ngOnInit() {
@@ -29,13 +29,13 @@ export class HeaderComponent implements OnInit {
   onLoginClick() {
     this.register.removeElement();
     this.login.showAsElement().subscribe( () => {
-    })
+    });
   }
 
   onRegisterClick() {
     this.login.removeElement();
     this.register.showAsElement().subscribe( () => {
-    })
+    });
   }
 
 }

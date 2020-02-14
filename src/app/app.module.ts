@@ -1,11 +1,11 @@
-//Modules
+// Modules
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { FormsModule } from '@angular/forms';
 
-//Components
+// Components
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
 import { RoutesCreateComponent } from './main/routes/routes-create/routes-create.component';
@@ -22,11 +22,11 @@ import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-
 import { SpinnerComponent } from './shared/components/spinner/spinner.component';
 import { AlertBoxComponent } from './shared/components/alert-box/alert-box.component';
 import { RoutesReviewComponent } from './main/routes/routes-review/routes-review.component';
-import { LoginComponent } from './login-forms/login/login.component';
-import { WelcomeComponent } from './welcome/welcome.component'; 
-import { RegisterComponent } from './login-forms/register/register.component';
+import { LoginComponent } from 'src/app/shared/components/login/login.component';
+import { WelcomeComponent } from './welcome/welcome.component';
+import { RegisterComponent } from 'src/app/shared/components/register/register.component';
 
-//Services
+// Services
 import { HttpService } from './shared/services/http.service';
 import { MapService } from './shared/services/map.service';
 import { MapCreateService } from './shared/services/map-create.service';
@@ -38,15 +38,8 @@ import { RegisterService } from './shared/services/register.service';
 import { TokenInterceptorService } from './shared/services/token-interceptor.service';
 import { AuthGuard } from './auth.guard';
 
-//Pipes
+// Pipes
 import { UnitPipe } from './shared/unit.pipe';
-
-
-
-
-//Directives
-// import { InfoPanelDirective } from './__archive/app-directives/info-panel.directive';
-
 
 @NgModule({
   declarations: [
@@ -96,7 +89,7 @@ import { UnitPipe } from './shared/unit.pipe';
   ],
   bootstrap: [AppComponent],
   entryComponents: [
-    PanelRoutesCreateDetailsComponent, 
+    PanelRoutesCreateDetailsComponent,
     PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
     PanelRoutesListOptionsComponent,

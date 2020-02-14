@@ -29,13 +29,13 @@ export class RoutesReviewComponent implements OnInit {
       this.router.navigate(['routes/list']);
     } else {
 
-      // initialise the map 
+      // initialise the map
       this.mapService.initialiseMap(this.geoService.getPathCoG(geoJSON.bbox), 10).then( () => {
 
         // plot the stored route
         const plotOptions = {booReplaceExisting: false, booResizeView: true, booSaveToStore: true};
         this.mapService.addLayerToMap(geoJSON, globals.routeLineStyle, plotOptions);
-        
+
       });
     }
 

@@ -4,7 +4,7 @@ import { HttpService } from './http.service';
 import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
-import { tsCoordinate, tsPlotPathOptions, tsLineStyle } from 'src/app/shared/interfaces';
+import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
 // import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
@@ -21,20 +21,20 @@ export class MapCreateService extends MapService {
   private options = {
     snapProfile: 'driving'
   };
-  private coordsArray: Array<tsCoordinate> = [];
+  private coordsArray: Array<TsCoordinate> = [];
   private geoJSON;
-  private plotOptions: tsPlotPathOptions = {
-    booResizeView: false, 
+  private plotOptions: TsPlotPathOptions = {
+    booResizeView: false,
     booSaveToStore: true,
     booPlotMarkers: true
-  }
-  private styleOptions: tsLineStyle = {}
+  };
+  private styleOptions: TsLineStyle = {};
 
   constructor(
     httpService: HttpService,
     geoService: GeoService,
     dataService: DataService
-  ) { 
+  ) {
     super(httpService, geoService, dataService);
   }
 
@@ -44,7 +44,7 @@ export class MapCreateService extends MapService {
   }
 
   /**
-   * Allow user to create a route on the shown tsMap. Once invoked it will remain active 
+   * Allow user to create a route on the shown tsMap. Once invoked it will remain active
    * until the page is refreshed or navigated
     */
   createRoute() {
@@ -52,7 +52,7 @@ export class MapCreateService extends MapService {
     this.setUpMap();
     this.tsMap.on('click', (e) => {
 
-      const clickedPoint: tsCoordinate = { lat: e.lngLat.lat, lng: e.lngLat.lng }; 
+      const clickedPoint: TsCoordinate = { lat: e.lngLat.lat, lng: e.lngLat.lng };
 
       // First loop (if firstPoint parameter on multiPath instance has not been set)
       if (this.coordsArray.length === 0) {
@@ -61,37 +61,37 @@ export class MapCreateService extends MapService {
 
       // Subsequent loops
       } else {
-        // const startPoint: tsCoordinate = this.multiPath.getLastPoint();
-        const startPoint = this.coordsArray[this.coordsArray.length-1];
+        // const startPoint: TsCoordinate = this.multiPath.getLastPoint();
+        const startPoint = this.coordsArray[this.coordsArray.length - 1];
 
         // get coordinates for the next chunk of path, add to the path object
-        this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<tsCoordinate>) => {
+        this.getNextPathCoords(startPoint, clickedPoint).then( (coords: Array<TsCoordinate>) => {
           this.coordsArray = this.coordsArray.concat(coords);
           const elevs = this.geoJSON ? this.geoJSON.properties.params.elev : [];
           this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
             this.geoJSON = result.hills;
             this.removeLayerFromMap('0000');
             this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
-            if ( Object.keys(this.activeLayers).length > 1) { 
-              this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1], '0000')
+            if ( Object.keys(this.activeLayers).length > 1) {
+              this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length - 1], '0000');
             }
-          })
-        })
+          });
+        });
       }
-    })
+    });
   }
 
 
 
-  
+
   /**
    * gets the coordinates for a given start and end point
    * @param start start point
    * @param end end point
    */
-  getNextPathCoords(start: tsCoordinate, end: tsCoordinate) {
+  getNextPathCoords(start: TsCoordinate, end: TsCoordinate) {
 
-    return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
+    return new Promise<Array<TsCoordinate>>( (resolve, reject) => {
 
       // if we dont need to get directions, just return the supplied coords as an array
       if (this.options.snapProfile === 'none') {
@@ -100,21 +100,21 @@ export class MapCreateService extends MapService {
       // otherwise, get coords from directions service
       } else {
         this.httpService.mapboxDirectionsQuery(this.options.snapProfile, start, end).subscribe( (result) => {
-    
-          if (result.code === "Ok") { 
+
+          if (result.code === 'Ok') {
             const returnArray = [];
             result.routes[0].geometry.coordinates.forEach( (coord: GeoJSON.Position) => [
-              returnArray.push({lat: coord[1], lng: coord[0]}) ])
+              returnArray.push({lat: coord[1], lng: coord[0]}) ]);
             resolve(returnArray);
-  
+
           } else {
-            console.log('Mapbox directions query failed with error: ' + result.code)
+            console.log('Mapbox directions query failed with error: ' + result.code);
             resolve();
           }
-        });  
+        });
       }
-    })
-  
+    });
+
   }
 
 
@@ -123,18 +123,18 @@ export class MapCreateService extends MapService {
    *  Get a list of coordinates depending on whether snap to roads is on or off
    *  The trivial case of not snapping to road is handled in the same function to simmplify the calling routine,
    *  as this way it only needs to call updatemap() in one place
-   * @param s tsCoordinate of the starting point of this segment
-   * @param e tsCoordinate of the ending point of this segment
-   * @returns tsCoordinate array with the path of points
+   * @param s TsCoordinate of the starting point of this segment
+   * @param e TsCoordinate of the ending point of this segment
+   * @returns TsCoordinate array with the path of points
    * Note:
    *  Uses turf to simply the route in order to minimise data points for elevation query
    */
-  // getPathDirections(s: tsCoordinate, e: tsCoordinate) {
+  // getPathDirections(s: TsCoordinate, e: TsCoordinate) {
 
-  //   return new Promise<Array<tsCoordinate>>( (resolve, reject) => {
+  //   return new Promise<Array<TsCoordinate>>( (resolve, reject) => {
 
   //   })
-      
+
   // }
 
 
@@ -143,18 +143,18 @@ export class MapCreateService extends MapService {
   */
   undo() {
 
-//NEEDS REWRITE
+// NEEDS REWRITE
 
-    // if there are no paths on the array 
-    // if (this.multiPath.nPaths() === 0) { 
-      
+    // if there are no paths on the array
+    // if (this.multiPath.nPaths() === 0) {
+
     //   // if there are markers, then delete them and reset multiPath, otherwise do nothing
     //   if (this.markers.length > 0) {
     //     this.popMarker();
     //     this.multiPath.setFirstPoint(null);
     //     this.multiPath.resetPathStats();
     //   }
-    
+
     // // there are paths on the array so remove the most recent one
     // } else {
     //   this.multiPath.remPath()
@@ -176,22 +176,22 @@ export class MapCreateService extends MapService {
    * Called directly from component, so needs ot be public
    */
   public closePath() {
-    let startPoint: tsCoordinate = this.coordsArray[this.coordsArray.length-1];
-    let endPoint: tsCoordinate = this.coordsArray[0];
+    const startPoint: TsCoordinate = this.coordsArray[this.coordsArray.length - 1];
+    const endPoint: TsCoordinate = this.coordsArray[0];
 
     // get coordinates for the next chunk of path, add to the path object
-    this.getNextPathCoords(startPoint, endPoint).then( (coords: Array<tsCoordinate>) => {
+    this.getNextPathCoords(startPoint, endPoint).then( (coords: Array<TsCoordinate>) => {
       this.coordsArray = this.coordsArray.concat(coords);
       const elevs = this.geoJSON ? this.geoJSON.features[0].properties.params.elev : [];
       this.httpService.processPoints(this.coordsArray, elevs).subscribe( (result) => {
         this.geoJSON = result.hills;
         this.removeLayerFromMap('0000');
         this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
-        if ( Object.keys(this.activeLayers).length > 1) { 
-          this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length-1], '0000')
+        if ( Object.keys(this.activeLayers).length > 1) {
+          this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length - 1], '0000');
         }
-      })
-    })
+      });
+    });
   }
 
   kill() {
@@ -206,13 +206,13 @@ export class MapCreateService extends MapService {
     this.tsMap.getCanvas().style.cursor = 'crosshair';
 
       this.tsMap.addSource('geojson', {
-        "type": "geojson",
-        "data": {
-              "type": "FeatureCollection",
-              "features": []
+        'type': 'geojson',
+        'data': {
+              'type': 'FeatureCollection',
+              'features': []
             }
       });
-    
+
       this.tsMap.addLayer({
         id: 'measure-lines',
         type: 'line',
@@ -232,7 +232,7 @@ export class MapCreateService extends MapService {
   resetGeoJSON() {
 
     return {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features: [
       //   {
       //   geometry: {
@@ -241,7 +241,7 @@ export class MapCreateService extends MapService {
       //   }
       // }
     ],
-      properties:{
+      properties: {
           pathId: '0000',
           params: {
               elev: [],
@@ -259,11 +259,11 @@ export class MapCreateService extends MapService {
             },
           },
           info: {
-              name: "",
-              description: "",
+              name: '',
+              description: '',
               isLong: false,
               isElevations: false          }
         }
-      }
+      };
   }
 }

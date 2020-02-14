@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NgElement, WithProperties } from '@angular/elements';
-import { LoginComponent } from 'src/app/login-forms/login/login.component';
+import { LoginComponent } from 'src/app/shared/components/login/login.component';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 })
 export class LoginService {
 
-  private login: NgElement & WithProperties<LoginComponent>; 
+  private login: NgElement & WithProperties<LoginComponent>;
 
   constructor() { }
 
@@ -37,7 +37,7 @@ export class LoginService {
         document.body.removeChild(this.login);
         return observer.next(true);
       });
-    })
+    });
   }
 
 }

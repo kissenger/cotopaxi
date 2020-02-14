@@ -7,8 +7,6 @@ import { MapService } from 'src/app/shared/services/map.service';
 import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'src/app/shared/services/alert.service';
-import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box.component';
-import { createCustomElement } from '@angular/elements';
 import { SpinnerService } from 'src/app/shared/services/spinner.service';
 
 @Component({
@@ -31,13 +29,11 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
    }
 
   ngOnInit() {
-    
   }
 
   /** virtually clicks the hidden form element to launch the select file dialogue */
   onLoadFileClick() {
-    document.getElementById('file-select-single').click(); 
-    
+    document.getElementById('file-select-single').click();
   }
 
   onDeleteClick() {
@@ -50,11 +46,11 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
+
   }
 
 
-  onExportGpxClick(){
+  onExportGpxClick() {
     const pathId = this.dataService.getFromStore('activePath', false).pathAsGeoJSON.properties.pathId;
     const pathType = 'route';
     this.subscription = this.httpService.exportToGpx(pathType, pathId).subscribe( (fname) => {
@@ -73,7 +69,7 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
 
     // show the spinner
     this.spinner.showAsElement();
-    
+
     // Get file names
     const files = (event.target as HTMLInputElement).files;        // multiple files
     const fileData = new FormData();
@@ -90,8 +86,8 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
         // reset the form otherwise if you do the same action again, the change event wont fire
         (<HTMLFormElement>document.getElementById('file_form')).reset();
         this.spinner.removeElement();
-      })
-      
+      });
+
     });
 
   }
@@ -103,8 +99,8 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log('destroy optinos')
-    if(this.subscription) { this.subscription.unsubscribe(); };
+    console.log('destroy optinos');
+    if (this.subscription) { this.subscription.unsubscribe(); }
   }
 
 }

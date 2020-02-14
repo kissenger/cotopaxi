@@ -3,6 +3,7 @@ import { PanelRoutesCreateDetailsComponent } from 'src/app/main/info-panel/panel
 import { PanelRoutesCreateOverlayComponent } from 'src/app/main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
 import { PanelRoutesListListComponent } from 'src/app/main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
 import { PanelRoutesListOptionsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
+import { TsTabsArray } from 'src/app/shared/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -12,19 +13,19 @@ export class InfoPanelService {
   /**
    * Define the tabs for each page - object key is the page name
    */
-  private tabsDefinition = 
-  { create: 
+  private tabsDefinition: {create?: TsTabsArray, review?: TsTabsArray, list?: TsTabsArray} =
+  { create:
       [ { active: true,
           name: 'details',
           component: PanelRoutesCreateDetailsComponent },
         { active: false,
           name: 'overlay',
           component: PanelRoutesCreateOverlayComponent } ],
-    review: 
+    review:
       [ { active: true,
           name: 'details',
-          component: PanelRoutesCreateDetailsComponent } ],          
-    list: 
+          component: PanelRoutesCreateDetailsComponent } ],
+    list:
       [ { active: true,
           name: 'list',
           component: PanelRoutesListListComponent },
@@ -34,12 +35,12 @@ export class InfoPanelService {
         { active: false,
           name: 'options',
           component: PanelRoutesListOptionsComponent } ]
-  }
+  };
 
   constructor() { }
 
   /**
-   * Returns the tabs array for the requested page, augmented with additional params as required to 
+   * Returns the tabs array for the requested page, augmented with additional params as required to
    * define the info-panel html tabbing - called by info-panel component
    * @param pageName string, name of page as defined by data service
    */
@@ -60,7 +61,7 @@ export class InfoPanelService {
   getComponent(pageName: string, panelName: string) {
     const tabsArray = this.tabsDefinition[pageName];
     for (let i = 0; i < tabsArray.length; i++) {
-      if (tabsArray[i].name === panelName) { return tabsArray[i].component }
+      if (tabsArray[i].name === panelName) { return tabsArray[i].component; }
     }
   }
 

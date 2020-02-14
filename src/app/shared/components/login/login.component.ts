@@ -2,7 +2,6 @@ import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/cor
 import { HttpService } from 'src/app/shared/services/http.service';
 import { Router } from '@angular/router';
 import { RegisterService } from 'src/app/shared/services/register.service';
-import { LoginService } from 'src/app/shared/services/login.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { AlertService } from 'src/app/shared/services/alert.service';
 
@@ -28,14 +27,14 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {}
-  
+
   onLoginClick() {
 
-    const userName = document.forms["login-form"]["userName"].value;
-    const password = document.forms["login-form"]["password"].value;
-    
+    const userName = document.forms['login-form']['userName'].value;
+    const password = document.forms['login-form']['password'].value;
+
     this.http.loginUser({userName, password}).subscribe( (res) => {
-          
+
       // success
       this.close.next();
       this.auth.setToken(res.token);
@@ -46,7 +45,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       // failure
       this.close.next();
       this.alert.showAsElement('Something went wrong :(', error.status + ': ' + error.error, true, false).subscribe( () => {
-      })
+      });
 
     });
   }
@@ -55,8 +54,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.close.next();
     this.register.showAsElement().subscribe( (response) => {
       console.log(response);
-    })
+    });
   }
 
-  ngOnDestroy() {} 
+  ngOnDestroy() {}
 }

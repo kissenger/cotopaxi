@@ -2,11 +2,11 @@
 
 <div class='container'  class="p-0 m-0 oveflow-auto position-static">
 
-  <div *ngFor="let line of htmlData; let i = index">
+  <div *ngFor="let line of listData; let i = index">
 
-    <div id={{line.pathId}} 
-      (click)="onLineClick(line.pathId)" 
-      class="p-1 border-bottom border-left border-right" 
+    <div id={{line.pathId}}
+      (click)="onLineClick(line.pathId)"
+      class="p-1 border-bottom border-left border-right"
       [ngClass]="getCssClass(line.pathId, i)">
 
     <div *ngIf="line.name === ''" class="name">
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  
+
   <div class="more p-1 text-left">
     <span *ngIf="isNoPathsToPlot"> No paths in this view </span>
   </div>

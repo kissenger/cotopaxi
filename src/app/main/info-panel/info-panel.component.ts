@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, ContentChildren, QueryList, ViewChildren, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { InfoPanelService } from 'src/app/shared/services/info-panel.service';
 import { DataService } from 'src/app/shared/services/data.service';
-import { PanelsInjectorComponent } from './panels-injector/panels-injector.component';
+import { TsTabsArray } from 'src/app/shared/interfaces';
 
 @Component({
   selector: 'app-info-panel',
@@ -13,9 +13,9 @@ export class InfoPanelComponent implements OnInit {
 
   // bind to property in parent to determine which page called the info panel
   @Input() callingPage: string;
-  private tabsArray: Array<{}>;   // dont delete - used in html
+  public tabsArray: TsTabsArray;
 
-  constructor( 
+  constructor(
     private infoPanelService: InfoPanelService,
     private dataService: DataService
    ) { }
