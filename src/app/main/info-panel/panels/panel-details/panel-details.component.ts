@@ -8,9 +8,9 @@ import { ChartsService } from 'src/app/shared/services/charts-service';
 import { TsUnits, TsPathStats } from 'src/app/shared/interfaces';
 
 @Component({
-  selector: 'app-panel-routes-create-details',
-  templateUrl: './panel-routes-create-details.component.html',
-  styleUrls: ['./panel-routes-create-details.component.css']
+  selector: 'app-panel-details',
+  templateUrl: './panel-details.component.html',
+  styleUrls: ['./panel-details.component.css']
 })
 export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
@@ -24,7 +24,9 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   public pathDescription = '';
   public isListPage: boolean;
   public isLong: boolean;
-  public isElevations = false;
+  public isElevations: boolean;
+  public isHills: boolean;
+  public isData: boolean;
   public units: TsUnits = globals.units;
   public wikiLink: string = globals.links.wiki.elevations;
   public pathCategory: string;
@@ -52,11 +54,14 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
     // show form inputs and buttons only for review or create pages, not for list
     this.isListPage = this.callingPage === 'list';
+    this.isData = true;
+
     this.chartsService.plotChart(document.getElementById('chart_div'), [[], []], []);
 
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
     this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
 
+      this.isData = true;
       if (geoJson.features.length === 0) {
         this.resetPathStats();
       } else {
@@ -66,9 +71,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
         this.pathCategory = geoJson.properties.info.category;
         this.pathType = geoJson.properties.info.pathType;
         this.isLong = geoJson.properties.info.isLong;
-        this.isElevations = (geoJson.properties.info.isElevations && !this.isLong) ? true : false;
-        console.log(geoJson.properties.info, this.isLong);
-
+        this.isElevations = geoJson.properties.info.isElevations && !this.isLong;
+        this.isHills = this.pathStats.hills.length > 0;
       }
           // work out the data to plot on chart
       // loops through the features, creating an array of the form:
@@ -112,7 +116,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // activePath is stored from two locations - both are full geoJSON descriptions of the path:
     // - when a route is created on the map,  mapCreateService saves each time a new chunk of path is added
     // - when a route is imported, the backend sends the geoJSON, which is in turned saved by panel-routes-list-options
-    const newPath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
+    const newPath = this.dataService.getFromStore('activePath', false);
 
     // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
     if (newPath.properties.pathId === '0000') {    // pathId for created route is set to 0000 in the backend
@@ -126,7 +130,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
         this.router.navigate(['/route/list/']);
       });
 
-    // imported file, beackend only needs to knw the pathType, pathId, name and description, so create theis object and call http
+    // imported file, backend only needs to knw the pathType, pathId, name and description, so create theis object and call http
     } else {
       const sendObj = {
         pathId: newPath.properties.pathId,
@@ -154,9 +158,9 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.activePathSubscription.unsubscribe();
 
-    this.httpService.flushDatabase().subscribe( () => {
-      console.log('db flushed');
-    });
+    // this.httpService.flushDatabase().subscribe( () => {
+    //   console.log('db flushed');
+    // });
   }
 
 }

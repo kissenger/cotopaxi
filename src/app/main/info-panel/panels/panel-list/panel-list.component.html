@@ -1,0 +1,38 @@
+
+
+<div class='container'  class="p-0 mt-1 h-100 oveflow-auto position-static">
+
+  <div *ngFor="let line of listData; let i = index">
+
+    <div id={{line.pathId}}
+      (click)="onLineClick(line.pathId)"
+      class="p-1 border-bottom border-left border-right"
+      [ngClass]="getCssClass(line.pathId, i)">
+
+    <div *ngIf="line.name === '' || !line.name; else else_div" class="name">
+      {{line.category}} {{line.pathType}}
+    </div>
+
+    <ng-template #else_div >
+      <div class="name">{{line.name}}</div>
+    </ng-template>
+
+    {{line.stats.distance | units: 'distance': units.distance}}
+    {{line.stats.elevations.ascent | units: 'elevation': units.elevation}}
+    {{line.stats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}
+
+    </div>
+  </div>
+
+
+  <div *ngIf="numberOfRoutes === 0; else moreThanOneRouteDiv" class="more p-0 text-center">
+    No routes to show.
+  </div>
+  <ng-template #moreThanOneRouteDiv >
+    <div class="more p-0 text-center">
+      showing {{numberOfLoadedRoutes}} of {{numberOfRoutes}} routes <br>
+      <span *ngIf="!isEndOfList" class="global-make-text-look-like-link" (click)="onMoreClick()"> Load more </span> <br>
+    </div>
+  </ng-template>
+
+</div>

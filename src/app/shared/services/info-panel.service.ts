@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { PanelRoutesCreateDetailsComponent } from 'src/app/main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
-import { PanelRoutesCreateOverlayComponent } from 'src/app/main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
-import { PanelRoutesListListComponent } from 'src/app/main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
+import { PanelRoutesCreateDetailsComponent } from 'src/app/main/info-panel/panels/panel-details/panel-details.component';
+import { PanelRoutesListListComponent } from 'src/app/main/info-panel/panels/panel-list/panel-list.component';
 import { PanelRoutesListOptionsComponent } from 'src/app/main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 import { TsTabsArray } from 'src/app/shared/interfaces';
 
@@ -20,7 +19,7 @@ export class InfoPanelService {
           component: PanelRoutesCreateDetailsComponent },
         { active: false,
           name: 'overlay',
-          component: PanelRoutesCreateOverlayComponent } ],
+          component: PanelRoutesListListComponent } ],
     review:
       [ { active: true,
           name: 'details',

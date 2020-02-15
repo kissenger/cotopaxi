@@ -15,9 +15,8 @@ import { MainComponent } from './main/main.component';
 import { InfoPanelComponent } from './main/info-panel/info-panel.component';
 import { MenuBarComponent } from './main/menu-bar/menu-bar.component';
 import { PanelsInjectorComponent } from './main/info-panel/panels-injector/panels-injector.component';
-import { PanelRoutesCreateDetailsComponent } from './main/info-panel/panels/panel-routes-create-details/panel-routes-create-details.component';
-import { PanelRoutesCreateOverlayComponent } from './main/info-panel/panels/panel-routes-create-overlay/panel-routes-create-overlay.component';
-import { PanelRoutesListListComponent } from './main/info-panel/panels/panel-routes-list-list/panel-routes-list-list.component';
+import { PanelRoutesCreateDetailsComponent } from './main/info-panel/panels/panel-details/panel-details.component';
+import { PanelRoutesListListComponent } from './main/info-panel/panels/panel-list/panel-list.component';
 import { PanelRoutesListOptionsComponent } from './main/info-panel/panels/panel-routes-list-options/panel-routes-list-options.component';
 import { SpinnerComponent } from './shared/components/spinner/spinner.component';
 import { AlertBoxComponent } from './shared/components/alert-box/alert-box.component';
@@ -55,7 +54,6 @@ import { UnitPipe } from './shared/unit.pipe';
     // InfoPanelDirective,
     PanelsInjectorComponent,
     PanelRoutesCreateDetailsComponent,
-    PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
     PanelRoutesListOptionsComponent,
     RoutesReviewComponent,
@@ -90,7 +88,6 @@ import { UnitPipe } from './shared/unit.pipe';
   bootstrap: [AppComponent],
   entryComponents: [
     PanelRoutesCreateDetailsComponent,
-    PanelRoutesCreateOverlayComponent,
     PanelRoutesListListComponent,
     PanelRoutesListOptionsComponent,
     AlertBoxComponent,

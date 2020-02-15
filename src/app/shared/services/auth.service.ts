@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 @Injectable()
 export class AuthService {
 
-  private tokenName: string = 'tsToken';
+  private tokenName = 'tsToken';
 
   constructor() {
 

@@ -4,7 +4,7 @@ import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box
 import { Observable } from 'rxjs';
 
 /**
- * Service to launch custom alert-box element 
+ * Service to launch custom alert-box element
  * See angular custom elements example: https://angular.io/guide/elements
  */
 
@@ -17,7 +17,7 @@ export class AlertService {
 
   showAsElement(title: string, message: string, okBtn: boolean, cancelBtn: boolean) {
 
-    // Create element    
+    // Create element
     const alertBox: NgElement & WithProperties<AlertBoxComponent> = document.createElement('alert-box') as any;
     alertBox.message = message;
     alertBox.title = title;
@@ -40,6 +40,6 @@ export class AlertService {
         document.body.removeChild(alertBox);
         return observer.next(true);
       });
-    })
+    });
   }
 }

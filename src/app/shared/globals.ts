@@ -1,5 +1,5 @@
 'use strict';
-import { TsCoordinate, TsUnits } from 'src/app/shared/interfaces';
+import { TsCoordinate, TsUnits, TsLineStyle } from 'src/app/shared/interfaces';
 
 export const mapboxAccessToken = 'pk.eyJ1Ijoia2lzc2VuZ2VyIiwiYSI6ImNrMWYyaWZldjBtNXYzaHFtb3djaDJobmUifQ.ATRTeTi2mygBXAoXd42KSw';
 
@@ -25,4 +25,7 @@ export const userHomeLocation: TsCoordinate = {lat: 51, lng: -4};
 
 // lineStyles are defined here and on geoJSON - when specified locally they will override the geoJSON lineStyle
 // export const overlayLineStyle = {lineWidth: 2, lineColour: 'blue', lineOpacity: 0.3};
-export const routeLineStyle = {lineWidth: 4, lineColour: 'red', lineOpacity: 0.1};
+export const routeLineStyle: TsLineStyle = {lineWidth: 4, lineColour: 'red', lineOpacity: 0.5};
+export const overlayLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 0.3};
+export const createRouteLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 1.0};
+// export const routeReviewLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 1.0};

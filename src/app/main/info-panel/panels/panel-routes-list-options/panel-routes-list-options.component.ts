@@ -38,7 +38,7 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
 
   onDeleteClick() {
 
-    const activePath = this.dataService.getFromStore('activePath', false).pathAsGeoJSON;
+    const activePath = this.dataService.getFromStore('activePath', false);
     this.alert.showAsElement('Are you sure?', 'Cannot undo delete!', true, true).subscribe( (alertBoxResponse: boolean) => {
       if (alertBoxResponse) {
         this.httpService.deletePath(activePath.properties.pathId).subscribe( () => {

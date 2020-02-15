@@ -5,6 +5,8 @@ import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import * as mapboxgl from 'mapbox-gl';
 import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
+import { SpinnerService } from './spinner.service';
+
 // import { Path, MultiPath } from 'src/app/shared/classes/path-classes';
 
 @Injectable({
@@ -30,10 +32,13 @@ export class MapCreateService extends MapService {
   };
   private styleOptions: TsLineStyle = {};
 
+  // private spinner: SpinnerService;
+
   constructor(
     httpService: HttpService,
     geoService: GeoService,
-    dataService: DataService
+    dataService: DataService,
+    private spinner: SpinnerService
   ) {
     super(httpService, geoService, dataService);
   }
@@ -52,12 +57,14 @@ export class MapCreateService extends MapService {
     this.setUpMap();
     this.tsMap.on('click', (e) => {
 
+      this.spinner.showAsElement();
       const clickedPoint: TsCoordinate = { lat: e.lngLat.lat, lng: e.lngLat.lng };
 
       // First loop (if firstPoint parameter on multiPath instance has not been set)
       if (this.coordsArray.length === 0) {
         this.coordsArray.push(clickedPoint);
         this.addMarkerToPath(clickedPoint, '0000');
+        this.spinner.removeElement();
 
       // Subsequent loops
       } else {
@@ -75,6 +82,7 @@ export class MapCreateService extends MapService {
             if ( Object.keys(this.activeLayers).length > 1) {
               this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length - 1], '0000');
             }
+            this.spinner.removeElement();
           });
         });
       }
@@ -164,10 +172,12 @@ export class MapCreateService extends MapService {
   }
 
   public clearPath() {
+    this.spinner.showAsElement();
     this.removeLayerFromMap('0000');
     this.coordsArray = [];
     this.geoJSON = this.resetGeoJSON();
     this.addLayerToMap(this.geoJSON, this.styleOptions, this.plotOptions);
+    this.spinner.removeElement();
   }
 
 
@@ -176,6 +186,7 @@ export class MapCreateService extends MapService {
    * Called directly from component, so needs ot be public
    */
   public closePath() {
+    this.spinner.showAsElement();
     const startPoint: TsCoordinate = this.coordsArray[this.coordsArray.length - 1];
     const endPoint: TsCoordinate = this.coordsArray[0];
 
@@ -190,6 +201,7 @@ export class MapCreateService extends MapService {
         if ( Object.keys(this.activeLayers).length > 1) {
           this.replaceLastMarkerOnPath(this.coordsArray[this.coordsArray.length - 1], '0000');
         }
+        this.spinner.removeElement();
       });
     });
   }

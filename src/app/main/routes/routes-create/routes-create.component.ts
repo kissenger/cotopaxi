@@ -4,7 +4,8 @@ import { DataService } from 'src/app/shared/services/data.service';
 import * as globals from 'src/app/shared/globals';
 import { Subscription } from 'rxjs';
 import { HttpService } from 'src/app/shared/services/http.service';
-import { TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
+import { TsPlotPathOptions, TsLineStyle, TsCoordinate } from 'src/app/shared/interfaces';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -15,31 +16,35 @@ import { TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
 export class RoutesCreateComponent implements OnInit, OnDestroy {
 
   private menuSubscription: Subscription;
-  private pathIdSubscription: Subscription;
+  private overlaySubscription: Subscription;
   private overlaidPaths = [];
   private overlayPlotOptions: TsPlotPathOptions = {
     booResizeView: false,
     booSaveToStore: false,
     booPlotMarkers: false
   };
-  private overlayLineStyle: TsLineStyle = {
-    lineWidth: 2,
-    lineColour: 'blue',
-    lineOpacity: 0.3
-  };
 
   constructor(
     private dataService: DataService,
     private mapCreateService: MapCreateService,
-    private httpService: HttpService
+    private httpService: HttpService,
+    private router: Router
     ) { }
 
   ngOnInit() {
-
+    // this.router.navigate(['/route/list']);
     // centre map on the currently loading route if it exists, otherwise take users home location
     const mapView = this.dataService.getFromStore('mapView', true);
-    const startPosition = mapView ? mapView.centre : globals.userHomeLocation;
-    const startZoom = mapView ? mapView.zoom : 5;
+    let startPosition: TsCoordinate;
+    let startZoom: number;
+
+    if ( !mapView ) {
+      this.mapCreateService.kill();
+      this.router.navigate(['/route/list']);
+    } else {
+      startPosition = mapView ? mapView.centre : <TsCoordinate>{lat: -999, lng: -999};
+      startZoom = mapView ? mapView.zoom : 5;
+    }
 
     // initialise the map and launch createroute
     this.mapCreateService.initialiseMap(startPosition, startZoom).then( () => {
@@ -59,13 +64,13 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
     });
 
     // listen for pathID emission from panel-routes-list-list, and get the path from the backend
-    this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId) => {
+    this.overlaySubscription = this.dataService.pathIdEmitter.subscribe( (pathId: string) => {
 
       // if pathId is not in overlaidPaths then add it
       if (!this.overlaidPaths.includes(pathId)) {
         this.httpService.getPathById('route', pathId).subscribe( (result) => {
           this.mapCreateService.removeLayerFromMap(pathId);
-          this.mapCreateService.addLayerToMap(result.geoJson, this.overlayLineStyle, this.overlayPlotOptions);
+          this.mapCreateService.addLayerToMap(result.geoJson, globals.overlayLineStyle, this.overlayPlotOptions);
           this.overlaidPaths.push(pathId);
         });
 
@@ -76,11 +81,13 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
       }
 
     });
+
+
   }
 
   ngOnDestroy() {
-    this.menuSubscription.unsubscribe();
-    this.pathIdSubscription.unsubscribe();
+    if ( this.menuSubscription ) { this.menuSubscription.unsubscribe(); }
+    if ( this.overlaySubscription ) { this.overlaySubscription.unsubscribe(); }
     this.mapCreateService.kill();
   }
 

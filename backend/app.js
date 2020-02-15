@@ -54,12 +54,12 @@ mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() { 
+db.once('open', function() {
   console.log('connected!');
   // we're connected!
 });
 
-/*****************************************************************  
+/*****************************************************************
  *
  * new file data is submitted from the front end
  *
@@ -79,14 +79,14 @@ var upload = multer({
  * request elevations
  *
  *****************************************************************/
-app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => { 
+app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
 
   // check options array - if it's not present then fill it in with falses
   let options = req.body.options;
   if (!options) {
     options = {
       interpolate: false,
-      writeResultsToFile: false 
+      writeResultsToFile: false
     }
   }
 
@@ -94,7 +94,7 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
   getElevations(req.body.coordsArray, options).then( result => {
     res.status(200).json( {result} );
   })
-  
+
 });
 
 
@@ -108,32 +108,32 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
   app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
 
     if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
-  
+
     // ensure user is authorised
     const userId = req.userId;
     if ( !userId ) {
       res.status(401).send('Unauthorised');
-      if (DEBUG) { console.log(' >> Unauthorised') }; 
+      if (DEBUG) { console.log(' >> Unauthorised') };
     }
-  
+
     // const userId = 0;
-  
+
     getMongoFromGpx(userId).then( (mongoPath) => {
 
       MongoPath.Routes.create(mongoPath).then( (doc) => {
         res.status(201).json({geoJson: new GeoRoute(doc)});
         if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
 
-      }).catch( (err) => { 
+      }).catch( (err) => {
         throw err // catch error in the outside catch rather than handle twice
       });
 
-    }).catch( (err) => { 
+    }).catch( (err) => {
       res.status(500).json(err.toString());
       if (DEBUG) { console.log(' >> ERROR:' + err); }
      });
 
-  
+
     function getMongoFromGpx(uid) {
 
       return new Promise ( (res, rej) => {
@@ -145,7 +145,7 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
         } catch(error) {
           rej(error);
         }
-          
+
         // once Path is instantiated, it needs to be initialised (returns a promise)
         path.getElevations().then( () => {
           const mongoPath = path.asMongoObject(userId, false);
@@ -153,19 +153,19 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
         }).catch( (err) => {
           rej(err);
         })
-        
+
       })
-  
+
     };
-  
+
   })
 
 
 
 /*****************************************************************
  *
- *  Save a path to database - path has already been saved to the 
- *  database, all we are doing is updating some fields, and 
+ *  Save a path to database - path has already been saved to the
+ *  database, all we are doing is updating some fields, and
  *  changing isSaved flag to true; id of path is provided
  *
  *****************************************************************/
@@ -176,7 +176,7 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   // construct query based on incoming payload
@@ -191,7 +191,7 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
     .updateOne(condition, {$set: filter}, {upsert: true, writeConcern: {j: true}})
     .then( () => {
       res.status(201).json( {pathId: req.body.pathId} );
-    }) 
+    })
 
 });
 
@@ -208,7 +208,7 @@ app.post('/save-created-route/', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   // console.log(req.body);
@@ -221,8 +221,8 @@ app.post('/save-created-route/', auth.verifyToken, (req, res) => {
     // console.log(path);
     const mongoPath = path.asMongoObject(userId, true);
     mongoModel('route').create(mongoPath).then( (document) => {
-      res.status(201).json( {pathId: document._id} );  
-    }) 
+      res.status(201).json( {pathId: document._id} );
+    })
   });
 })
 
@@ -238,7 +238,7 @@ app.get('/get-path-by-id/:type/:id', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   // query the database and return result to front end
@@ -263,9 +263,9 @@ app.post('/flush/', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
-  
+
   mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} ).then( () => {
     // MongoPath.Tracks.deleteMany( {'isSaved': false} ).then( () => {
       // MongoChallenges.Challenges.deleteMany( {'isSaved': false} ).then( () => {
@@ -278,31 +278,39 @@ app.post('/flush/', auth.verifyToken, (req, res) => {
 })
 
 /*****************************************************************
- * 
+ *
  *  Retrieve a list of paths from database
- * 
+ *
  *****************************************************************/
 
-app.get('/get-paths-list/:type/:offset', auth.verifyToken, (req, res) => {
+app.get('/get-paths-list/:pathType/:offset', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=', req.params.type, ', offset=', req.params.offset )};
+  if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=',
+    req.params.pathType, ', offset=', req.params.offset, ', bbox=', req.query.bbox )};
   const LIMIT = 9 //number of items to return in one query
 
   // ensure user is authorised
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   // get the appropriate model and setup query
-  let condition = {isSaved: true, userId: userId};
+  let condition;
+  // if bbox=0, search for all paths, otherwise search for paths intersecting the bounding box
+  if (req.query.bbox === '0') {
+    condition = {isSaved: true, userId: userId};
+  } else {
+    let geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
+    condition = {isSaved: true, userId: userId, geometry: { $geoIntersects: { $geometry: geometry} } }
+  }
   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
-  let sort = req.params.type === 'track' ? {startTime: -1} : {creationDate: -1};
-    
+  let sort = req.params.pathType === 'track' ? {startTime: -1} : {creationDate: -1};
+
   // the front end would like to know how many paths there are in total, so make that the first query
-  mongoModel(req.params.type).countDocuments(condition).then( (count) => {
-    mongoModel(req.params.type)
+  mongoModel(req.params.pathType).countDocuments(condition).then( (count) => {
+    mongoModel(req.params.pathType)
       .find(condition, filter).sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
       .then(documents => {
         res.status(201).json(new ListData(documents, count))
@@ -312,34 +320,40 @@ app.get('/get-paths-list/:type/:offset', auth.verifyToken, (req, res) => {
 
 
 /*****************************************************************
- * 
+ *
  *  Get a list of routes that intersect with a provided bounding box
- * 
+ *
  *****************************************************************/
 
-app.get('/get-intersecting-routes', auth.verifyToken, (req, res) => {
+// app.get('/get-intersecting-routes/:type/:offset', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> get-overlay-list, pathType=', req.params.type, ', offset=', req.params.offset )};
+//   if (DEBUG) { console.log(timeStamp() + ' >> get-overlay-list, pathType=', req.params.type, ', offset=', req.params.offset )};
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
-  }
+//   const LIMIT = 9 //number of items to return in one query
 
-  // let condition = {userId: userId};
-  let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
-  let geometry = { 'type': 'Polygon', 'coordinates': bbox2Polygon(req.query.bbox) };
+//   // ensure user is authorised
+//   const userId = req.userId;
+//   if ( !userId ) {
+//     res.status(401).send('Unauthorised');
+//     if (DEBUG) { console.log(' >> Unauthorised') };
+//   }
 
-  mongoModel('route')
-    .find( {userId: userId, geometry: { $geoIntersects: { $geometry: geometry} } }, filter)
-    .then( (documents) => {
-      res.status(201).json(new ListData(documents))
-    })
+//   // let condition = {userId: userId};
+//   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
+//   let geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
+//   let sort = req.params.type === 'track' ? {startTime: -1} : {creationDate: -1};
 
+//   // the front end would like to know how many paths there are in total, so make that the first query
+//   mongoModel(req.params.type).countDocuments(condition).then( (count) => {
+//     mongoModel(req.params.type)
+//     .find( {userId: userId, geometry: { $geoIntersects: { $geometry: geometry} } }, filter)
+//     .sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
+//       .then(documents => {
+//         res.status(201).json(new ListData(documents, count))
+//       });
+//   })
 
-})
+// })
 
 
 /*****************************************************************
@@ -355,7 +369,7 @@ app.delete('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   // construct query based on incoming payload
@@ -384,16 +398,16 @@ app.post('/export-path', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
 
   mongoModel(req.body.pathType).find({_id: req.body.pathId}).then(document => {
 
     let route = new Route(
-      document[0].info.name, 
-      document[0].info.description, 
-      document[0].geometry.coordinates, 
+      document[0].info.name,
+      document[0].info.description,
+      document[0].geometry.coordinates,
       document[0].params.elev);
 
     writeGpx(route).then( (fileName) => {
@@ -403,14 +417,14 @@ app.post('/export-path', auth.verifyToken, (req, res) => {
   });
 })
 
-  
+
 app.get('/download/:fname', auth.verifyToken, (req, res) => {
 
   // ensure user is authorised
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   res.download('../' + req.params.fname + '.gpx', (err) => {
@@ -438,7 +452,7 @@ app.get('/download/:fname', auth.verifyToken, (req, res) => {
 
 //   if (DEBUG) { console.log(timeStamp() + '>> simplify-path') };
 
-//   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]); 
+//   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
 //   const points = lngLats.map(coord => new Point([coord]))
 //   res.status(201).json( simplify(points) );
 
@@ -459,11 +473,11 @@ app.post('/process-points/', auth.verifyToken, (req, res) => {
   const userId = req.userId;
   if ( !userId ) {
     res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') }; 
+    if (DEBUG) { console.log(' >> Unauthorised') };
   }
 
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
-  
+
   var path = new Route('', '', lngLats, req.body.elevs);
   // console.log(req.body);
   path.getElevations().then( () => {

@@ -81,7 +81,7 @@ interface TsHill {
   aveGrad: number;
 }
 
-export interface TsListData {
+interface TsListItem {
   name: string;
   stats: TsPathStats;
   category: string;
@@ -93,11 +93,14 @@ export interface TsListData {
   count: number;
 }
 
+export interface TsListArray extends Array<TsListItem> {}
+
 
 export interface TsCoordinate {
   lat: number;
   lng: number;
   elev?: number;
+  invalid?: boolean;
 }
 
 

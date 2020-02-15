@@ -8,7 +8,6 @@ import { InfoPanelService } from 'src/app/shared/services/info-panel.service';
 })
 export class PanelsInjectorComponent implements OnInit {
   @ViewChild('AppInfoPanel', {static: true, read: ViewContainerRef}) infoPanel: any;
-  // @ViewChild('callingP', {static: true, read: ViewContainerRef}) infoPanel: any;
   @Input() tabName: string;
   @Input() callingPage: string;
 

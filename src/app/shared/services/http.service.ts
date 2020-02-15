@@ -49,26 +49,37 @@ export class HttpService {
     return this.http.post<any>('http://' + this.hostName + ':3000/flush/', '');
   }
 
-  getPathsList(type: string, offset: number) {
-    return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset);
+  getPathsList(type: string, offset: number, bbox: Array<number>) {
+    let query: string;
+    if (bbox.length === 0) {
+      query = '?bbox=0';
+    } else {
+      query = '?';
+      bbox.forEach( (coord, index) => {
+        query += 'bbox=' + coord;
+        if (index !== bbox.length - 1) { query += '&'; }
+      });
+    }
+    console.log(query);
+    return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset + query);
   }
 
   getPathById(type: string, id: string) {
     return this.http.get<any>('http://' + this.hostName + ':3000/get-path-by-id/' + type + '/' + id);
   }
 
-  deletePath(id) {
+  deletePath(id: string) {
     return this.http.delete<any>('http://' + this.hostName + ':3000/delete-path/' + 'route' + '/' + id);
   }
 
-  getIntersectingRoutes(bbox: Array<number>) {
-    let query = '?';
-    bbox.forEach( (coord, index) => {
-      query += 'bbox=' + coord;
-       if (index !== bbox.length - 1) { query += '&'; }
-    });
-    return this.http.get<any>('http://' + this.hostName + ':3000/get-intersecting-routes/' + query);
-  }
+  // getIntersectingRoutes(bbox: Array<number>) {
+  //   let query = '?';
+  //   bbox.forEach( (coord, index) => {
+  //     query += 'bbox=' + coord;
+  //      if (index !== bbox.length - 1) { query += '&'; }
+  //   });
+  //   return this.http.get<any>('http://' + this.hostName + ':3000/get-intersecting-routes/' + query);
+  // }
 
   exportToGpx(pathType: string, pathId: string) {
     return this.http.post<any>('http://' + this.hostName + ':3000/export-path/', {pathType, pathId});

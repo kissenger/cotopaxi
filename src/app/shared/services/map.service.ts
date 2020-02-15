@@ -5,7 +5,6 @@ import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globals from 'src/app/shared/globals';
 import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
-import { MapCreateService } from './map-create.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,8 +23,6 @@ export class MapService {
     public httpService: HttpService,
     public geoService: GeoService,
     public dataService: DataService
-
-
   ) {
     // get and set the mapbox access token to enable the api
     Object.getOwnPropertyDescriptor(mapboxgl, 'accessToken').set(this.accessToken);
@@ -52,7 +49,9 @@ export class MapService {
       });
 
       this.tsMap.on('moveend', (ev) => {
-        this.dataService.mapBoundsEmitter.emit(this.getMapBounds());
+        try {
+          this.dataService.mapBoundsEmitter.emit(this.getMapBounds());
+        } catch {}
       });
 
     });
@@ -143,8 +142,9 @@ export class MapService {
     }
 
     // emit the pathStats to the details component
+    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
     if (plotOptions.booSaveToStore) {
-      this.dataService.activePathEmitter.emit(pathAsGeoJSON);
+      this.dataService.saveToStore('activePath', pathAsGeoJSON);
       console.log(pathAsGeoJSON);    // always useful to see the active geoJson in the console
     }
 
@@ -168,6 +168,7 @@ export class MapService {
    */
   removeLayerFromMap(pid: string) {
     // check that the path we think we are deleting exists on the map
+    console.log('delete layer', this.activeLayers);
     if (this.tsMap.getLayer(pid)) {
       this.tsMap.removeLayer(pid);
       this.tsMap.removeSource(pid);
@@ -177,20 +178,23 @@ export class MapService {
 
     // if the pid exists then also delete any markers
     if (pid in this.activeLayers) {
+      // console.log('found pid', pid, this.activeLayers);
       this.removeMarkersFromPath(pid);
       delete this.activeLayers[pid];
     }
   }
 
-  // removeLayersFromMap() {
-  //   for (var key in this.activeLayers) {
-  //     if (!this.activeLayers.hasOwnProperty(key)) continue;
-  //     this.tsMap.removeLayer(key);
-  //     this.tsMap.removeSource(key);
-  //   }
-  //   this.removeMarkersFromMap();
-  //   this.activeLayers = {};
-  // }
+  clearMap() {
+    for (const key in this.activeLayers) {
+      if (!this.activeLayers.hasOwnProperty(key)) { continue; }
+      if (this.tsMap.getLayer(key)) {
+        this.tsMap.removeLayer(key);
+        this.tsMap.removeSource(key);
+      }
+    }
+    this.removeMarkersFromMap();
+    this.activeLayers = {};
+  }
 
 
   /**
@@ -198,13 +202,13 @@ export class MapService {
    * @param pid string defining the desired path Id
    */
   removeMarkersFromPath(pid: string) {
-    console.log(this.activeLayers);
+    // console.log('delete markers', this.activeLayers);
     this.activeLayers[pid].forEach( (marker: mapboxgl.Marker) => {
-      console.log(marker);
+      // console.log(marker);
       marker.remove();
     });
     this.activeLayers[pid] = [];
-    console.log(this.activeLayers);
+    // console.log(this.activeLayers);
   }
 
   /**
@@ -237,7 +241,6 @@ export class MapService {
       .setLngLat(pos)
       .addTo(this.tsMap);
     this.activeLayers[pid].push(newMarker);
-    console.log(this.activeLayers);
   }
 
   /**

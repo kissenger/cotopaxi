@@ -17,7 +17,6 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
   private pathIdSubscription: Subscription;
   private geoJSON;
-  private oldPathId: string;
   private plotOptions: TsPlotPathOptions = {
     booResizeView: true,
     booSaveToStore: true,
@@ -31,7 +30,6 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     private mapService: MapService,
     private httpService: HttpService,
     private geoService: GeoService
-
     ) { }
 
   /**
@@ -48,8 +46,8 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     // if we come into list component from eg delet route, the map exists and is causing trouble, so delete it and start afresh
     if (this.mapService.isMap()) { this.mapService.killMap(); }
 
-    // OVERLAY PATH listen for pathID emission from panel-routes-list-list, and get the path from the backend
-    this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId) => {
+    // listen for pathID emission from panel-routes-list-list, and get the path from the backend
+    this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId: string) => {
       this.httpService.getPathById('route', pathId).subscribe( (result) => {
 
         // put on the class to avoid passing to functions
@@ -58,15 +56,10 @@ export class RoutesListComponent implements OnInit, OnDestroy {
         // as initialisation will temporarily show default location, only run it if map doesnt currently exist
         this.initialiseMapIfNeeded().then( () => {
 
-          this.mapService.removeLayerFromMap(this.oldPathId);
+          this.mapService.clearMap();
           this.mapService.addLayerToMap(this.geoJSON, this.lineStyle, this.plotOptions);
 
-          // store the current pathId so we can remove it on the next click
-          this.oldPathId = pathId;
         });
-
-
-
       });
     });
   }
@@ -78,7 +71,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
     return new Promise( (resolve, reject) => {
       if (!this.mapService.isMap()) {
-        console.log(this.mapService.isMap());
+        // console.log(this.mapService.isMap());
         this.mapService.initialiseMap(this.geoService.getPathCoG(this.geoJSON.bbox), 10).then( () => {
           resolve();
         });
