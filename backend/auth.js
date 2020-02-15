@@ -47,7 +47,7 @@ authRoute.post('/register', (req, res) => {
 
   // confirm that email address does not exist in db
   MongoUsers.Users
-    .findOne( {email: req.body.email}, {'_id': 1} )
+    .findOne( {email: req.body.email}, {} )
     .then( (user) => {
 
     if ( user ) {
@@ -59,7 +59,7 @@ authRoute.post('/register', (req, res) => {
 
         MongoUsers.Users.create({...req.body, hash}).then( (regUser) => {
           const token = jwt.sign( {subject: regUser._id}, KEY);
-          res.status(200).send({token});
+          res.status(200).send({token, user});
         }).catch( (err) => {
           throw err.toString();
         });
@@ -68,12 +68,12 @@ authRoute.post('/register', (req, res) => {
         throw err.toString();
       })
     }
-    
+
   }).catch( (err) => {
     if (DEBUG) { console.log(' >> ERROR: ' + err); }
     res.status(401).send(err);
   })
-  
+
 
 });
 
@@ -83,9 +83,9 @@ authRoute.post('/login', (req, res) => {
 
   // check that user exists and return data in variable user
   MongoUsers.Users
-    .findOne( {userName: req.body.userName}, {'hash': 1} )
+    .findOne( {userName: req.body.userName}, {} )
     .then( (user) => {
- 
+
     if (!user) {
       throw 'User name not found.'
 
@@ -95,7 +95,7 @@ authRoute.post('/login', (req, res) => {
 
         if (result) {
           const token = jwt.sign({ subject: user._id }, KEY);
-          res.status(200).send({token});
+          res.status(200).send({token, user});
         } else {
           throw 'Password did not match';
         }

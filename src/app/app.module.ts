@@ -39,6 +39,8 @@ import { AuthGuard } from './auth.guard';
 
 // Pipes
 import { UnitPipe } from './shared/unit.pipe';
+import { ProfileComponent } from './shared/components/profile/profile.component';
+import { ProfileService } from './shared/services/profile.service';
 
 @NgModule({
   declarations: [
@@ -61,7 +63,8 @@ import { UnitPipe } from './shared/unit.pipe';
     AlertBoxComponent,
     LoginComponent,
     WelcomeComponent,
-    RegisterComponent
+    RegisterComponent,
+    ProfileComponent
   ],
   imports: [
     BrowserModule,
@@ -79,6 +82,7 @@ import { UnitPipe } from './shared/unit.pipe';
     AuthGuard,
     LoginService,
     RegisterService,
+    ProfileService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptorService,
@@ -93,7 +97,8 @@ import { UnitPipe } from './shared/unit.pipe';
     AlertBoxComponent,
     SpinnerComponent,
     LoginComponent,
-    RegisterComponent
+    RegisterComponent,
+    ProfileComponent
     ]
 })
 export class AppModule { }

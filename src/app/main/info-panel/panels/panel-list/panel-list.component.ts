@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
-import {  Router } from '@angular/router';
 import * as globals from 'src/app/shared/globals';
 import { DataService } from 'src/app/shared/services/data.service';
 import { Subscription } from 'rxjs';
@@ -15,10 +14,11 @@ import { MapCreateService } from 'src/app/shared/services/map-create.service';
 export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
   @Input() callingPage: string;
-  private subscription: Subscription;
+  private getPathsSubscription: Subscription;
+  private mapUpdateSubscription: Subscription;
   private listOffset = 0;
   private boundingBox: Array<number> = [];
-  private pathIdArray: Array<string> = [];
+  private activePathsArray: Array<string> = [];
 
   public listData: TsListArray = [];
   public pathId: string;
@@ -36,17 +36,19 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    if (this.callingPage === 'create') {
+    console.log(this.callingPage);
 
+    if (this.callingPage === 'create') {
       // if create page then we need to know the current view on map so we can get appropriate overlay paths
       if (this.mapCreateService.isMap()) {
         this.boundingBox = this.mapCreateService.getMapBounds();
         this.updateList(false);
 
-        // then subscripe to emitter, which is sent from map-service when any movement of the map has finished
-        // this.dataService.mapBoundsEmitter.subscribe( (bb) => {
-        //   this.updateList(bb);
-        // });
+        // update the list when the view is moved
+        this.mapUpdateSubscription = this.dataService.mapBoundsEmitter.subscribe( (bb: Array<number>) => {
+          this.boundingBox = bb;
+          this.updateList(false);
+        });
       }
 
     } else {
@@ -61,36 +63,34 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   */
   updateList(booAutoSelectPathId: boolean) {
 
-    console.log(this.boundingBox);
-      this.subscription = this.httpService.getPathsList('route', this.listOffset, this.boundingBox).subscribe( pathsList => {
-        if ( pathsList.length === 0 ) {
-          this.numberOfRoutes = 0;
+    this.getPathsSubscription = this.httpService.getPathsList('route', this.listOffset, this.boundingBox).subscribe( pathsList => {
 
-        } else {
-          // compile data and confirm if we are at the end of the list yet
-          console.log(this.listData);
-          this.listData = this.listData.concat(pathsList);
-          this.numberOfRoutes = this.listData[0].count;
-          this.numberOfLoadedRoutes = this.listData.length;
-          this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes;
-        }
+      if (this.callingPage === 'create') {
+        // this approach is limiting - dont know what will happen when more than 9 paths are returned
+        // filter out all list items that are not active on the map
+        const a = this.listData.filter(el => this.activePathsArray.includes(el.pathId));
+        // filter out any items in paths list that are in the filtered list array
+        const b = pathsList.filter(bel => !a.find(ael => bel.pathId === ael.pathId));
+        this.listData = [...a, ...b];
+      } else {
+        this.listData = this.listData.concat(pathsList);
+      }
+      this.numberOfRoutes = pathsList.length === 0 ? 0 : this.listData[0].count;
+      this.numberOfLoadedRoutes = this.listData.length;
+      this.isEndOfList = this.numberOfLoadedRoutes === this.numberOfRoutes;
 
-        // emit the first id in the list and highlight that row
-        if (booAutoSelectPathId) {
-          this.pathId = this.listData[0].pathId;
-          this.dataService.pathIdEmitter.emit(this.pathId);
-        }
-      });
+      // emit the first id in the list and highlight that row
+      if (booAutoSelectPathId) {
+        this.pathId = this.listData[0].pathId;
+        this.dataService.pathIdEmitter.emit(this.pathId);
+      }
+    });
 
 
 
 
   }
 
-  // compileData(list) {
-
-
-  // }
 
   /**
   * Request additional items in list
@@ -107,20 +107,38 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
    */
   onLineClick(idFromClick: string) {
 
+    this.dataService.pathIdEmitter.emit(idFromClick);
+
     // for overlaid paths, toggle highlighting on row
     if (this.callingPage === 'create') {
-      this.dataService.pathIdEmitter.emit(idFromClick);
-      if (this.pathIdArray.includes(idFromClick)) {
-        this.pathIdArray.splice(this.pathIdArray.indexOf(idFromClick), 1);
+      // const listItemIndex = this.listData.findIndex(el => el.pathId === idFromClick);
+      // this.listData[listItemIndex].isActive = !this.listData[listItemIndex].isActive;
+      // if (!!this.listData[listItemIndex].isActive) {
+      //   this.listData[listItemIndex].isActive = false;
+
+      // }
+      // // find the list item containing the current pathId
+      // const idIndex = this.activeListItemsArray.findIndex(el => el.pathId === idFromClick);
+      // if (idIndex >= 0) {
+      //   // found the id in the active list, so toggle it off
+      //   this.activeListItemsArray.splice(idIndex, 1);
+      // } else {
+      //   // id not found so add list item to the array
+      //   const listElement = this.listData.find(el => el.pathId === idFromClick);
+      //   this.activeListItemsArray.push(listElement);
+      // }
+
+
+      if (this.activePathsArray.includes(idFromClick)) {
+        this.activePathsArray.splice(this.activePathsArray.indexOf(idFromClick), 1);
       } else {
-        this.pathIdArray.push(idFromClick);
+        this.activePathsArray.push(idFromClick);
       }
 
       // for basic list, do nothing if row if clicked again
     } else {
       if (idFromClick !== this.pathId) {
         this.pathId = idFromClick;
-        this.dataService.pathIdEmitter.emit(idFromClick);
       }
     }
   }
@@ -136,11 +154,17 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   getCssClass(id: string, i: number) {
     let cssClass = '';
     if (this.callingPage === 'create') {
-      if (this.pathIdArray.includes(id)) { cssClass += 'highlight-div '; }
+      if (this.activePathsArray.includes(id)) {
+        cssClass += 'highlight-div ';
+      }
     } else {
-      if (id === this.pathId) { cssClass += 'highlight-div '; }
+      if (id === this.pathId) {
+        cssClass += 'highlight-div ';
+      }
     }
-    if (i === 0) { cssClass += 'border-top'; }
+    if (i === 0) {
+      cssClass += 'border-top mt-1';
+    }
     return cssClass;
   }
 
@@ -151,7 +175,8 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
    * Actions to do when component is destroyed
    */
   ngOnDestroy() {
-    this.subscription.unsubscribe();
+    if (this.getPathsSubscription) { this.getPathsSubscription.unsubscribe(); }
+    if (this.mapUpdateSubscription) { this.mapUpdateSubscription.unsubscribe(); }
   }
 
 

@@ -91,6 +91,7 @@ interface TsListItem {
   creationDate: string;
   pathId: string;
   count: number;
+  isActive?: boolean;
 }
 
 export interface TsListArray extends Array<TsListItem> {}
@@ -122,8 +123,13 @@ export interface TsElevationQuery {
 
 
 export interface TsElevationResults extends Array<TsCoordinate> {}
-    // result: Array<TsCoordinate>;
 
+export interface TsUser {
+  userName: string;
+  homeLngLat: Array<number>;
+  email: string;
+  _id: string;
+}
 
 // export interface tsFeatureCollection {
 //     bbox: tsBoundingBox,

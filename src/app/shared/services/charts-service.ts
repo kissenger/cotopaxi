@@ -8,17 +8,17 @@ declare var google: any;
 @Injectable({
   providedIn: 'root'
 })
-export class ChartsService{
+export class ChartsService {
 
   constructor(
     public httpService: HttpService,
     public geoService: GeoService,
     public dataService: DataService
-  ) { 
+  ) {
   }
 
-  plotChart(htmlElement, chartData, colourArray) {      
-    
+  plotChart(htmlElement, chartData, colourArray) {
+
     let frigFlag = false;
     try {
       if (chartData[0].length === 0) {
@@ -60,7 +60,7 @@ export class ChartsService{
           // }
           viewWindow:{
             min: 0
-          }          
+          }
         },
         legend: 'none',
         chartArea: {
@@ -76,8 +76,8 @@ export class ChartsService{
         // width: '100%'
 
       };
-   
-      return chart.draw(data, options); 
+
+      return chart.draw(data, options);
 
     });
 
@@ -104,7 +104,7 @@ export class ChartsService{
   }
 
   processChartData(chData) {
-    
+
       // arrange elevation data for plttoing on charts - first step convert to dsired units
       if (globals.units.distance === 'miles') {
         var xData = chData[0].map( (m) => m / 1000.0 * globals.KM_TO_MILE);
@@ -115,7 +115,7 @@ export class ChartsService{
       let yData = chData.slice(1);
       if (globals.units.elevation === 'ft' ) {
         yData = yData[0].map( () => yData.Map((m) => m * globals.M_TO_FT));
-      } 
+      }
 
       // console.log(dist, elevs)
       return [xData, ...yData]

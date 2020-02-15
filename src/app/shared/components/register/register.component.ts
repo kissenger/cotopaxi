@@ -18,7 +18,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   @Output()
   ok = new EventEmitter();
-  
+
   constructor(
     private login: LoginService,
     private http: HttpService,
@@ -27,7 +27,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     private router: Router
   ) { }
 
-  ngOnInit() {} 
+  ngOnInit() {}
 
   onRegisterClick() {
 
@@ -46,11 +46,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
         // success
         this.close.next();
-        this.auth.setToken(res.token);
+        this.auth.setToken(res.token, res.user);
         this.router.navigate(['route/list']);
-      
+
       }, (error) => {
-        
+
         // failure
         this.close.next();
         this.alert.showAsElement('Something went wrong :(', error.status + ': ' + error.error, true, false).subscribe( () => {
@@ -69,7 +69,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     })
   }
 
-  
+
   ngOnDestroy() {}
 
 }

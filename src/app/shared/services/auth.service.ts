@@ -1,29 +1,33 @@
-import { EventEmitter, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
+import { Injectable } from '@angular/core';
+import { TsUser } from 'src/app/shared/interfaces';
 @Injectable()
 export class AuthService {
-
-  private tokenName = 'tsToken';
 
   constructor() {
 
   }
 
   isLoggedIn() {
-    return !!localStorage.getItem(this.tokenName);   // double ! casts result to boolean
+    return !!sessionStorage.getItem('tsToken');   // double ! casts result to boolean
   }
 
   getToken() {
-    return localStorage.getItem(this.tokenName);
+    return sessionStorage.getItem('tsToken');
   }
 
-  setToken(token: string) {
-    localStorage.setItem(this.tokenName, token);
+  setToken(token: string, user: TsUser) {
+    sessionStorage.setItem('tsToken', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
   }
+
+  getUser() {
+    return JSON.parse(sessionStorage.getItem('user'));
+  }
+
 
   deleteToken() {
-    localStorage.removeItem(this.tokenName);
+    sessionStorage.removeItem('tsToken');
+    sessionStorage.removeItem('user');
   }
 
 }

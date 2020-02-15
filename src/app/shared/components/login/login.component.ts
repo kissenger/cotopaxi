@@ -24,7 +24,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private alert: AlertService,
     private router: Router
-  ) {}
+    ) {}
 
   ngOnInit() {}
 
@@ -33,11 +33,13 @@ export class LoginComponent implements OnInit, OnDestroy {
     const userName = document.forms['login-form']['userName'].value;
     const password = document.forms['login-form']['password'].value;
 
-    this.http.loginUser({userName, password}).subscribe( (res) => {
+    this.http.loginUser( {userName, password}).subscribe( (res) => {
 
       // success
       this.close.next();
-      this.auth.setToken(res.token);
+      this.auth.setToken(res.token, res.user);
+      // this.auth.setUser(res.user);
+      // this.dataService.loginUserEmitter.emit(res.user);
       this.router.navigate(['route/list']);
 
     }, (error) => {

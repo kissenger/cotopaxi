@@ -34,7 +34,7 @@ export class RoutesReviewComponent implements OnInit {
 
         // plot the stored route
         const plotOptions = {booReplaceExisting: false, booResizeView: true, booSaveToStore: true};
-        this.mapService.addLayerToMap(geoJSON, globals.routeLineStyle, plotOptions);
+        this.mapService.addLayerToMap(geoJSON, {}, plotOptions);
 
       });
     }

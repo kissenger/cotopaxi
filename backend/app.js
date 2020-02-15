@@ -121,7 +121,10 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
     getMongoFromGpx(userId).then( (mongoPath) => {
 
       MongoPath.Routes.create(mongoPath).then( (doc) => {
-        res.status(201).json({geoJson: new GeoRoute(doc)});
+        res.status(201).json({
+          geoJson: new GeoRoute(doc),
+          hills: new GeoHills(doc)
+        });
         if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
 
       }).catch( (err) => {
@@ -181,7 +184,6 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
 
   // construct query based on incoming payload
   if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
-  console.log(req.body);
 
   let condition = {_id: req.body.pathId, userId: userId};
   let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};

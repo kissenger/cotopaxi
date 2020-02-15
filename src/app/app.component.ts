@@ -4,6 +4,7 @@ import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box
 import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
 import { LoginComponent } from 'src/app/shared/components/login/login.component';
 import { RegisterComponent } from 'src/app/shared/components/register/register.component';
+import { ProfileComponent } from './shared/components/profile/profile.component';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +31,9 @@ export class AppComponent {
 
     const RegisterElement = createCustomElement(RegisterComponent, {injector});
     customElements.define('register-box', RegisterElement);
+
+    const ProfileElement = createCustomElement(ProfileComponent, {injector});
+    customElements.define('profile-box', ProfileElement);
 
    }
 

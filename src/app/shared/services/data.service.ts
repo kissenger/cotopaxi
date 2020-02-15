@@ -18,6 +18,7 @@ export class DataService {
   public menuClickEmitter = new EventEmitter();          // from map service to info panel
   public pathStatsEmitter = new EventEmitter();   // from map-create to panel-create-detail
   public activeTabEmitter = new EventEmitter();          // from map service to info panel
+  public loginUserEmitter = new EventEmitter();   // from login to header
   // stored by map-create-service, accessed by panel-routes-create-details
   // public createdPathData: {coords: Array<TsCoordinate>, elevations: {elevs: Array<number>, elevationStatus: string}};
   // stored by panel-routes-list-options, accessed by panel-routes-create-details

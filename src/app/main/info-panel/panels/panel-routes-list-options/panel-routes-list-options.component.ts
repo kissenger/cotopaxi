@@ -76,7 +76,7 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
     fileData.append('filename', files[0], files[0].name);
 
     this.subscription = this.httpService.importRoute(fileData).subscribe( (result) => {
-      const pathAsGeoJSON = result.geoJson;
+      const pathAsGeoJSON = result.hills;
       this.dataService.saveToStore('activePath', {source: 'imported', pathAsGeoJSON});
       this.spinner.removeElement();
       this.router.navigate(['route/review/']);

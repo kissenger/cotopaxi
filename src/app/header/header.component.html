@@ -18,8 +18,8 @@
   </button>
 
   <!-- Uncollapsed menu -->
-  <div class="collapse navbar-collapse " id="navbarNav">
-      <ul class="navbar-nav ml-auto">
+  <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto">
         <li class="nav-item active">
           <a *ngIf='auth.isLoggedIn()' [routerLink]="['/route/list/']" class="nav-link">Routes<span class="sr-only">(current)</span></a>
           <!-- <a *ngIf='!auth.isLoggedIn()' [routerLink]="[{ outlets: { loggedIn: ['route', 'list'] }}]" class="nav-link" href="#">Routes<span class="sr-only">(current)</span></a> -->
@@ -27,17 +27,25 @@
         <li class="nav-item">
           <a *ngIf='auth.isLoggedIn()' class="nav-link">Blog</a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a *ngIf='auth.isLoggedIn()' (click)="onLogoutClick()" class="nav-link">Logout</a>
-        </li>        
+        </li> -->
         <li class="nav-item">
           <a *ngIf='!auth.isLoggedIn()' (click)="onRegisterClick()" class="nav-link">Register</a>
-        </li>       
+        </li>
         <li class="nav-item">
           <a *ngIf='!auth.isLoggedIn()' (click)="onLoginClick()" class="nav-link">Login</a>
           <!-- <a *ngIf='!auth.isLoggedIn()' [routerLink]="[{ outlets: { loggedOut: ['login'] }}]" class="nav-link" href="#">Login</a> -->
-        </li>   
+        </li>
       </ul>
+  </div>
+
+  <div *ngIf='auth.isLoggedIn()' class="d-flex flex-column small align-items-end">
+    <div class="">
+        Welcome <span class="global-make-text-look-like-link" (click)="onUserClick()">{{auth.getUser().userName}}</span>
+    </div>
+
+    <div class="global-make-text-look-like-link" (click)="onLogoutClick()">Logout</div>
   </div>
 
 </nav>
