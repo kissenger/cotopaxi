@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import * as globals from 'src/app/shared/globals';
 import { TsLineStyle, TsPlotPathOptions } from 'src/app/shared/interfaces';
 import { GeoService } from 'src/app/shared/services/geo.service';
+import { AuthService } from 'src/app/shared/services/auth.service';
 
 @Component({
   selector: 'app-routes',
@@ -29,7 +30,8 @@ export class RoutesListComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private mapService: MapService,
     private httpService: HttpService,
-    private geoService: GeoService
+    private geoService: GeoService,
+    private auth: AuthService
     ) { }
 
   /**
@@ -48,6 +50,14 @@ export class RoutesListComponent implements OnInit, OnDestroy {
 
     // listen for pathID emission from panel-routes-list-list, and get the path from the backend
     this.pathIdSubscription = this.dataService.pathIdEmitter.subscribe( (pathId: string) => {
+
+      if (pathId === '0') {
+        // no path id found so default to users dfault location
+        this.mapService.initialiseMap();
+        document.getElementById('Options').click();
+        // this.dataService.activeTabEmitter.emit('options');
+      }
+
       this.httpService.getPathById('route', pathId).subscribe( (result) => {
 
         // put on the class to avoid passing to functions

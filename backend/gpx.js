@@ -4,13 +4,14 @@ const DEBUG = true;
 
  /**
   * readGPX(data)
-  * @param {*} data input data from multer file read 
+  * @param {*} data input data from multer file read
   * @param return object containing path name, coords, elevs and timestamp
+  * TODO: use regex for parsing xml?
   */
 function readGPX(data) {
 
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX()') };
-  
+
   // write to file - only for debugging  throw 'error';
   // const fs = require('fs');
   // const file = fs.createWriteStream("../check.txt");}
@@ -126,7 +127,7 @@ function readGPX(data) {
   // // check whether we have param data for each data point
   // // F - imported from file
   // // D - imported from file, discarded due to incomplete
-  // // A - api elevations 
+  // // A - api elevations
   // let elevationStatus = 'F';
 
   // if elevation array is incomplete, then discard them - if necessary they'll get populated from DEM later
@@ -144,7 +145,7 @@ function readGPX(data) {
     lngLat: lngLat,
     elev: elev,
     time: time,
-    
+
   };
 
 }
@@ -176,7 +177,7 @@ function writeGPX(path){
     file.on('error', reject);
     file.on('open', () => {
 
-      // file.on('finish', () => { resolve(true) }); 
+      // file.on('finish', () => { resolve(true) });
       // file.on('error', reject);
 
       file.write(s.repeat(0) + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + eol);
@@ -185,7 +186,7 @@ function writeGPX(path){
       file.write(s.repeat(2) + "<name>" + path.name + "</name>" + eol);
 
       path.points.forEach( (point) => {
-  
+
         if ( point.elev || point.time ) {
           // elevation or time data exists, use conventional tag
 

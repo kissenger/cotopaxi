@@ -25,7 +25,7 @@ export class InfoPanelComponent implements OnInit {
   }
 
   onClick(e) {
-    this.dataService.activeTabEmitter.emit(e.target.id);
+    // this.dataService.activeTabEmitter.emit(e.target.id);/
   }
 
 }

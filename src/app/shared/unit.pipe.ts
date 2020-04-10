@@ -43,6 +43,10 @@ export class UnitPipe implements PipeTransform {
         return 'pipe error';
       }
 
+      // if (value === null) {
+      //   return null;
+      // }
+
       // work out what output units should be
       const unitString = unitA + '/' + (unitB === 'miles' ? 'mi' : 'km');
 

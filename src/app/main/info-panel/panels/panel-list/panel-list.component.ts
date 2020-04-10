@@ -36,8 +36,6 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    console.log(this.callingPage);
-
     if (this.callingPage === 'create') {
       // if create page then we need to know the current view on map so we can get appropriate overlay paths
       if (this.mapCreateService.isMap()) {
@@ -81,7 +79,7 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
       // emit the first id in the list and highlight that row
       if (booAutoSelectPathId) {
-        this.pathId = this.listData[0].pathId;
+        this.pathId = this.listData.length === 0 ? '0' : this.listData[0].pathId;
         this.dataService.pathIdEmitter.emit(this.pathId);
       }
     });

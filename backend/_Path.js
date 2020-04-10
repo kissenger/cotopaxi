@@ -34,8 +34,8 @@ class Path  {
 
     // auto simplify a route - user does not get a choice
     if (DEBUG) { console.log(timeStamp() + ' >> Started with  ' + this.points.length + ' points and ' + this.elevs.length + ' elevations' ); }
-    if (this.pathType === 'route') { 
-      this.points = simplify(this.points); 
+    if (this.pathType === 'route') {
+      this.points = simplify(this.points);
       // this is a bit awkward - better if we dont need to keep an elevs array as well as points array ...?
       // map doesnt work beacuse it creates an array the same length as the points array, which screw up some stuff below
       this.elev = [];
@@ -45,12 +45,12 @@ class Path  {
     }
 
     // update remaining class variables after simplification
-    this.cumDistance = this.getCumDistance();    // cumulative distance array on the class avoids having to recalculate distances when pathStats() is called multiple times 
+    this.cumDistance = this.getCumDistance();    // cumulative distance array on the class avoids having to recalculate distances when pathStats() is called multiple times
     this.isLong = this.points.length > LONG_PATH_THRESHOLD ? true : false;
     this.bbox = boundingBox(this.points);
     this.pathSize = this.points.length - 1;
     this.category = this.category();
-    this.stats = this.getPathStats(); // called again from getElevations() but unavoidable 
+    this.stats = this.getPathStats(); // called again from getElevations() but unavoidable
 }
 
   /**
@@ -110,7 +110,7 @@ class Path  {
 
 
   /**
-   * Calculates cumalative distance array 
+   * Calculates cumalative distance array
    */
   getCumDistance() {
     let dist = 0;
@@ -167,7 +167,7 @@ class Path  {
 
   /**
    * Converts all parameters into an array of Point instances for ease of processing
-   * @param {*} coords lngLat array in [lng, lat] formay 
+   * @param {*} coords lngLat array in [lng, lat] formay
    * @param {*} elev array of numbers - if not the same length as coords then will fill the first x points
    */
   getPoints(coords, elev) {
@@ -177,18 +177,18 @@ class Path  {
       let thisPoint = [];
       if ( coords ) thisPoint.push(coords[i]);
       if ( elev && elev[i] ) {
-        thisPoint.push(elev[i])};     
+        thisPoint.push(elev[i])};
       pointsArray.push(new Point(thisPoint));
     }
-      
+
     return pointsArray;
   }
 
   // /**
   //  * NOT USED
   //  * Add elevations to an array of points
-  //  * @param {*} p 
-  //  * @param {*} e 
+  //  * @param {*} p
+  //  * @param {*} e
   //  */
   // addElevationsToPointsArray(p, e) {
   //   // if (p.length !== e.length ) { return p }
@@ -345,7 +345,7 @@ class Path  {
 
     // const KM_TO_MILE = 0.6213711922;
     // const SPEED_THRESHOLD = 1.4;   // km/h
-    // const ASCENT_THRESHOLD = 15;   // threshold below which changes in ascent/descent are ignored  
+    // const ASCENT_THRESHOLD = 15;   // threshold below which changes in ascent/descent are ignored
 
     // distances
     let dDist = 0;
@@ -365,7 +365,7 @@ class Path  {
 
     // elevations
     let dElev;                      // change in elevation from previous loop
-    let deltaSum = 0;               // cumulative change in elevation 
+    let deltaSum = 0;               // cumulative change in elevation
     let ascent = 0;
     let descent = 0;
     let maxElev = -9999;
@@ -373,7 +373,7 @@ class Path  {
 
     // hills and gradients local variables
     let lastSlopeType;
-    let thisSlopeType;              // 0 = flat, 1 = ascending, -1 = descending    
+    let thisSlopeType;              // 0 = flat, 1 = ascending, -1 = descending
     // let elevDist = 0;               // cumulative distance over which elevation is unchanged, used for gradient calc
     let hills = [];                 // array cotaining identified hills
     let maxGradient;                // maxGradient over the whole path
@@ -387,7 +387,7 @@ class Path  {
 
       /**
        * Distance
-       * cumdistance 
+       * cumdistance
        */
       dDist = this.cumDistance[index] - this.cumDistance[index-1];
       p2pMax = dDist > maxDist ? dDist : maxDist;
@@ -457,7 +457,7 @@ class Path  {
 
         // if we we have changed direction then increment ascent/descent only if last movement was > threshold
         } else {
-          
+
           if (Math.abs(deltaSum) > HILL_THRESHOLD) {
             if (deltaSum > 0) {
               ascent += deltaSum;
@@ -466,9 +466,9 @@ class Path  {
             }
           }
           deltaSum = dElev;
-        } 
-        
-        /** 
+        }
+
+        /**
          * use a gradient threshold, below which consider to be on the flat, above which calculate hill stats
          * where a hill starts/stops is determined by GRAD_THRESHOLD
          * Whether a hill is registered as significant is determined by HILL_THRESHOLD (which will also affect ascent/descent calcs)
@@ -476,14 +476,14 @@ class Path  {
         const GRAD_ALPHA = 0.35;
 
         // determine type of slope based on gradient
-        // elevDist += dDist / 1000.0;   
+        // elevDist += dDist / 1000.0;
         let thisGrad = (this.elevs[index] - this.elevs[index-1]) / dDist * 100;   // factor of 10  = * 100 (for %) / 1000 (for km->m)
-        
+
         // smooth gradient using LP filter
-        if (index === 1) { gradient = thisGrad } 
+        if (index === 1) { gradient = thisGrad }
         else { gradient = ( thisGrad * GRAD_ALPHA + gradient * ( 1 - GRAD_ALPHA ) ); }
 
-        
+
 
         // determine slope type
         if ( gradient < (-GRAD_THRESHOLD) ) { thisSlopeType = -1; }
@@ -494,7 +494,7 @@ class Path  {
         maxGradient = Math.abs(gradient) > maxGradient ? Math.abs(gradient) : maxGradient;
         // elevDist = 0;   // reset distance each time elevation changes
 
-        /** 
+        /**
          * calculate hills array
          */
         // console.log(index, this.cumDistance[index], this.elevs[index], thisGrad, gradient, thisSlopeType, lastSlopeType);
@@ -506,14 +506,14 @@ class Path  {
 
         } else {
           // slopeType exists
- 
+
           if ( (thisSlopeType !== lastSlopeType && lastSlopeType !== 0) || index === this.pathSize) {
-            
+
             // slopetype has changed, determine delta between this point and the start of the hill
             const de = this.elevs[index] - e0;
             const dd = this.cumDistance[index] - d0;
             const gradAve = de / dd * 100 ;
-            
+
             // if its greater than the threshold, mark as a hill
             if ( Math.abs(de) > HILL_THRESHOLD && Math.abs(gradAve) > GRAD_THRESHOLD) {
 
@@ -540,7 +540,7 @@ class Path  {
             // t0 = duration;
             e0 = this.elevs[index];
             maxGradient = 0;
-            
+
           }
           lastSlopeType = thisSlopeType;
         } //if ( typeof lastSlopeType === 'undefined' ) {
@@ -555,7 +555,7 @@ class Path  {
       bbox: this.bbox,
       distance: this.cumDistance[this.pathSize],
       cumDistance: this.cumDistance,
-      nPoints: this.pathSize,
+      nPoints: this.pathSize + 1,
       pace: this.isTime ? (duration/60) / (this.cumDistance[this.pathSize]/1000) : 0,
       movingStats: {
         movingTime: this.isTime ? movingTime : 0,

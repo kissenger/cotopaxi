@@ -5,6 +5,7 @@ import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globals from 'src/app/shared/globals';
 import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +23,8 @@ export class MapService {
   constructor(
     public httpService: HttpService,
     public geoService: GeoService,
-    public dataService: DataService
+    public dataService: DataService,
+    public auth: AuthService
   ) {
     // get and set the mapbox access token to enable the api
     Object.getOwnPropertyDescriptor(mapboxgl, 'accessToken').set(this.accessToken);
@@ -40,7 +42,7 @@ export class MapService {
       this.tsMap = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/cjaudgl840gn32rnrepcb9b9g',
-        center: location ? location : globals.userHomeLocation,
+        center: location ? location : this.auth.getUser().homeLngLat,
         zoom: zoom ? zoom : 13
       });
 
@@ -123,11 +125,14 @@ export class MapService {
     });
 
     // plot a marker at the start and end of the route, pushing the new markers to activeLayers
+    //
+
+    // const nPoints = pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates.length;
     const nFeatures = pathAsGeoJSON.features.length;
-    if (nFeatures > 0 && plotOptions.booPlotMarkers) {
-      const nPoints = pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates.length;
-      this.addMarkerToPath(pathAsGeoJSON.features[0].geometry.coordinates[0], pathId);
-      this.addMarkerToPath(pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates[nPoints - 1], pathId);
+    const nPoints = pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates.length;
+    if (nPoints > 0 && plotOptions.booPlotMarkers) {
+      this.addMarkerToMap(pathAsGeoJSON.features[0].geometry.coordinates[0], pathId);
+      this.addMarkerToMap(pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates[nPoints - 1], pathId);
     }
 
     // set the bounds
@@ -142,8 +147,9 @@ export class MapService {
     }
 
     // emit the pathStats to the details component
-    this.dataService.activePathEmitter.emit(pathAsGeoJSON);
+
     if (plotOptions.booSaveToStore) {
+      this.dataService.activePathEmitter.emit(pathAsGeoJSON);
       this.dataService.saveToStore('activePath', pathAsGeoJSON);
       console.log(pathAsGeoJSON);    // always useful to see the active geoJson in the console
     }
@@ -234,7 +240,7 @@ export class MapService {
    * @param pid string defining the desire path Id
    * If pathId is not specified defaults to layer [0] - if that doesnt exist will throw an error
    */
-  addMarkerToPath(pos: TsCoordinate, pid: string) {
+  addMarkerToMap(pos: TsCoordinate, pid: string) {
     // deals with the specific case of creating a point before line is created, eg when creating a route
     if (!(pid in this.activeLayers)) { this.activeLayers[pid] = []; }
     const newMarker = new mapboxgl.Marker()
@@ -249,10 +255,10 @@ export class MapService {
    * @param pos TsCoordinate defining the desired position of the marker
    * @param pid string defining the desire path Id
    */
-  replaceLastMarkerOnPath(pos: TsCoordinate, pid: string) {
-    this.activeLayers[pid].pop().remove();
-    this.addMarkerToPath(pos, pid);
-  }
+  // replaceLastMarkerOnPath(pos: TsCoordinate, pid: string) {
+  //   this.activeLayers[pid].pop().remove();
+  //   this.addMarkerToPath(pos, pid);
+  // }
 
   /***************************************************************************
    * UTILITIES
@@ -268,6 +274,17 @@ export class MapService {
     this.tsMap = null;
   }
 
+  /***************************************************************************
+   * Set default location by clicking screen
+   ***************************************************************************/
+  getLocationOnClick() {
+    this.tsMap.getCanvas().style.cursor = 'crosshair';
+    return new Promise<TsCoordinate>( (resolve, reject) => {
+      this.tsMap.on('click', (e) => {
+        this.tsMap.getCanvas().style.cursor = 'pointer';
+        resolve({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      });
+    });
+  }
+
 }
-
-

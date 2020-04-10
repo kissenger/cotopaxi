@@ -4,7 +4,6 @@ const authRoute = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const timeStamp = require('./utils.js').timeStamp;
-// const KEY = 'AppleCrumbleAndCustard';
 const KEY = 'ma8MKeK&&n1wlJNOm@ne08';
 const DEBUG = true;
 
@@ -36,6 +35,33 @@ function verifyToken(req, res, next) {
   next();
 
 }
+
+
+authRoute.post('/update-user-data', verifyToken, (req, res) => {
+
+
+
+  if (DEBUG) { console.log(timeStamp() + ' >> update-user-data'); }
+
+
+  // ensure user is authorised
+  const userId = req.userId;
+  if ( !userId ) {
+    res.status(401).send('Unauthorised');
+    if (DEBUG) { console.log(' >> Unauthorised') };
+  }
+  // let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
+
+  delete req.body._id;
+  console.log(req.body)
+  // query database, updating changed data and setting isSaved to true
+  MongoUsers.Users
+    .updateOne( {_id: userId}, {$set: req.body}, {upsert: false, writeConcern: {j: true}})
+    .then( (doc) => {
+      res.status(201).json( {doc} );
+    })
+
+})
 
 
 authRoute.post('/register', (req, res) => {

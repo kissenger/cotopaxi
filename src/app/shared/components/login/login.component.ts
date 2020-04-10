@@ -37,7 +37,9 @@ export class LoginComponent implements OnInit, OnDestroy {
 
       // success
       this.close.next();
-      this.auth.setToken(res.token, res.user);
+      this.auth.setToken(res.token);
+      this.auth.setUser(res.user);
+      console.log(res.user);
       // this.auth.setUser(res.user);
       // this.dataService.loginUserEmitter.emit(res.user);
       this.router.navigate(['route/list']);

@@ -6,7 +6,15 @@ const userSchema = mongoose.Schema({
   hash: {type: String, required: true},
   firstName: {type: String},
   lastName: {type: String},
-  homeLngLat: {type: [Number]}
+  homeLngLat: {
+    lat: {type: Number},
+    lng: {type: Number}
+  },
+  isHomeLocSet: {type: Boolean},
+  units: {
+    distance: {type: String},
+    elevation: {type: String}
+  }
 })
 
 const Users = mongoose.model('user', userSchema);
@@ -14,4 +22,3 @@ const Users = mongoose.model('user', userSchema);
 module.exports = {
   Users: Users
 };
- 

@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as globals from 'src/app/shared/globals';
-import { TsCoordinate, TsElevationQuery } from 'src/app/shared/interfaces';
+import { TsCoordinate, TsElevationQuery, TsUser } from 'src/app/shared/interfaces';
 
 @Injectable()
 export class HttpService {
 
-  private DEBUG = true;
   private accessToken = globals.mapboxAccessToken;
   // private hostName = '192.168.0.12'
   private hostName = 'localhost';
@@ -60,7 +59,6 @@ export class HttpService {
         if (index !== bbox.length - 1) { query += '&'; }
       });
     }
-    console.log(query);
     return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset + query);
   }
 
@@ -111,6 +109,10 @@ export class HttpService {
 
   getToken() {
     return localStorage.getItem('token');
+  }
+
+  updateUserData(userData: TsUser) {
+    return this.http.post<any>('http://localhost:3000/update-user-data/', userData);
   }
 
 

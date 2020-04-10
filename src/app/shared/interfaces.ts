@@ -1,9 +1,16 @@
 
-
 // export interface tsElevations{
 //     elevationStatus: string,
 //     elevs: Array<number>
 // }
+
+// export interface Array<T> {
+//   lastElement(elem: T): Function;
+// }
+
+// Array.prototype.lastElement = function() {
+//   return 1;
+// };
 
 export interface TsUnits {
     distance: 'miles' | 'kms';
@@ -96,7 +103,7 @@ interface TsListItem {
 
 export interface TsListArray extends Array<TsListItem> {}
 
-
+// invalid is used to indicate hhome location has not been set
 export interface TsCoordinate {
   lat: number;
   lng: number;
@@ -126,105 +133,115 @@ export interface TsElevationResults extends Array<TsCoordinate> {}
 
 export interface TsUser {
   userName: string;
-  homeLngLat: Array<number>;
+  homeLngLat?: TsCoordinate;
+  isHomeLocSet?: boolean;
   email: string;
-  _id: string;
+  units: TsUnits;
+  password?: string;
+  _id?: string;
 }
 
-// export interface tsFeatureCollection {
-//     bbox: tsBoundingBox,
-//     type: 'FeatureCollection',
-//     features: Array<tsFeature>,
-//     properties: {}
-// }
+export interface TsFeatureCollection {
+    bbox: TsBoundingBox;
+    type: 'FeatureCollection';
+    features: Array<TsFeature>;
+    properties: TsProperties;
+}
 
 
 
-// export interface tsLineString {
-//     type: "LineString";
-//     coordinates: [[number]];
-// }
+export interface TsLineString {
+    type: 'LineString';
+    coordinates: Array<Array<number>>;
+}
 
+export interface TsBoundingBox extends Array<number> {}
 
-// export interface tsFeature {
-//     bbox?: tsBoundingBox,
-//     type: 'Feature',
-//     geometry: tsLineString,
-//     properties: {}
-// }
+export interface TsFeature {
+    bbox?: TsBoundingBox;
+    type: 'Feature';
+    geometry: TsLineString;
+    properties: TsProperties;
+}
 
-// export interface tsProperties{
-//     info: tsInfo,
-//     params: tsParams,
-//     stats: tsStats,
-//     colour?: string,
-//     creationDate?: string,
-//     lastEditDate?: string,
-//     plotType?: string,
-//     userID?: string
-// }
+export interface TsProperties {
+    pathId: string;
+    info: TsInfo;
+    params: TsParams;
+    stats: TsStats;
+    colour?: string;
+    creationDate?: string;
+    lastEditDate?: string;
+    plotType?: string;
+    userID?: string;
+}
 
-// export interface tsInfo {
-//     direction: string,
-//     category: string,
-//     nationalTrail: boolean,
-//     name: string,
-//     description: string,
-//     pathType: string,           // 'route' or 'track'
-//     startTime: string,
-// }
+export interface TsInfo {
+    direction: string;
+    category: string;
+    nationalTrail: boolean;
+    name: string;
+    description: string;
+    pathType: string;           // 'route' or 'track'
+    startTime: string;
+    isLong: boolean;
+}
 
-// export interface tsParams {
-//     elev: Array<number>,
-//     time: Array<number>,
-//     heartRate: Array<number>,
-//     cadence: Array<number>
-// }
+export interface TsParams {
+    elev: Array<number>;
+    time: Array<number>;
+    heartRate: Array<number>;
+    cadence: Array<number>;
+    cumDistance: Array<number>;
+}
 
-// export interface tsStats {
-//     bbox: {
-//         minLng: number,
-//         minLat: number,
-//         maxLng: number,
-//         maxLat: number
-//     },
-//     nPoints: number,
-//     duration: number,
-//     distance: number,
-//     pace:  number,
-//     elevations: {
-//         ascent: number,
-//         descent: number,
-//         maxElev: number,
-//         minElev: number,
-//         lumpimess: number,
-//         distance: number,
-//         nPoints: number,
-//         badElevData?: boolean
-//     },
-//     p2p: {
-//         max: number,
-//         ave: number
-//     },
-//     movingStats: {
-//         movingTime: number,
-//         movingDist: number,
-//         movingPace: number,
-//     },
-//     hills: [ {
-//         dHeight: number,
-//         dDist: number,
-//         dTime: number,
-//         pace: number,
-//         ascRate: number,
-//         gradient: {
-//             max: number,
-//             ave: number
-//         }
-//         } ],
-//     splits: {
-//         kmSplits: Array<Array<number>>,
-//         mileSplits: Array<Array<number>>
-//     }
-// }
+export interface TsStats {
+    bbox: {
+        minLng: number,
+        minLat: number,
+        maxLng: number,
+        maxLat: number
+    };
+    nPoints: number;
+    duration: number;
+    distance: number;
+    pace:  number;
+    elevations: {
+        ascent: number,
+        descent: number,
+        maxElev: number,
+        minElev: number,
+        lumpiness: number,
+        distance: number,
+        nPoints: number,
+        badElevData?: boolean
+    };
+    p2p: {
+        max: number,
+        ave: number
+    };
+    movingStats: {
+        movingTime: number,
+        movingDist: number,
+        movingPace: number,
+    };
+    hills: Array<TsHills>;
+    splits: {
+        kmSplits: Array<Array<number>>,
+        mileSplits: Array<Array<number>>
+    };
+}
+
+interface TsHills {
+
+      dHeight?: number;
+      dDist?: number;
+      dTime?: number;
+      pace?: number;
+      ascRate?: number;
+      gradient?: {
+          max?: number;
+          ave?: number
+      };
+}
 

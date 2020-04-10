@@ -1,10 +1,7 @@
 import { Component, OnInit, OnDestroy, Injector } from '@angular/core';
-import * as globals from 'src/app/shared/globals';
 import { Router } from '@angular/router';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from 'src/app/shared/services/data.service';
-import { MapService } from 'src/app/shared/services/map.service';
-import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'src/app/shared/services/alert.service';
 import { SpinnerService } from 'src/app/shared/services/spinner.service';

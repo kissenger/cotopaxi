@@ -5,6 +5,7 @@ import { HttpService } from 'src/app/shared/services/http.service';
 import { AlertService } from 'src/app/shared/services/alert.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { Router } from '@angular/router';
+import { TsUser, TsUnits } from '../../interfaces';
 
 @Component({
   selector: 'app-register',
@@ -32,21 +33,32 @@ export class RegisterComponent implements OnInit, OnDestroy {
   onRegisterClick() {
 
     // get form data
-    const userName = document.forms["register-form"]["userName"].value;
-    const email = document.forms["register-form"]["email"].value;
-    const password = document.forms["register-form"]["password"].value;
+    const userName = document.forms['register-form']['userName'].value;
+    const email = document.forms['register-form']['email'].value;
+    const password = document.forms['register-form']['password'].value;
 
     // basic form validation
-    if (userName === "" || email === "" || password === "") {
-      this.alert.showAsElement('Incomplete form', 'Make sure all fields are completed', true, false).subscribe( () => {})
+    if (userName === '' || email === '' || password === '') {
+      this.alert.showAsElement('Incomplete form', 'Make sure all fields are completed', true, false).subscribe( () => {});
 
     } else {
 
-      this.http.registerUser({userName, email, password}).subscribe( (res) => {
+      const user: TsUser = {
+        userName,
+        email,
+        password,
+        isHomeLocSet: false,
+        units: <TsUnits>{
+          distance: 'miles',
+          elevation: 'm'
+        }
+      };
+      this.http.registerUser(user).subscribe( (res) => {
 
         // success
         this.close.next();
-        this.auth.setToken(res.token, res.user);
+        this.auth.setToken(res.token);
+        this.auth.setUser(res.user);
         this.router.navigate(['route/list']);
 
       }, (error) => {
@@ -54,7 +66,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         // failure
         this.close.next();
         this.alert.showAsElement('Something went wrong :(', error.status + ': ' + error.error, true, false).subscribe( () => {
-        })
+        });
 
       });
     }
@@ -66,7 +78,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.close.next();
     this.login.showAsElement().subscribe( (response) => {
       console.log(response);
-    })
+    });
   }
 
 

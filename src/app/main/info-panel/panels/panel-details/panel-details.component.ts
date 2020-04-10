@@ -26,7 +26,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   public isLong: boolean;
   public isElevations: boolean;
   public isHills: boolean;
-  public isData: boolean;
+  public isData = false;
   public units: TsUnits = globals.units;
   public wikiLink: string = globals.links.wiki.elevations;
   public pathCategory: string;
@@ -54,17 +54,19 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
     // show form inputs and buttons only for review or create pages, not for list
     this.isListPage = this.callingPage === 'list';
-    this.isData = true;
+    // this.isData = true;
 
-    this.chartsService.plotChart(document.getElementById('chart_div'), [[], []], []);
+
 
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
     this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
 
+      console.log(geoJson);
+
       this.isData = true;
-      if (geoJson.features.length === 0) {
-        this.resetPathStats();
-      } else {
+      // if (geoJson.features.length === 0) {
+      //   this.resetPathStats();
+      // } else {
         this.pathStats = geoJson.properties.stats;
         this.pathName = geoJson.properties.info.name;
         this.pathDescription =  geoJson.properties.info.description;
@@ -73,7 +75,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
         this.isLong = geoJson.properties.info.isLong;
         this.isElevations = geoJson.properties.info.isElevations && !this.isLong;
         this.isHills = this.pathStats.hills.length > 0;
-      }
+      // }
           // work out the data to plot on chart
       // loops through the features, creating an array of the form:
       // [[x1, x2, x3, x4, x5, ....],
@@ -85,15 +87,13 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       let x = 0;
 
       geoJson.features.forEach( feature => {
+        // console.log(feature);
         const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
         this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
         x += feature.properties.params.elev.length - 1;
         this.colourArray.push(feature.properties.lineColour);
       });
 
-      // then plot the chart
-      // console.log(chartDataArray);
-      // console.log(this.isElevations);
       this.chartsService.plotChart(document.getElementById('chart_div'), this.chartData, this.colourArray);
 
     });

@@ -15,8 +15,12 @@ export class AuthService {
     return sessionStorage.getItem('tsToken');
   }
 
-  setToken(token: string, user: TsUser) {
+  setToken(token: string) {
     sessionStorage.setItem('tsToken', token);
+  }
+
+  setUser(user: TsUser) {
+    console.log(user);
     sessionStorage.setItem('user', JSON.stringify(user));
   }
 
