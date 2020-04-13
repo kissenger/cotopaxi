@@ -104,6 +104,49 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
  *
  *
  *****************************************************************/
+  // app.post('/import-route-postman-tests/', upload.single('filename'), (req, res) => {
+
+  //   console.log("Hello World");
+
+  //   console.log(req);
+  //   getMongoFromGpx().then( (mongoPath) => {
+
+  //     MongoPath.Routes.create(mongoPath).then( (doc) => {
+  //       res.status(201).json({
+  //         geoJson: new GeoRoute(doc),
+  //         hills: new GeoHills(doc)
+  //       });
+  //     });
+  //   })
+
+  //   function getMongoFromGpx() {
+
+  //     return new Promise ( (res, rej) => {
+  //       console.log('here');
+  //       // Get a mongo object from the path data
+  //       try {
+  //         console.log('there');
+  //         const pathFromFile = readGPX(req.file.buffer.toString());
+  //         console.log('where');
+  //         var path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
+  //       } catch(error) {
+  //         rej(error);
+  //       }
+
+  //       // once Path is instantiated, it needs to be initialised (returns a promise)
+  //       path.getElevations().then( () => {
+  //         const mongoPath = path.asMongoObject('njrev', false);
+  //         res(mongoPath);
+  //       }).catch( (err) => {
+  //         rej(err);
+  //       })
+
+  //     })
+
+  //   };
+  //   // res.status(201).json("Hello World");
+  // })
+
 
   app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
 
@@ -115,6 +158,8 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
       res.status(401).send('Unauthorised');
       if (DEBUG) { console.log(' >> Unauthorised') };
     }
+
+    // console.log(req);
 
     // const userId = 0;
 
@@ -143,15 +188,15 @@ app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
         // Get a mongo object from the path data
         try {
           const pathFromFile = readGPX(req.file.buffer.toString());
-          var path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
-          path.userId = uid;  // inject userID into path object
+          var Path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
+          Path.userId = uid;  // inject userID into path object
         } catch(error) {
           rej(error);
         }
 
         // once Path is instantiated, it needs to be initialised (returns a promise)
-        path.getElevations().then( () => {
-          const mongoPath = path.asMongoObject(userId, false);
+        Path.getElevations().then( () => {
+          const mongoPath = Path.asMongoObject(userId, false);
           res(mongoPath);
         }).catch( (err) => {
           rej(err);

@@ -8,19 +8,20 @@ const ROUTE_COLOUR = '#0000FF';
 const TRACK_COLOUR = '#00FF00';
 
 class GeoJSON {
-  
+
   constructor(docOrPath) {
 
     // expect a mongo document or Path instance
     // input is a Path object -
-    // NOTE lngLats is an array of arrays 
+    // NOTE lngLats is an array of arrays
     if (docOrPath instanceof Path) {
       this.lngLats = docOrPath.points.map( c => [c.lng, c.lat]);
       this.elevs = docOrPath.elevs;
-      this.properties = { 
+      this.properties = {
         pathId: '0000',
         params: {
           cumDistance: docOrPath.cumDistance,
+          matchPairs: docOrPath.matchedPoints,
           elev: docOrPath.elevs
         },
         info: {
@@ -39,7 +40,7 @@ class GeoJSON {
     } else {
       this.lngLats = docOrPath.geometry.coordinates;
       this.elevs = docOrPath.params.elev;
-      this.properties = { 
+      this.properties = {
         pathId: docOrPath._id,
         params: docOrPath.params,
         info: docOrPath.info,
@@ -89,13 +90,13 @@ class GeoRoute extends GeoJSON{
   // expect a mongo document or a Path object as input
   constructor(docOrPath) {
     super(docOrPath);
-  
+
     this.features.push(this.feature(this.lngLats, this.elevs, ROUTE_COLOUR))
     return this.featureCollection();
 
   }
 
-  
+
 }
 
 
@@ -145,7 +146,7 @@ class GeoHills extends GeoJSON {
       slicePairs.push([hills[i].aveGrad > 0 ? UP_COLOUR : DOWN_COLOUR, hills[i].startPoint, hills[i].endPoint]);
       // push the next flat
       if (i !== iMax) {
-        if (hills[i].endPoint !== hills[i+1].startPoint) { 
+        if (hills[i].endPoint !== hills[i+1].startPoint) {
           slicePairs.push([FLAT_COLOUR, hills[i].endPoint, hills[i+1].startPoint]);
         }
       } else {

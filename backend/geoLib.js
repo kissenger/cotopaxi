@@ -1,6 +1,6 @@
 const Point = require('./_Point').Point;
 const timeStamp = require('./utils').timeStamp;
-const DEBUG = true;
+const DEBUG = false;
 // const elevationAPIQuery = require('./http').elevationAPIQuery;
 
   /**
@@ -15,7 +15,7 @@ const DEBUG = true;
    * loop, and returns when the last promise is resolved.
    * TODO - pretty sure this can be neatened up...
    */
-  
+
 
 
 
@@ -143,7 +143,7 @@ function boundingBox(pointsArray) {
 
   const bbox = {
     minLng: 180,
-    minLat: 90, 
+    minLat: 90,
     maxLng: -180,
     maxLat: -90};
 
@@ -180,7 +180,7 @@ function outerBoundingBox(arrayOfBboxes) {
 
   const outerBbox = {
     minLng: 180,
-    minLat: 90, 
+    minLat: 90,
     maxLng: -180,
     maxLat: -90};
 
@@ -247,16 +247,16 @@ function isPointInBBox(point, bbox) {
 /**
  * function simplifyPath
  * simplify path using perpendicular distance method
- * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf 
+ * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
  * @param {*} points array of Point instances defining the path to be simplified
  */
-function simplify(points) {
-    
+function simplify(points, tolerance) {
+
   if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
-  const TOLERANCE = 10;     // tolerance value in metres; the higher the value to greater the simplification
+  // const TOLERANCE = 0;     // tolerance value in metres; the higher the value to greater the simplification
   const origLength = points.length;
-  
+
   // j is an array of indexes - the index of removed points are removed from this array
   let j = Array.from(points, (x, i) => i)
 
@@ -268,7 +268,7 @@ function simplify(points) {
     flag = false;   // if remains false then simplification is complete; loop will break
     while ( i < ( j.length - 2 ) ) {
       const pd = p2l( points[j[i]], points[j[i+2]], points[j[i+1]] );
-      if ( Math.abs(pd) < TOLERANCE ) {
+      if ( Math.abs(pd) < tolerance ) {
         j.splice(i+1, 1); // delete a point
         flag = true;
       }

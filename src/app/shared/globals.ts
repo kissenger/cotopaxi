@@ -104,10 +104,10 @@ const emptyProps: TsProperties = {
 };
 
 export const emptyGeoJson: TsFeatureCollection = {
-  bbox: [],
+  bbox: null,
   type: 'FeatureCollection',
   features: [{
-      bbox: [],
+      bbox: null,
     type: 'Feature',
     geometry: {
       type: 'LineString',

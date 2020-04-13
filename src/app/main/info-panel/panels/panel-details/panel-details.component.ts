@@ -31,17 +31,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   public wikiLink: string = globals.links.wiki.elevations;
   public pathCategory: string;
   public pathType: string;
-  public pathStats: TsPathStats = {
-    distance: 0,
-    nPoints: 0,
-    elevations:
-      { ascent: 0,
-        descent: 0,
-        lumpiness: 0,
-        maxElev: 0,
-        minElev: 0},
-    hills: []
-  };
+  public pathStats: TsPathStats = this.emptyPathStats();
 
   constructor(
     private dataService: DataService,
@@ -100,14 +90,30 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
   }
 
-  resetPathStats() {
-    this.pathStats = {
-      distance: 0,
+  emptyPathStats() {
+    return {
+      bbox: null,
       nPoints: 0,
-      elevations: { ascent: 0, descent: 0, lumpiness: 0, maxElev: 0, minElev: 0 }
+      duration: null,
+      distance: 0,
+      pace: null,
+      elevations: {
+          ascent: 0,
+          descent: 0,
+          maxElev: 0,
+          minElev: 0,
+          lumpiness: 0,
+          distance: 0,
+          nPoints: 0
+      },
+      p2p: {
+          max: 0,
+          ave: 0
+      },
+      movingStats: null,
+      hills: null,
+      splits: null
     };
-    this.isElevations = false;
-    this.isLong = false;
   }
 
   onSave() {

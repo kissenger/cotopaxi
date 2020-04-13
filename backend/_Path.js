@@ -6,9 +6,11 @@ const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
 const upsAndDowns = require('./upsAndDowns.js').upsAndDowns;
-const DEBUG = true;
+const DEBUG = false;
 
 const LONG_PATH_THRESHOLD = 2000;  // number of points (before simplification) above which the path will be treated as long
+const SIMPIFY_TOLERANCE = 4;
+const MATCH_DISTANCE = 100;
 
 /**
  * Path Class
@@ -35,12 +37,12 @@ class Path  {
     // auto simplify a route - user does not get a choice
     if (DEBUG) { console.log(timeStamp() + ' >> Started with  ' + this.points.length + ' points and ' + this.elevs.length + ' elevations' ); }
     if (this.pathType === 'route') {
-      this.points = simplify(this.points);
+      this.points = simplify(this.points, SIMPIFY_TOLERANCE);
       // this is a bit awkward - better if we dont need to keep an elevs array as well as points array ...?
       // map doesnt work beacuse it creates an array the same length as the points array, which screw up some stuff below
       this.elev = [];
       this.points.forEach(point => {
-        if (point.elev) {this.elev.push(point.elev)}
+        if (point.elev) { this.elev.push(point.elev); }
       })
     }
 
@@ -48,9 +50,10 @@ class Path  {
     this.cumDistance = this.getCumDistance();    // cumulative distance array on the class avoids having to recalculate distances when pathStats() is called multiple times
     this.isLong = this.points.length > LONG_PATH_THRESHOLD ? true : false;
     this.bbox = boundingBox(this.points);
-    this.pathSize = this.points.length - 1;
-    this.category = this.category();
+    this.matchedPoints = this.getMatchedPoints();
+    this.category = this.getCategory();
     this.stats = this.getPathStats(); // called again from getElevations() but unavoidable
+    this.direction = this.getDirection();
 }
 
   /**
@@ -122,48 +125,6 @@ class Path  {
     return cumDist;
   }
 
-  /**
-   * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
-   * desired format
-   * @param {string} userId
-   * @param {boolean} isSaved
-   * // TODO change this to property of the class, not a method. Neater but need byRef?
-   */
-  asMongoObject(userId, isSaved) {
-
-    if (DEBUG) { console.log(timeStamp() + ' >> Assemble Mongo Object '); }
-
-    const params = {};
-    if (this.time) params.time = this.time;
-    if (this.elevs) params.elev = this.elevs;
-    if (this.heartRate) params.heartRate = this.heartRate;
-    if (this.cadence) params.cadence = this.cadence;
-    params.cumDistance = this.stats.cumDistance;
-
-    return {
-      userId: userId,
-      isSaved: isSaved,
-      geometry: {
-        type: 'LineString',
-        coordinates: this.points.map( x => [x.lng, x.lat])
-      },
-      info: {
-        // direction: this.direction(),
-        direction: "",
-        category: this.category,
-        isFavourite: false,
-        isNationalTrail: false,
-        name: this.name,
-        description: this.description,
-        pathType: this.pathType,
-        startTime: this.startTime,
-        isLong: this.isLong,
-        isElevations: this.isElevations
-      },
-      params: params,
-      stats: this.stats,
-    }
-  }
 
   /**
    * Converts all parameters into an array of Point instances for ease of processing
@@ -203,135 +164,145 @@ class Path  {
 
   /**
    * Categorises the path based on shape (circular, out-and-back, etc)
+   * Principal is to find the number of points on the route that are 'coincident', i.e.
+   * if a point on the way out is close to a point on the way back
+   * - Circular
+   *     1/ starts and ends at the same point
+   *     2/ has few coincident points (n < PC_THRESH_LOW)
+   * - Out and back
+   *     1/ shares lots of coincident points (n > PC_THRESH_HIGH)
+   *     NOTE does not need to start and end at the same place
+   * - One way
+   *     1/ does not start and end at the same place
+   *     2/ has few coincident points (n < PC_THRESH_LOW)
+   * - Hybrid
+   *     Does really match any of the above - uncategorisable
    *
    */
-  category() {
+  getCategory() {
+
+    //
 
     if (DEBUG) { console.log(timeStamp() + ' >> Get category of Path '); }
 
-    const MATCH_DISTANCE = 25;   // in m, if points are this close then consider as coincident
-    const BUFFER = 50;           // number of points ahead to skip in matching algorithm
-    const PC_THRESH_UPP = 90;    // if % shared points > PC_THRESH_UPP then consider as 'out and back' route
-    const PC_THRESH_LOW = 10;    // if % shared points < PC_THRESH_LOW the consider as 'one way' or 'circular' depending on whether start is returned toKs
+    const START_AT_END_THRESH = 250;  // distance in metres, if start and end points are this close then consider as matching
+    const PC_THRESH_UPP = 90;        // if % shared points > PC_THRESH_UPP then consider as 'out and back' route
+    const PC_THRESH_LOW = 10;        // if % shared points < PC_THRESH_LOW the consider as 'one way' or 'circular' depending on whether start is returned toKs
 
-    // loop through points and match each point against remaining points in path; count matches
-    // also calculate average lat/long for later use
-    let nm = 0;
-    for ( let i = 0; i < this.pathSize - BUFFER; i++ ) {
-      for ( let j = i + BUFFER; j < this.pathSize; j++ ) {
-        const dist = p2p(this.points[i], this.points[j]);
+    const pcShared = this.matchedPoints.length / this.points.length * 100 * 2;  //(x2 becasue only a max 1/2 of points can be matched)
+    const isStartAtEnd = p2p(this.points[0], this.points[this.points.length - 1]) < (START_AT_END_THRESH);
 
-        // if dist between nodes is below threshold then count the match and break loop
+    // console.log(nm, this.points.length, pcShared, isStartAtEnd);
+    // console.log(matchPairs);
+
+    if ( pcShared > PC_THRESH_UPP ) { return 'Out and back'; }
+    if ( isStartAtEnd && pcShared < PC_THRESH_LOW ) { return 'Circular'; }
+    if ( !isStartAtEnd && pcShared > PC_THRESH_UPP ) { return 'Out and back'; }
+    if ( !isStartAtEnd && pcShared < PC_THRESH_LOW ) { return 'One way'; }
+
+    // if nothing else fits then call it a hybrid
+    return 'Hybrid';
+
+  }
+
+
+  /**
+   * Returns an array of matched point pairs, useful for route categorisation but also sent to front end for debugging
+   */
+  getMatchedPoints() {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Get mtached points '); }
+
+    /**
+     * match distance should be greater than the average distance between points
+     */
+
+    // const MATCH_DISTANCE = 100;       // distance in metres, if points are this close then consider as matching
+    const BUFFER = 100;   // number of points ahead to skip when finding match (to avoid matching point in the same direction)
+    const mp = [];
+
+    for ( let i = 0; i < this.points.length; i++ ) {  // look at each point
+      for ( let j = i + BUFFER; j < this.points.length; j++ ) {  // look at each point ahead of it
+
+        const dist = p2p(this.points[i], this.points[j]);  // get distance btwn points i and j
+
         if ( dist < MATCH_DISTANCE ) {
-          nm++;
+          mp.push([i, j]);
           break;
 
         // if dist is a high number, skip some points as we know the next point is not going to be a match also
+        // number of points to skip is the calculated distance over the threshold
         } else if ( dist > MATCH_DISTANCE * 10 ) {
-          j += Math.round(dist / MATCH_DISTANCE);
+          // j += Math.round(0.8*dist / MATCH_DISTANCE);
         }
       }
     }
 
-    // caculate proportion of points that are matched ( x2 becasue only a max 1/2 of points can be matched)
-    const pcShared = nm / this.pathSize * 100 * 2;
-    if ( p2p(this.points[0], this.points[this.pathSize]) < MATCH_DISTANCE * 10 ) {
-      // path ends where it started, within tolerance
+    return mp;
 
-      if ( pcShared > PC_THRESH_UPP ) return 'Out and back'
-      else if (pcShared < PC_THRESH_LOW ) return 'Circular'
-      else return 'Hybrid'
-
-    } else {
-      // path did not end where it started
-
-      if ( pcShared > PC_THRESH_UPP ) return 'Out and back'
-      else if (pcShared < PC_THRESH_LOW ) return 'One way'
-      else return 'Hybrid'
-
-    }
   }
 
 
   /**
    * Determines the direction of the path
-   * Currently only determines 'clockwise' or 'anticlockwise' for circular route
-   * TODO - not used as not working for short paths, needs reviewing
+   * - Circular Route:
+   *   Works by calculating the bearing from the successive points on route and determining
+   *   if this bearing is more often increasing (clockwise) or decreasing (anti-clockwise)
+   * - One Way Route:
+   *  Simply takes the bearing from the first to last point and converts this into a direction
+   * - Hybrid / Out and back:
+   *  Direction is meaningless --> returns empty string ""
    */
-  direction() {
+  getDirection() {
 
-    if (DEBUG) { console.log(timeStamp() + ' >> Get Path direction '); }
+    if (DEBUG) { console.log(timeStamp() + ' >> getDirection '); }
 
-    const RANGE_TOL = 0.5 * Math.PI;   // in m, if points are this close then consider as coincident
+    if ( this.category === 'Circular' ) {
 
-    if ( this.category === 'Circular' || this.category === 'One way') {
-
-      const startPoint = this.points[0];
-      const stepSize = parseInt(this.pathSize/20);
-      let brgShift = 0;
-      let minBrg = 20;
-      let maxBrg = -20;
+      // cwSum is incremented if current bearing > last bearing, or decremented if <
+      // the direction of the path is determine on whether the final brgShift is +ve or -ve
       let cwSum = 0;
+      const n = Math.ceil(this.points.length / 20);    // only sample the nth point
       let lastBrg;
 
-      for ( let i = 1; i < this.pathSize; i+= stepSize ) {
-        let thisBrg = bearing(startPoint, this.points[0]);
+      for ( let i = 1; i < this.points.length; i += n ) {
 
+        const thisBrg = bearing(this.points[i-1], this.points[i]);
         if (i !== 1) {
-          let deltaBrg = thisBrg - lastBrg;
-
-          // if the change in bearing is greater than 90degs then suspect have moved across 0degs - correct bearing
-          if (deltaBrg > 0.5*Math.PI) { brgShift-- };
-          if (deltaBrg < -0.5*Math.PI) { brgShift++ };
-          thisBrg += brgShift * 2 * Math.PI;
-          deltaBrg = thisBrg - lastBrg;
-
-          // update max and min bearing
-          maxBrg = thisBrg > maxBrg ? thisBrg : maxBrg;
-          minBrg = thisBrg < minBrg ? thisBrg : minBrg;
-
-          // increment/decrement counters depending on change in bearing
-          if (deltaBrg < 0) {
-            cwSum++;
-          } else {
-            cwSum--;
+          const deltaBrg = thisBrg - lastBrg;
+          if (Math.abs(deltaBrg) < Math.PI) {    // ignore point if delta is > 180deg (assume moved across 0degs)
+            cwSum += Math.sign(deltaBrg);        // increment if bearing is increasing, decrement if decreasing
           }
-          // console.log(cwSum, thisBrg, minBrg, maxBrg, deltaBrg, maxBrg - minBrg);
         }
 
         lastBrg = thisBrg;
-
       }
 
-      // return
-      if (maxBrg - minBrg < RANGE_TOL) return ''
-      else {
-        if ( cwSum > 0 ) return 'Anti-clockwise'
-        else return 'Clockwise'
-        }
-      }
+      if ( cwSum > 0 )   { return 'Clockwise'; }
+      if ( cwSum < 0 )   { return 'Anti-Clockwise'; }
+      if ( cwSum === 0 ) { return 'Unknown Direction'; }
+
+
+    } else if ( this.category === 'One way' ) {
+
+      const thisBrg = bearing(this.points[0], this.points[this.points.length - 1]);
+
+      if (thisBrg > 5.890 || thisBrg <= 0.393) { return 'South to North'; }
+      if (thisBrg > 0.393 && thisBrg <= 1.178) { return 'South-West to North-East'; }
+      if (thisBrg > 1.178 && thisBrg <= 1.963) { return 'West to East'; }
+      if (thisBrg > 1.963 && thisBrg <= 2.749) { return 'North-West to South-East'; }
+      if (thisBrg > 2.749 && thisBrg <= 3.534) { return 'North to South'; }
+      if (thisBrg > 3.534 && thisBrg <= 4.320) { return 'North-East to South West'; }
+      if (thisBrg > 4.320 && thisBrg <= 5.105) { return 'East to West'; }
+      if (thisBrg > 5.105 && thisBrg <= 5.890) { return 'South-East to North-West'; }
+
+    } else {
+
+      return '';
 
     }
+  }
 
-
-      // // path is circular, now determine direction
-      // let lastBrg = 0;
-      // let delta = 0;
-      // let deltaSum = 0;
-      // let midPoint = new Point([(this.bbox[2]-this.bbox[0])/2, (this.bbox[3]-this.bbox[1])/2]);
-      // for ( let i = 0; i < this.pathSize; i+=10 ) {
-      //   const brg = bearing(midPoint, this.getPoint(i));
-      //   if (i !== 0 && delta < 3.14) {
-      //     delta = brg - lastBrg;
-      //     deltaSum += delta;
-      //   }
-      //   lastBrg = brg;
-      // }
-      // if (deltaSum > 0) {
-      //   return 'Anticlockwise'
-      // } else {
-      //   return 'Clockwise'
-      // }
 
   /**
    * Create path statistics and parameters
@@ -383,7 +354,7 @@ class Path  {
     let e0 = 0;                     //  elevation at the start of a hill
     let p0 = 0;                     // point number at which hill begins
 
-    for (let index = 1; index < this.pathSize; index++ ) {
+    for (let index = 1; index < this.points.length; index++ ) {
 
       /**
        * Distance
@@ -507,7 +478,7 @@ class Path  {
         } else {
           // slopeType exists
 
-          if ( (thisSlopeType !== lastSlopeType && lastSlopeType !== 0) || index === this.pathSize) {
+          if ( (thisSlopeType !== lastSlopeType && lastSlopeType !== 0) || index === this.points.length) {
 
             // slopetype has changed, determine delta between this point and the start of the hill
             const de = this.elevs[index] - e0;
@@ -553,10 +524,10 @@ class Path  {
     return{
       duration: this.isTime ? duration: 0,
       bbox: this.bbox,
-      distance: this.cumDistance[this.pathSize],
+      distance: this.cumDistance[this.points.length - 1],
       cumDistance: this.cumDistance,
-      nPoints: this.pathSize + 1,
-      pace: this.isTime ? (duration/60) / (this.cumDistance[this.pathSize]/1000) : 0,
+      nPoints: this.points.length,
+      pace: this.isTime ? (duration/60) / (this.cumDistance[this.points.length - 1]/1000) : 0,
       movingStats: {
         movingTime: this.isTime ? movingTime : 0,
         movingDist: this.isTime ? movingDist : 0,
@@ -567,7 +538,7 @@ class Path  {
         descent: descent,
         maxElev: maxElev,
         minElev: minElev,
-        lumpiness: (ascent - descent) / this.cumDistance[this.pathSize],
+        lumpiness: (ascent - descent) / this.cumDistance[this.points.length - 1],
       },
       hills: hills,
       splits: {
@@ -576,7 +547,7 @@ class Path  {
       },
       p2p: {
         max: p2pMax,
-        ave: this.cumDistance[this.pathSize] / this.pathSize
+        ave: this.cumDistance[this.points.length - 1] / this.points.length
       }
     }
   }
@@ -612,6 +583,51 @@ class Path  {
             }
         }
       }]
+    }
+  }
+
+  
+  /**
+   * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
+   * desired format
+   * @param {string} userId
+   * @param {boolean} isSaved
+   * // TODO change this to property of the class, not a method. Neater but need byRef?
+   */
+  asMongoObject(userId, isSaved) {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Assemble Mongo Object '); }
+
+    const params = {};
+    if (this.time) params.time = this.time;
+    if (this.elevs) params.elev = this.elevs;
+    if (this.heartRate) params.heartRate = this.heartRate;
+    if (this.cadence) params.cadence = this.cadence;
+    params.cumDistance = this.stats.cumDistance;
+    params.matchedPoints = this.matchedPoints;
+
+    return {
+      userId: userId,
+      isSaved: isSaved,
+      geometry: {
+        type: 'LineString',
+        coordinates: this.points.map( x => [x.lng, x.lat])
+      },
+      info: {
+        // direction: this.direction(),
+        direction: this.direction,
+        category: this.category,
+        isFavourite: false,
+        isNationalTrail: false,
+        name: this.name,
+        description: this.description,
+        pathType: this.pathType,
+        startTime: this.startTime,
+        isLong: this.isLong,
+        isElevations: this.isElevations
+      },
+      params: params,
+      stats: this.stats,
     }
   }
 
@@ -667,6 +683,8 @@ class Route extends Path {
 
   }
 }
+
+
 
 
 module.exports = {

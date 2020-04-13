@@ -1,20 +1,19 @@
+// file system and timestamp only used for debugging
+const DEBUG = true;
 const fs = require('fs');
 const timeStamp = require('./utils.js').timeStamp;
-const DEBUG = true;
 
  /**
   * readGPX(data)
   * @param {*} data input data from multer file read
   * @param return object containing path name, coords, elevs and timestamp
-  * TODO: use regex for parsing xml?
+  * Parses track data from a provided GPX file.
+  * Does not distiguish between a route and a track - it disguards this knowledge
+  * and simplyy returns an object with supported parameters
   */
 function readGPX(data) {
 
   if (DEBUG) { console.log(timeStamp() + ' >> readGPX()') };
-
-  // write to file - only for debugging  throw 'error';
-  // const fs = require('fs');
-  // const file = fs.createWriteStream("../check.txt");}
 
   // declare function variables
   const MAX_LOOPS = 1000000;
@@ -25,8 +24,6 @@ function readGPX(data) {
   let time = [];
   let elev = [];
   let nameOfPath = "";
-  let isElev = false;  // TODO are these used??
-  let isTime = false;  // TODO are these used??
 
   /**
    * Loop through each line until we find track or route start
@@ -105,7 +102,7 @@ function readGPX(data) {
     b = ptData.indexOf("</ele>");
     if (a != -1 && b != -1) {
       eleValue = parseFloat(ptData.slice(a,b).match(/[-0123456789.]/g).join(""));
-      isElev = true;
+      // isElev = true;
     }
     elev.push(eleValue);
 
@@ -115,20 +112,10 @@ function readGPX(data) {
     b = ptData.indexOf("</time>");
     if (a != -1 && b != -1) {
       timeValue = ptData.slice(a,b).match(/[-0123456789.TZ:]/g).join("");
-      isTime = true;
+      // isTime = true;
     }
     time.push(timeValue);
-
-    // write to file - only for debugging
-    // file.write(lngValue + ',' + latValue + ',' + eleValue + ',' + timeValue + '\n');
-
   }
-
-  // // check whether we have param data for each data point
-  // // F - imported from file
-  // // D - imported from file, discarded due to incomplete
-  // // A - api elevations
-  // let elevationStatus = 'F';
 
   // if elevation array is incomplete, then discard them - if necessary they'll get populated from DEM later
   for (let i = 0, n = lngLat.length - 1; i < n; i++) {
@@ -139,15 +126,21 @@ function readGPX(data) {
     throw new Error('Error reading .gpx file');
   }
 
-  if (DEBUG) { console.log(timeStamp() + ' >> readGPX() finished') };
-  return {
+  // form return object so we can use it for debug as well as return
+  const returnObject = {
     name: nameOfPath,
     lngLat: lngLat,
     elev: elev,
     time: time,
-
   };
 
+  // print to console and dump to file to support testing/debugging
+  if (DEBUG) {
+    console.log(timeStamp() + ' >> readGPX() finished');
+    fs.writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
+  };
+
+  return returnObject;
 }
 
 

@@ -4,7 +4,7 @@ import { DataService } from './data.service';
 import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globals from 'src/app/shared/globals';
-import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
+import { TsCoordinate, TsPlotPathOptions, TsLineStyle, TsFeatureCollection, TsLineString, TsFeature, TsPosition } from 'src/app/shared/interfaces';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -56,6 +56,9 @@ export class MapService {
         } catch {}
       });
 
+      this.tsMap.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
+
+
     });
 
   }
@@ -99,14 +102,12 @@ export class MapService {
    */
   addLayerToMap(pathAsGeoJSON, styleOptions?: TsLineStyle, plotOptions?: TsPlotPathOptions ) {
 
-    // // remove existing layer if it exists
-    // if (plotOptions.booReplaceExisting) {
-    //   this.removeLayerFromMap();
-    // }
-
     // keep a track of what layers are active by pushing current id to activelayers array
     const pathId = pathAsGeoJSON.properties.pathId;
     this.activeLayers[pathId] = [];
+
+    // used for debugging - allows points to be shown
+    // this.addPointsToGeoJson(pathAsGeoJSON);
 
     // add the layer to the map
     this.tsMap.addLayer({
@@ -124,10 +125,9 @@ export class MapService {
       }
     });
 
-    // plot a marker at the start and end of the route, pushing the new markers to activeLayers
-    //
+    this.addPointsLayer(pathAsGeoJSON);
 
-    // const nPoints = pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates.length;
+    // plot a marker at the start and end of the route, pushing the new markers to activeLayers
     const nFeatures = pathAsGeoJSON.features.length;
     const nPoints = pathAsGeoJSON.features[nFeatures - 1].geometry.coordinates.length;
     if (nPoints > 0 && plotOptions.booPlotMarkers) {
@@ -147,7 +147,6 @@ export class MapService {
     }
 
     // emit the pathStats to the details component
-
     if (plotOptions.booSaveToStore) {
       this.dataService.activePathEmitter.emit(pathAsGeoJSON);
       this.dataService.saveToStore('activePath', pathAsGeoJSON);
@@ -285,6 +284,145 @@ export class MapService {
         resolve({ lat: e.lngLat.lat, lng: e.lngLat.lng });
       });
     });
+  }
+
+
+  /***************************************************************************
+   *
+   *
+   * USEFUL FOR DEBUGGING
+   *
+   *
+   * **************************************************************************/
+
+  /**
+   * Show points on map - used for debugging esp backend matching algorithms
+   * Details on how to find the apprpriate factors here:
+   *   https://stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
+   *   https://docs.mapbox.com/help/glossary/zoom-level/
+   */
+  addPointsLayer(geoJson: TsFeatureCollection) {
+
+    const CIRCLE_RADIUS = 30; // desired radius of circle in metres
+
+    this.tsMap.addLayer({
+      id: 'circles',
+      type: 'circle',
+      source: {
+        type: 'geojson',
+        data: this.getPointsGeoJson(geoJson)
+      },
+      paint: {
+        'circle-radius': [
+          'interpolate', ['exponential', 2], ['zoom'],
+              0, 0,
+              22, ['/', CIRCLE_RADIUS, ['/', 0.019, ['cos', ['/', ['*', ['get', 'latitude'], ['pi']], 180]]]]
+        ],
+        'circle-opacity': 0,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': [
+          'case', ['==', ['get', 'matched'], true], 'red', 'blue'
+        ]
+      }
+    });
+
+    console.log(this.getMatchPairsGeoJson(geoJson));
+
+    this.tsMap.addLayer({
+      id: 'matchPairs',
+      type: 'line',
+      source: {
+        type: 'geojson',
+        data: this.getMatchPairsGeoJson(geoJson)
+      },
+      paint: {
+        // if property is defined in style options then use it, otherwise use what is provided on the geoJson
+        'line-width': 2,
+        'line-color': 'red'
+      }
+    });
+
+
+  }
+
+  /**
+   * Create a new geoJson with only points as features
+   * Note that map/reduce is more pretty but map doesnt work on union type (type1 | type2)
+   * as defined in interfaces - couldn't fix so used forEach instead
+   *   matched array is copy paste from backend console output when gpx file is loaded -it
+   *   is used to colour matched points differently
+   */
+  getPointsGeoJson(geoJson: TsFeatureCollection) {
+
+    const pointFeatures = [];
+    const coordsArray = [];
+    const matchedPairs = geoJson.properties.params.matchedPoints;
+    const flatMatched = matchedPairs.reduce( (arr, elem) => arr.concat(elem), []);
+
+    geoJson.features.forEach( (feature, fi) => {
+      feature.geometry.coordinates.forEach( (coordinate, ci) => {
+        if (fi !== 0 && ci === 0 ) {
+        } else {
+          coordsArray.push(coordinate);
+        }
+      });
+    });
+
+    coordsArray.forEach( (coordinate, ci) => {
+      pointFeatures.push(
+        <TsFeature>{
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: coordinate
+          },
+          properties: {
+            latitude: coordinate[1],
+            matched: flatMatched.indexOf(ci) > 0
+          }
+        }
+      );
+    });
+
+    return <TsFeatureCollection>{
+      type: 'FeatureCollection',
+      features: pointFeatures
+    };
+
+  }
+
+  getMatchPairsGeoJson(geoJson: TsFeatureCollection) {
+
+    const matchedPairs = geoJson.properties.params.matchedPoints;
+    const coordsArray = [];
+    const lineFeatures = [];
+
+    geoJson.features.forEach( (feature, fi) => {
+      feature.geometry.coordinates.forEach( (coordinate, ci) => {
+        if (fi !== 0 && ci === 0 ) {
+        } else {
+          coordsArray.push(coordinate);
+        }
+      });
+    });
+
+    matchedPairs.forEach( (pair) => {
+      lineFeatures.push(
+        <TsFeature>{
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: [ coordsArray[pair[0]], coordsArray[pair[1]] ]
+          }
+        }
+      );
+    });
+
+    return <TsFeatureCollection>{
+      type: 'FeatureCollection',
+      features: lineFeatures
+    };
+
   }
 
 }

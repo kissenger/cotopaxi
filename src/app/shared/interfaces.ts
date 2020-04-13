@@ -1,22 +1,13 @@
 
-// export interface tsElevations{
-//     elevationStatus: string,
-//     elevs: Array<number>
-// }
-
-// export interface Array<T> {
-//   lastElement(elem: T): Function;
-// }
-
-// Array.prototype.lastElement = function() {
-//   return 1;
-// };
-
+// Define unit type for definition of user units
 export interface TsUnits {
     distance: 'miles' | 'kms';
     elevation: 'm' | 'ft';
 }
 
+/**
+ * Map display options
+ */
 export interface TsPlotPathOptions {
     booResizeView?: boolean;
     booSaveToStore?: boolean;
@@ -29,65 +20,9 @@ export interface TsLineStyle {
     lineOpacity?: number;
 }
 
-export interface TsPathStats {
-    // distance: number;
-    // nPoints: number;
-    // elevations?: {
-    //     ascent: number;
-    //     descent: number;
-    //     lumpiness: number;
-    //     maxElev: number;
-    //     minElev: number;
-    // };
-    // hills?: Array<TsHill>;
-
-      bbox?: {
-        minLng: number;
-        minLat: number;
-        maxLng: number;
-        maxLat: number;
-      };
-      nPoints?: number;
-      duration?: number;
-      distance: number;
-      pace?: number;
-      elevations?: {
-        ascent: number;
-        descent: number;
-        maxElev: number;
-        minElev: number;
-        lumpiness: number;
-      };
-      p2p?: {
-        max: number;
-        ave: number;
-      };
-      movingStats?: {
-        movingTime: number;
-        movingDist: number;
-        movingPace: number;
-      };
-      hills?: Array<TsHill>;
-      splits?: {
-        kmSplits: number;
-        mileSplits: number;
-      };
-
-  }
-
-interface TsHill {
-  dHeight: number;
-  dDist: number;
-  startDist: number;
-  startPoint: number;
-  endPoint: number;
-  dTime: number;
-  pace: number;
-  ascRate: number;
-  maxGrad: number;
-  aveGrad: number;
-}
-
+/**
+ * Used to populate list of paths
+ */
 interface TsListItem {
   name: string;
   stats: TsPathStats;
@@ -101,9 +36,13 @@ interface TsListItem {
   isActive?: boolean;
 }
 
-export interface TsListArray extends Array<TsListItem> {}
+export type TsListArray = TsListItem[];
 
-// invalid is used to indicate hhome location has not been set
+/**
+ * TsCoordinate is the standard means of using coordinate data within the app
+ * The only exception is that geoJson coordinate is different; this is defined below
+ * as TsPosition within the geoJSON definition
+ */
 export interface TsCoordinate {
   lat: number;
   lng: number;
@@ -111,14 +50,20 @@ export interface TsCoordinate {
   invalid?: boolean;
 }
 
-
+/**
+ * Used for definition of tab names on side-panel
+ */
 interface TsTab {
   active: boolean;
   name: string;
   component: any;
 }
 
-export interface TsTabsArray extends Array<TsTab> {}
+export type TsTabsArray = TsTab[];
+
+/**
+ * Elevations
+ */
 
 export interface TsElevationQuery {
     options?: {
@@ -128,9 +73,11 @@ export interface TsElevationQuery {
     coords: Array<TsCoordinate>;
 }
 
+export type TsElevationResults = TsCoordinate[];
 
-export interface TsElevationResults extends Array<TsCoordinate> {}
-
+/**
+ * User details
+ */
 export interface TsUser {
   userName: string;
   homeLngLat?: TsCoordinate;
@@ -141,39 +88,54 @@ export interface TsUser {
   _id?: string;
 }
 
+/**
+ * GeoJSON Definition
+ * Largely stolen from here: ...\node_modules\@types\geojson\index.d.ts
+ * But adapted to ensure we get geoJSON formed in the correct manner from the back-end
+ * Also see spec: https://tools.ietf.org/html/rfc7946
+ */
+
 export interface TsFeatureCollection {
-    bbox: TsBoundingBox;
-    type: 'FeatureCollection';
-    features: Array<TsFeature>;
-    properties: TsProperties;
+  type: 'FeatureCollection';
+  features: TsFeature[];
+  bbox?: TsBoundingBox;
+  properties?: TsProperties;
 }
-
-
-
-export interface TsLineString {
-    type: 'LineString';
-    coordinates: Array<Array<number>>;
-}
-
-export interface TsBoundingBox extends Array<number> {}
 
 export interface TsFeature {
-    bbox?: TsBoundingBox;
-    type: 'Feature';
-    geometry: TsLineString;
-    properties: TsProperties;
+  bbox?: TsBoundingBox;
+  type: 'Feature';
+  geometry: TsGeometry;
+  properties: TsProperties | null;
 }
+
+export type TsGeometry = TsPoint | TsLineString;
+
+export interface TsPoint {
+  type: 'Point';
+  coordinates: TsPosition;
+}
+
+export interface TsLineString {
+  type: 'LineString';
+  coordinates: TsPosition[];
+}
+
+export type TsPosition = [number, number];
+export type TsBoundingBox = [number, number, number, number];
 
 export interface TsProperties {
     pathId: string;
     info: TsInfo;
     params: TsParams;
-    stats: TsStats;
+    stats: TsPathStats;
     colour?: string;
     creationDate?: string;
     lastEditDate?: string;
     plotType?: string;
     userID?: string;
+    latitude?: number;   // front need, used by map service when creating points geoJson
+    matched?: boolean;
 }
 
 export interface TsInfo {
@@ -188,14 +150,15 @@ export interface TsInfo {
 }
 
 export interface TsParams {
-    elev: Array<number>;
-    time: Array<number>;
-    heartRate: Array<number>;
-    cadence: Array<number>;
-    cumDistance: Array<number>;
+    elev: number[];
+    time: number[];
+    heartRate: number[];
+    cadence: number[];
+    cumDistance: number[];
+    matchedPoints?: number[][]; /// used for debugging route algorthims on the back end
 }
 
-export interface TsStats {
+export interface TsPathStats {
     bbox: {
         minLng: number,
         minLat: number,
@@ -225,23 +188,37 @@ export interface TsStats {
         movingDist: number,
         movingPace: number,
     };
-    hills: Array<TsHills>;
+    hills: TsHill[];
     splits: {
-        kmSplits: Array<Array<number>>,
-        mileSplits: Array<Array<number>>
+        kmSplits: number[][],
+        mileSplits: number[][]
     };
 }
 
-interface TsHills {
 
-      dHeight?: number;
-      dDist?: number;
-      dTime?: number;
-      pace?: number;
-      ascRate?: number;
-      gradient?: {
-          max?: number;
-          ave?: number
-      };
+// interface TsHills {
+
+//   dHeight?: number;
+//   dDist?: number;
+//   dTime?: number;
+//   pace?: number;
+//   ascRate?: number;
+//   gradient?: {
+//       max?: number;
+//       ave?: number
+//   };
+// }
+
+interface TsHill {
+  dHeight: number;
+  dDist: number;
+  startDist: number;
+  startPoint: number;
+  endPoint: number;
+  dTime: number;
+  pace: number;
+  ascRate: number;
+  maxGrad: number;
+  aveGrad: number;
 }
 

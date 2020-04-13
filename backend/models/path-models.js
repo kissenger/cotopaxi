@@ -8,10 +8,10 @@ const pathSchema = mongoose.Schema({
   isSaved: {type: Boolean, default: false},
 
   // geometric information defining the path, in geoJSON format to aid searching
-  geometry: {                                        
+  geometry: {
     type: {type: String, required: true},
     coordinates: {type: [[Number]], required: true}
-  }, 
+  },
 
   // params are the additional parameters from the recording devi
   params: {
@@ -20,7 +20,8 @@ const pathSchema = mongoose.Schema({
     heartRate: {type: [Number]},
     cadence: {type: [Number]},
     cumDistance: {type: [Number]},
-    smoothedElev: {type: [Number]}
+    smoothedElev: {type: [Number]},
+    matchedPoints: {type: [[Number]]}
   },
 
   // user entered information to describe/tag route
@@ -28,8 +29,8 @@ const pathSchema = mongoose.Schema({
     direction: {type: String},
     category: {type: String},
     nationalTrail: {type: Boolean},
-    isFavourite: {type: Boolean},  
-    name: {type: String}, 
+    isFavourite: {type: Boolean},
+    name: {type: String},
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'
     startTime: {type: String},
