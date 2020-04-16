@@ -1,16 +1,14 @@
 const p2p = require('./geoLib.js').p2p;
 // const p2l = require('./geoLib.js').p2l;
-const Point = require('./_Point.js').Point;
-const boundingBox = require('./geoLib').boundingBox;
+// const Point = require('./_Point.js').Point;
+const Points = require('./_Point.js').Points;
+// const boundingBox = require('./geoLib').boundingBox;
 const bearing = require('./geoLib.js').bearing;
 const timeStamp = require('./utils.js').timeStamp;
 const simplify = require('./geoLib.js').simplify;
-const upsAndDowns = require('./upsAndDowns.js').upsAndDowns;
 const DEBUG = false;
 
-const LONG_PATH_THRESHOLD = 2000;  // number of points (before simplification) above which the path will be treated as long
-const SIMPIFY_TOLERANCE = 4;
-const MATCH_DISTANCE = 100;
+
 
 /**
  * Path Class
@@ -23,37 +21,35 @@ const MATCH_DISTANCE = 100;
 
 class Path  {
 
+   LONG_PATH_THRESHOLD = 2000;  // number of points (before simplification) above which the path will be treated as long
+   SIMPLIFY_TOLERANCE = 4;      // metres offset from a line below which a point will be deleted; higher tol -> greater simplification
+   MATCH_DISTANCE = 100;        // metres; if distance between two points is less than this they will be treated as matching
+
   constructor(lngLat, elevs, pathType) {
 
     if (DEBUG) { console.log(timeStamp() + ' >> Creating a new Path instance '); }
 
-    // populate the class variables that can be populated before simplifying (if a route)
-    this.elevs = elevs;
+    this.points = new Points(lngLat, elevs);
     this.pathType = pathType;
-    this.points = this.getPoints(lngLat, elevs); // elevations need to be put on the points array so thay the correct eevations are deleted when simplifying
-    this.isElevations = this.elevs.length > 0 ? true : false;
-    this.isTime = false;
+
+    // determine the type of path BEFORE simplification, allows more accurate categorisation
+    this.matchedPoints = this.getMatchedPoints();
+    this.category = this.getCategory();
+    this.direction = this.getDirection();
+
 
     // auto simplify a route - user does not get a choice
-    if (DEBUG) { console.log(timeStamp() + ' >> Started with  ' + this.points.length + ' points and ' + this.elevs.length + ' elevations' ); }
+    if (DEBUG) { console.log(timeStamp() + ' >> Started with  ' + this.points.length() + ' points and ' + this.points.elevs().length() + ' elevations' ); }
+
     if (this.pathType === 'route') {
-      this.points = simplify(this.points, SIMPIFY_TOLERANCE);
-      // this is a bit awkward - better if we dont need to keep an elevs array as well as points array ...?
-      // map doesnt work beacuse it creates an array the same length as the points array, which screw up some stuff below
-      this.elev = [];
-      this.points.forEach(point => {
-        if (point.elev) { this.elev.push(point.elev); }
-      })
+      this.points.makeSimple(SIMPLIFY_TOLERANCE);
     }
 
     // update remaining class variables after simplification
-    this.cumDistance = this.getCumDistance();    // cumulative distance array on the class avoids having to recalculate distances when pathStats() is called multiple times
-    this.isLong = this.points.length > LONG_PATH_THRESHOLD ? true : false;
-    this.bbox = boundingBox(this.points);
-    this.matchedPoints = this.getMatchedPoints();
-    this.category = this.getCategory();
+    this.isLong = this.Points.length > LONG_PATH_THRESHOLD ? true : false;
+    this.bbox = this.Points.boundingBox();
     this.stats = this.getPathStats(); // called again from getElevations() but unavoidable
-    this.direction = this.getDirection();
+
 }
 
   /**
@@ -65,14 +61,16 @@ class Path  {
     return new Promise((resolve, reject) => {
 
       // if the path is not 'long', and we dont have the same number of elevs (could be none) as points
-      if (!this.isLong && this.points.length !== this.elevs.length) {
+      // if (!this.isLong && points.isElevsComplete()) {
 
-        const options = {interpolate: true, writeResultsToFile: false };
-        upsAndDowns(this.points.slice(this.elevs.length, this.points.length), options).then( (newElevs) => {
+        upsAndDowns(this.points.pointsWithoutElevs(), {interpolate: true}).then( (newElevs) => {
+
+          this.points.addNewElevs();
+
           if (DEBUG) { console.log(timeStamp() + ' >> Got ' + newElevs.length + ' new elevations.'); }
-          this.elevs = this.elevs.concat(newElevs.map(e => e.elev));
-          this.elevs = this.getFilteredElevations(this.elevs);
-          this.isElevations = true;           // must set before getting stats or elevs wont be calculated
+          // this.elevs = this.elevs.concat(newElevs.map(e => e.elev));
+          // this.elevs = this.getFilteredElevations(this.elevs);
+          // this.isElevations = this;           // must set before getting stats or elevs wont be calculated
           this.stats = this.getPathStats();
           resolve();
         }).catch( () => {
@@ -80,86 +78,64 @@ class Path  {
         })
 
       // if the path is long (checking that the path is a route) or we have the right number of elevs
-      } else {
+      // } else {
         // its a long route so whatever happens, discard the elevations
-        if (this.isLong) {
-          this.elevs = [];
-          this.isElevations = false;
+        // if (this.isLong) {
+          // this.elevs = [];
+          // this.isElevations = false;
         // its a track so keep elevations if they are present.
         // completeness of supplied elevations is not checked, although there is a check in readGPX()
-        } else {
-          if (this.pathType === 'route') {
-            this.isElevations = this.elevs.length !== 0 ? true : false;
-          }
+        // } else {
+        //   if (this.pathType === 'route') {
+        //     this.isElevations = this.elevs.length !== 0 ? true : false;
+        //   }
+        // }
+        // resolve();
+      // }
+    // })
+      })
+  }
+
+
+  /**
+   * Returns an array of matched point pairs, useful for route categorisation but also sent to front end for debugging
+   */
+  getMatchedPoints() {
+
+    if (DEBUG) { console.log(timeStamp() + ' >> Get mtached points '); }
+
+    /**
+     * match distance should be greater than the average distance between points
+     */
+
+    // const MATCH_DISTANCE = 100;       // distance in metres, if points are this close then consider as matching
+    const BUFFER = 100;   // number of points ahead to skip when finding match (to avoid matching point in the same direction)
+    const mp = [];
+
+    for ( let i = 0; i < this.points.length(); i++ ) {  // look at each point
+      for ( let j = i + BUFFER; j < this.points.length(); j++ ) {  // look at each point ahead of it
+
+        const dist = p2p(this.points[i], this.points[j]);  // get distance btwn points i and j
+
+        if ( dist < MATCH_DISTANCE ) {
+          mp.push([i, j]);
+          break;
+
+        // if dist is a high number, skip some points as we know the next point is not going to be a match also
+        // number of points to skip is the calculated distance over the threshold
+        } else if ( dist > MATCH_DISTANCE * 10 ) {
+          // j += Math.round(0.8*dist / MATCH_DISTANCE);
         }
-        resolve();
       }
-    })
-
-  }
-
-  /**
-   * Apply low pass filter to elevation data
-   * @param {} elevs elevations as an array of numbers
-   */
-  getFilteredElevations(elevs) {
-    const ALPHA = 0.35;
-    const smoothedElevs = [elevs[0]];
-    for (let i = 1, max = elevs.length; i < max; i++) {
-      smoothedElevs.push( elevs[i] * ALPHA + smoothedElevs[i-1] * ( 1 - ALPHA ) );
-    }
-    return smoothedElevs;
-  }
-
-
-  /**
-   * Calculates cumalative distance array
-   */
-  getCumDistance() {
-    let dist = 0;
-    let cumDist = [0];
-    for (let i = 1, iMax = this.points.length; i < iMax; i++) {
-      dist += p2p(this.points[i], this.points[i-1]);;
-      cumDist.push(dist);
-    }
-    return cumDist;
-  }
-
-
-  /**
-   * Converts all parameters into an array of Point instances for ease of processing
-   * @param {*} coords lngLat array in [lng, lat] formay
-   * @param {*} elev array of numbers - if not the same length as coords then will fill the first x points
-   */
-  getPoints(coords, elev) {
-
-    let pointsArray = [];
-    for (let i = 0, n = coords.length; i < n; i++) {
-      let thisPoint = [];
-      if ( coords ) thisPoint.push(coords[i]);
-      if ( elev && elev[i] ) {
-        thisPoint.push(elev[i])};
-      pointsArray.push(new Point(thisPoint));
     }
 
-    return pointsArray;
+    return mp;
+
   }
 
-  // /**
-  //  * NOT USED
-  //  * Add elevations to an array of points
-  //  * @param {*} p
-  //  * @param {*} e
-  //  */
-  // addElevationsToPointsArray(p, e) {
-  //   // if (p.length !== e.length ) { return p }
-  //   let pointsArray = [];
-  //   for (let i = 0, n = p.length; i < n; i++) {
-  //     p[i].addElevation(e[i]);
-  //     pointsArray.push(p[i]);
-  //   }
-  //   return pointsArray;
-  // }
+
+
+
 
 
   /**
@@ -206,41 +182,6 @@ class Path  {
   }
 
 
-  /**
-   * Returns an array of matched point pairs, useful for route categorisation but also sent to front end for debugging
-   */
-  getMatchedPoints() {
-
-    if (DEBUG) { console.log(timeStamp() + ' >> Get mtached points '); }
-
-    /**
-     * match distance should be greater than the average distance between points
-     */
-
-    // const MATCH_DISTANCE = 100;       // distance in metres, if points are this close then consider as matching
-    const BUFFER = 100;   // number of points ahead to skip when finding match (to avoid matching point in the same direction)
-    const mp = [];
-
-    for ( let i = 0; i < this.points.length; i++ ) {  // look at each point
-      for ( let j = i + BUFFER; j < this.points.length; j++ ) {  // look at each point ahead of it
-
-        const dist = p2p(this.points[i], this.points[j]);  // get distance btwn points i and j
-
-        if ( dist < MATCH_DISTANCE ) {
-          mp.push([i, j]);
-          break;
-
-        // if dist is a high number, skip some points as we know the next point is not going to be a match also
-        // number of points to skip is the calculated distance over the threshold
-        } else if ( dist > MATCH_DISTANCE * 10 ) {
-          // j += Math.round(0.8*dist / MATCH_DISTANCE);
-        }
-      }
-    }
-
-    return mp;
-
-  }
 
 
   /**
@@ -586,7 +527,7 @@ class Path  {
     }
   }
 
-  
+
   /**
    * Returns object in format for insertion into MongoDB - nothing is calculated afresh, it just assembles existing data into the
    * desired format

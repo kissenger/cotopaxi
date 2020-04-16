@@ -250,7 +250,7 @@ function isPointInBBox(point, bbox) {
  * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
  * @param {*} points array of Point instances defining the path to be simplified
  */
-function simplify(points, tolerance) {
+function simplify(points, TOLERANCE) {
 
   if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
 
@@ -268,7 +268,7 @@ function simplify(points, tolerance) {
     flag = false;   // if remains false then simplification is complete; loop will break
     while ( i < ( j.length - 2 ) ) {
       const pd = p2l( points[j[i]], points[j[i+2]], points[j[i+1]] );
-      if ( Math.abs(pd) < tolerance ) {
+      if ( Math.abs(pd) < TOLERANCE ) {
         j.splice(i+1, 1); // delete a point
         flag = true;
       }
