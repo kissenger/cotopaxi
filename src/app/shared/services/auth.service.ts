@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { TsUser } from 'src/app/shared/interfaces';
+
 @Injectable()
+
 export class AuthService {
 
   constructor() {

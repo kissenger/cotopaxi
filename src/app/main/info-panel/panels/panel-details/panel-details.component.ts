@@ -51,8 +51,6 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
     this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
 
-      console.log(geoJson);
-
       this.isData = true;
       // if (geoJson.features.length === 0) {
       //   this.resetPathStats();
@@ -76,9 +74,14 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       this.colourArray = [];
       let x = 0;
 
+      // this constructs the data as needed for google charts
       geoJson.features.forEach( feature => {
         // console.log(feature);
+
         const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
+        console.log(feature, x, y);
+
+
         this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
         x += feature.properties.params.elev.length - 1;
         this.colourArray.push(feature.properties.lineColour);
@@ -127,8 +130,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
     if (newPath.properties.pathId === '0000') {    // pathId for created route is set to 0000 in the backend
       const sendObj = {
-        coords: newPath.features[0].geometry.coordinates,
-        elevs: newPath.features[0].properties.params.elev,
+        coords: newPath.features.reduce( (coords, feature ) => coords.concat(feature.geometry.coordinates), []),
+        elevs: newPath.features.reduce( (elevs, feature) => elevs.concat(feature.properties.params.elev), []),
         name: this.pathName,
         description: this.pathDescription
       };

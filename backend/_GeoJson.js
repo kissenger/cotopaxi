@@ -1,58 +1,116 @@
-
-const Path = require('./_Path').Path;
+const debugMsg = require('./utils').debugMsg;
 
 const UP_COLOUR = '#FF0000';
 const DOWN_COLOUR = '#00FF00';
 const FLAT_COLOUR = '#0000FF';
 const ROUTE_COLOUR = '#0000FF';
-const TRACK_COLOUR = '#00FF00';
 
+ /**
+  * Class GeoJSON to handle creation of geoJson object to return to the front end.
+  * The class can be populated using path instance or mongo document.  The mehtods
+  * on the class are chained as follows:
+  *   const newGeoJson = new GeoJson();
+  *   return newGeoJson.fromPath(path).toGeoHills();
+  */
 class GeoJSON {
 
-  constructor(docOrPath) {
+  constructor() {
+    debugMsg('create GeoJson');
+  }
 
-    // expect a mongo document or Path instance
-    // input is a Path object -
-    // NOTE lngLats is an array of arrays
-    if (docOrPath instanceof Path) {
-      this.lngLats = docOrPath.points.map( c => [c.lng, c.lat]);
-      this.elevs = docOrPath.elevs;
-      this.properties = {
-        pathId: '0000',
-        params: {
-          cumDistance: docOrPath.cumDistance,
-          matchPairs: docOrPath.matchedPoints,
-          elev: docOrPath.elevs
-        },
-        info: {
-          name: docOrPath.name,
-          description: docOrPath.description,
-          isLong: docOrPath.isLong,
-          isElevations: docOrPath.isElevations,
-          category: docOrPath.category,
-          pathType: docOrPath.pathType
-        },
-        stats: docOrPath.stats
+  // populates the class instance with data from supplied Path instance
+  // TODO handle error is provided object is not a Path
+  fromPath(path) {
+    this.lngLats = path.lngLat;
+    this.properties = {
+      pathId: '0000',    // assumes that path is 'created'
+      params: path.pointsList.getParams(),
+      stats: path.pointsList.getStats(),
+      info: {
+        ...path.pointsList.getInfo(),
+        pathType: this.pathType
       }
-      this.bbox = docOrPath.bbox;
+    }
+    this.elevs = this.properties.params.elev;
+    this.bbox = this.properties.stats.bbox;
+    this.features = [];
+    return this;
+  }
 
-    // input is a Mongo Document
+  // populates the class instance with data from supplied mongo document
+  // TODO handle error if provided object is not a mongo document
+  fromDocument(doc) {
+    this.lngLats = doc.geometry.coordinates;
+    this.elevs = doc.params.elev;
+    this.properties = {
+      pathId: doc._id,
+      params: doc.params,
+      info: doc.info,
+      stats: doc.stats
+    };
+    this.bbox = doc.stats.bbox;
+    this.features = [];
+    return this;
+  }
+
+  toGeoRoute() {
+    this.features = [this.feature(this.lngLats, this.elevs, ROUTE_COLOUR)];
+    return this.featureCollection();
+  }
+
+  toGeoHills() {
+    // use the hills array provided in stats to determine an array of pairs of numbers,
+    // defining how to slice the lngLats and elevs arrays
+    // if there are no hills in the array, simply return a route geoJSON
+    if (this.properties.stats.hills.length > 0) {
+      const segments = this.getHillSegments();
+      segments.forEach( segment => {
+        let coords = this.lngLats.slice(segment.start, segment.end + 1);
+        let elevs = this.elevs.slice(segment.start, segment.end + 1);
+        this.features.push(this.feature(coords, elevs, segment.colour));
+      });
     } else {
-      this.lngLats = docOrPath.geometry.coordinates;
-      this.elevs = docOrPath.params.elev;
-      this.properties = {
-        pathId: docOrPath._id,
-        params: docOrPath.params,
-        info: docOrPath.info,
-        stats: docOrPath.stats
-      };
-      this.bbox = docOrPath.stats.bbox;
+      this.features.push(this.feature(this.lngLats, this.elevs, ROUTE_COLOUR));
+    }
+    return this.featureCollection();
+  }
+
+  /**
+   * get an array of arrays of the form [[startSlice, endSlice, colour], ...] describing each
+   * segment of the provided path according to whether it is uphill, downhill or flat
+   * TODO could be improved, a bit clunky but it works and will do for now
+   */
+  getHillSegments() {
+
+    const hills = this.properties.stats.hills;
+    const segments = [];
+
+    //if the path starts with a hill then push that before looping
+    if (hills[0].startPoint !== 0 ) {
+      segments.push({colour: FLAT_COLOUR, start: 0, end: hills[0].startPoint})
+    };
+    // loop through the hills array
+    for (let i = 0, iMax = hills.length - 1; i <= iMax; i++) {
+      // push the current hill
+      segments.push({colour: hills[i].aveGrad > 0 ? UP_COLOUR : DOWN_COLOUR, start: hills[i].startPoint, end: hills[i].endPoint});
+      // push the next flat
+      if (i !== iMax) {
+        if (hills[i].endPoint !== hills[i+1].startPoint) {
+          segments.push({colour: FLAT_COLOUR, start: hills[i].endPoint, end: hills[i+1].startPoint});
+        }
+      } else {
+        if (hills[i].endPoint !== this.lngLats.length-1) {
+          segments.push({colour: FLAT_COLOUR, start: hills[i].endPoint, end: this.lngLats.length-1});
+        }
+      }
     }
 
-    this.features = [];
+    return segments;
+
   }
 
   // returns a geoJson feature for the provided coordinates, elevations and colour
+  // called only by the child classes below
   feature(coords, elevs, colour) {
     return {
       type: 'Feature',
@@ -81,88 +139,6 @@ class GeoJSON {
     }
   }
 
-
 }
 
-
-class GeoRoute extends GeoJSON{
-
-  // expect a mongo document or a Path object as input
-  constructor(docOrPath) {
-    super(docOrPath);
-
-    this.features.push(this.feature(this.lngLats, this.elevs, ROUTE_COLOUR))
-    return this.featureCollection();
-
-  }
-
-
-}
-
-
-/**
- * Creates a GeoJSON object in which ascents, descent and flats are coloured
- * In addition, features have the slice of the relevant elevation so google charts can plot the same
- */
-class GeoHills extends GeoJSON {
-
-  constructor(docOrPath) {
-    super(docOrPath);
-
-    // use the hills array provided in stats to determine an array of pairs of numbers, defining how to slice the lngLats and elevs arrays
-    // if there are no hills in the array, simply return a route geoJSON
-    console.log(this.properties.stats.hills);
-    if (this.properties.stats.hills.length > 0) {
-      console.log('hlils');
-      const slicePairs = this.getSlicePairs();
-      slicePairs.forEach( pair => {
-        // this.properties.params.elevHills.push({
-        //   elevs: this.properties.params.elev.slice(pair[1],pair[2]+1),
-        //   colour: pair[0]
-        // })
-        let coords = this.lngLats.slice(pair[1], pair[2]+1);
-        let elevs = this.elevs.slice(pair[1], pair[2]+1);
-        this.features.push(this.feature(coords, elevs, pair[0]));
-      })
-    } else {
-      console.log('no hlils');
-      this.features.push(this.feature(this.lngLats, this.elevs, ROUTE_COLOUR));
-    }
-
-    return this.featureCollection();
-
-  }
-
-  getSlicePairs() {
-
-    const hills = this.properties.stats.hills;
-
-    // get an array of numbers [startSlice, endSlice, colour] describedin how to slice up lngLats
-    // probably a more succint way of doing this but itll do for now
-    const slicePairs = [];
-    if (hills[0].startPoint !== 0 ) { slicePairs.push([FLAT_COLOUR, 0,hills[0].startPoint])};
-    for (let i = 0, iMax = hills.length -1; i <= iMax; i++) {
-      // push the current hill
-      slicePairs.push([hills[i].aveGrad > 0 ? UP_COLOUR : DOWN_COLOUR, hills[i].startPoint, hills[i].endPoint]);
-      // push the next flat
-      if (i !== iMax) {
-        if (hills[i].endPoint !== hills[i+1].startPoint) {
-          slicePairs.push([FLAT_COLOUR, hills[i].endPoint, hills[i+1].startPoint]);
-        }
-      } else {
-        if (hills[i].endPoint !== this.lngLats.length-1) {
-          slicePairs.push([FLAT_COLOUR, hills[i].endPoint, this.lngLats.length-1]);
-        }
-      }
-    }
-
-    return slicePairs;
-
-  }
-}
-
-class GeoFringe extends GeoJSON {
-
-}
-
-module.exports = {GeoRoute, GeoFringe, GeoHills}
+module.exports = {GeoJSON}

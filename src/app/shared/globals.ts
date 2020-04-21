@@ -40,7 +40,8 @@ const emptyProps: TsProperties = {
     description: '',
     pathType: '',
     startTime: '',
-    isLong: false
+    isLong: false,
+    isSimplified: false
   },
   params: {
     elev: [],

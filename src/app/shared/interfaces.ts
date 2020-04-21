@@ -147,6 +147,7 @@ export interface TsInfo {
     pathType: string;           // 'route' or 'track'
     startTime: string;
     isLong: boolean;
+    isSimplified: boolean;
 }
 
 export interface TsParams {

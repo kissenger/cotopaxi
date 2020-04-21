@@ -1,6 +1,6 @@
 const Point = require('./_Point').Point;
-const timeStamp = require('./utils').timeStamp;
-const DEBUG = false;
+const debugMsg = require('./utils').debugMsg;
+
 // const elevationAPIQuery = require('./http').elevationAPIQuery;
 
   /**
@@ -38,10 +38,10 @@ const DEBUG = false;
  */
 function p2p(p1, p2) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
-    console.log("Error from p2p: arguments should be of Point class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
+  //   console.log("Error from p2p: arguments should be of Point class");
+  //   return 0;
+  // }
 
   const R = 6378.137;     // radius of earth
 
@@ -77,10 +77,10 @@ function degs2rads(degs) {
 
 function p2l(p1, p2, p3) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) || !(p3 instanceof Point)) {
-    console.log("Error from p2l: arguments should be of Points class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) || !(p3 instanceof Point)) {
+  //   console.log("Error from p2l: arguments should be of Points class");
+  //   return 0;
+  // }
 
   const d13 = p2p(p1, p3) / 1000.0;
   const brg12 = bearing(p1, p2);
@@ -102,10 +102,10 @@ function p2l(p1, p2, p3) {
  */
 function bearing(p1, p2) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
-    console.log("Error from bearing: arguments should be of Points class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
+  //   console.log("Error from bearing: arguments should be of Points class");
+  //   return 0;
+  // }
 
   const lat1 = degs2rads(p1.lat);
   const lat2 = degs2rads(p2.lat);
@@ -248,16 +248,15 @@ function isPointInBBox(point, bbox) {
  * function simplifyPath
  * simplify path using perpendicular distance method
  * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
+ * Note that supplied points array is not modified, a new array is returned
  * @param {*} points array of Point instances defining the path to be simplified
  */
 function simplify(points, TOLERANCE) {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
-
-  // const TOLERANCE = 0;     // tolerance value in metres; the higher the value to greater the simplification
-  const origLength = points.length;
+  debugMsg('simplify path');
 
   // j is an array of indexes - the index of removed points are removed from this array
+  const startLength = points.length;
   let j = Array.from(points, (x, i) => i)
 
   // Repeat loop until no nodes are deleted
@@ -277,8 +276,7 @@ function simplify(points, TOLERANCE) {
   }
 
   // show console how succesful weve been
-  if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
-              ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
+  debugMsg('simplified ' + startLength + '-->' + j.length + ' points(' + ((j.length/startLength)*100.0).toFixed(1) + '%)');
 
   return j.map( x => points[x] );
 

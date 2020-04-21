@@ -3,7 +3,7 @@ const express = require('express');
 const authRoute = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const timeStamp = require('./utils.js').timeStamp;
+const debugMsg = require('./utils').debugMsg;
 const KEY = 'ma8MKeK&&n1wlJNOm@ne08';
 const DEBUG = true;
 
@@ -14,8 +14,9 @@ const MongoUsers = require('./models/user-models');
  * middleware to confirm user has an acceptable token. returns userId in req if all is ok
  */
 function verifyToken(req, res, next) {
+  debugMsg('verifyToken');
 
-  if (DEBUG) { console.log(timeStamp() + '>> verifyToken') };
+  // console.log(req.headers)
 
   if (!req.headers.authorization) {
     return res.status(401).send('Unauthorised request');
@@ -38,11 +39,7 @@ function verifyToken(req, res, next) {
 
 
 authRoute.post('/update-user-data', verifyToken, (req, res) => {
-
-
-
-  if (DEBUG) { console.log(timeStamp() + ' >> update-user-data'); }
-
+  debugMsg('updateUserData');
 
   // ensure user is authorised
   const userId = req.userId;
@@ -68,7 +65,7 @@ authRoute.post('/register', (req, res) => {
 // take incoming user data in the form {email, password}, hash password,
 // save to db, get json token and return to front end
 
-  if (DEBUG) { console.log(timeStamp() + '>> register') };
+  debugMsg('register');
   const saltRounds = 10;
 
   // confirm that email address does not exist in db
@@ -104,8 +101,7 @@ authRoute.post('/register', (req, res) => {
 });
 
 authRoute.post('/login', (req, res) => {
-
-  if (DEBUG) { console.log(timeStamp() + '>> login') };
+  debugMsg('login');
 
   // check that user exists and return data in variable user
   MongoUsers.Users

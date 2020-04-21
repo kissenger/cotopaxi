@@ -103,6 +103,7 @@ export class MapService {
   addLayerToMap(pathAsGeoJSON, styleOptions?: TsLineStyle, plotOptions?: TsPlotPathOptions ) {
 
     // keep a track of what layers are active by pushing current id to activelayers array
+    console.log(pathAsGeoJSON);
     const pathId = pathAsGeoJSON.properties.pathId;
     this.activeLayers[pathId] = [];
 
@@ -125,7 +126,8 @@ export class MapService {
       }
     });
 
-    this.addPointsLayer(pathAsGeoJSON);
+    // this is for debugging only, but dont delete cos it is useful
+    // this.addPointsLayer(pathAsGeoJSON);
 
     // plot a marker at the start and end of the route, pushing the new markers to activeLayers
     const nFeatures = pathAsGeoJSON.features.length;
@@ -305,6 +307,11 @@ export class MapService {
 
     const CIRCLE_RADIUS = 30; // desired radius of circle in metres
 
+    if (this.tsMap.getLayer('circles')) {
+      this.tsMap.removeLayer('circles');
+      this.tsMap.removeSource('circles');
+    }
+
     this.tsMap.addLayer({
       id: 'circles',
       type: 'circle',
@@ -326,7 +333,10 @@ export class MapService {
       }
     });
 
-    console.log(this.getMatchPairsGeoJson(geoJson));
+    if (this.tsMap.getLayer('matchPairs')) {
+      this.tsMap.removeLayer('matchPairs');
+      this.tsMap.removeSource('matchPairs');
+    }
 
     this.tsMap.addLayer({
       id: 'matchPairs',

@@ -1,7 +1,7 @@
 // file system and timestamp only used for debugging
 const DEBUG = true;
 const fs = require('fs');
-const timeStamp = require('./utils.js').timeStamp;
+const debugMsg = require('./utils').debugMsg;
 
  /**
   * readGPX(data)
@@ -12,8 +12,7 @@ const timeStamp = require('./utils.js').timeStamp;
   * and simplyy returns an object with supported parameters
   */
 function readGPX(data) {
-
-  if (DEBUG) { console.log(timeStamp() + ' >> readGPX()') };
+  debugMsg('readGPX()');
 
   // declare function variables
   const MAX_LOOPS = 1000000;
@@ -126,7 +125,7 @@ function readGPX(data) {
     throw new Error('Error reading .gpx file');
   }
 
-  // form return object so we can use it for debug as well as return
+  // form return object so we can use it for debugMsg as well as return
   const returnObject = {
     name: nameOfPath,
     lngLat: lngLat,
@@ -136,7 +135,7 @@ function readGPX(data) {
 
   // print to console and dump to file to support testing/debugging
   if (DEBUG) {
-    console.log(timeStamp() + ' >> readGPX() finished');
+    debugMsg('readGPX() finished!');
     fs.writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
   };
 
@@ -153,6 +152,7 @@ function readGPX(data) {
  */
 
 function writeGPX(path){
+  debugMsg('writeGPX()');
 
   return new Promise( (resolve, reject) => {
 
@@ -164,7 +164,7 @@ function writeGPX(path){
     const file = fs.createWriteStream('../' + fileName + '.gpx');
     const s = '   ';
     const eol = '\r\n'
-    let i = 0;
+    // let i = 0;
 
     file.on('finish', () => { resolve(true) });
     file.on('error', reject);
@@ -178,21 +178,19 @@ function writeGPX(path){
       file.write(s.repeat(1) + "<rte>" + eol);
       file.write(s.repeat(2) + "<name>" + path.name + "</name>" + eol);
 
-      path.points.forEach( (point) => {
+      path.lngLat.forEach( (lngLat, i) => {
 
-        if ( point.elev || point.time ) {
-          // elevation or time data exists, use conventional tag
+        if ( path.elevs[i] ) {
+          // elevation data exists, use conventional tag
 
-          file.write(s.repeat(2) + "<rtept lat=\"" + point.lat + "\" lon=\"" + point.lng + "\">" + eol);
-          if ( point.elev ) {
-            file.write(s.repeat(3) + "<ele>" + point.elev + "</ele>" + eol);
-          }
+          file.write(s.repeat(2) + "<rtept lat=\"" + lngLat[1] + "\" lon=\"" + lngLat[0] + "\">" + eol);
+          file.write(s.repeat(3) + "<ele>" + path.elevs[i] + "</ele>" + eol);
           file.write(s.repeat(2) + "</rtept>" + eol);
 
         } else {
           // only lat/lon exists, use self-closing tag
 
-          file.write(s.repeat(2) + "<rtept lat=\"" + point.lat + "\" lon=\"" + point.lng + "\" />" + eol);
+          file.write(s.repeat(2) + "<rtept lat=\"" + lngLat[1] + "\" lon=\"" + lngLat[0] + "\" />" + eol);
 
         }
 
@@ -205,6 +203,7 @@ function writeGPX(path){
       resolve(fileName);
     });
 
+    debugMsg('writeGPX() finished');
   })
 
 }
@@ -217,7 +216,6 @@ function writeGPX(path){
 function exportGeoJSON(geoJSON) {
 
   const fs = require('fs');
-
 
   JSON.stringify(geoJSON)
   fs.writeFile('../myjsonfile.json', JSON.stringify(geoJSON), 'utf8', (err) => {console.log(err)});

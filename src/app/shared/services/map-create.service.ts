@@ -109,14 +109,23 @@ export class MapCreateService extends MapService {
 
     return new Promise( (resolve, reject) => {
       this.getNextPathCoords(start, end).then( (newCoords: Array<TsCoordinate>) => {
-        this.httpService.processPoints(this.history.coords().concat(newCoords), this.history.elevs()).subscribe( (result) => {
-
-          // save the incoming geoJSON, add the new set of elevations to the history and update display
+        this.httpService.getPathFromPoints(this.history.coords().concat(newCoords)).subscribe( (result) => {
           this.history.add(result.hills);
           this.removeLayerFromMap('0000');
           this.addLayerToMap(this.history.geoJson(), this.styleOptions, this.plotOptions);
           resolve();
         });
+
+
+
+        // this.httpService.processPoints(this.history.coords().concat(newCoords), this.history.elevs()).subscribe( (result) => {
+
+        //   // save the incoming geoJSON, add the new set of elevations to the history and update display
+        //   this.history.add(result.hills);
+        //   this.removeLayerFromMap('0000');
+        //   this.addLayerToMap(this.history.geoJson(), this.styleOptions, this.plotOptions);
+        //   resolve();
+        // });
 
       });
     });

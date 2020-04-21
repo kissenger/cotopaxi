@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import * as globals from 'src/app/shared/globals';
 import { TsCoordinate, TsElevationQuery, TsUser } from 'src/app/shared/interfaces';
 
 @Injectable()
 export class HttpService {
 
-  private accessToken = globals.mapboxAccessToken;
+  private mapBoxAccessToken = globals.mapboxAccessToken;
   // private hostName = '192.168.0.12'
   private hostName = 'localhost';
 
@@ -22,7 +22,7 @@ export class HttpService {
       + '/'
       + coords
       + '?geometries=geojson&access_token='
-      + this.accessToken);
+      + this.mapBoxAccessToken);
   }
 
   myElevationsQuery(queryString: TsElevationQuery) {
@@ -48,7 +48,7 @@ export class HttpService {
     return this.http.post<any>('http://' + this.hostName + ':3000/flush/', '');
   }
 
-  getPathsList(type: string, offset: number, bbox: Array<number>) {
+  getPathsList(type: string, offset: number, limit: number, bbox: Array<number>) {
     let query: string;
     if (bbox.length === 0) {
       query = '?bbox=0';
@@ -59,7 +59,7 @@ export class HttpService {
         if (index !== bbox.length - 1) { query += '&'; }
       });
     }
-    return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset + query);
+    return this.http.get<any>('http://' + this.hostName + ':3000/get-paths-list/' + type + '/' + offset + '/' + limit + query);
   }
 
   getPathById(type: string, id: string) {
@@ -70,25 +70,21 @@ export class HttpService {
     return this.http.delete<any>('http://' + this.hostName + ':3000/delete-path/' + 'route' + '/' + id);
   }
 
-  // getIntersectingRoutes(bbox: Array<number>) {
-  //   let query = '?';
-  //   bbox.forEach( (coord, index) => {
-  //     query += 'bbox=' + coord;
-  //      if (index !== bbox.length - 1) { query += '&'; }
-  //   });
-  //   return this.http.get<any>('http://' + this.hostName + ':3000/get-intersecting-routes/' + query);
-  // }
-
   exportToGpx(pathType: string, pathId: string) {
-    return this.http.post<any>('http://' + this.hostName + ':3000/export-path/', {pathType, pathId});
+    return this.http.get<any>('http://' + this.hostName + ':3000/write-path-to-gpx/' + pathType + '/' + pathId);
   }
 
   downloadFile(fileName: string) {
-    return this.http.get<any>('http://' + this.hostName + ':3000/download-file/' + fileName);
+    // note responseType in options and <Blob> type
+    return this.http.get<Blob>('http://' + this.hostName + ':3000/download-file/' + fileName, {responseType: 'blob' as 'json'});
   }
 
-  processPoints(coords: Array<TsCoordinate>, elevs?: Array<number> ) {
-    return this.http.post<any>('http://' + this.hostName + ':3000/process-points/', {coords, elevs});
+  // processPoints(coords: Array<TsCoordinate>, elevs?: Array<number> ) {
+  //   return this.http.post<any>('http://' + this.hostName + ':3000/process-points/', {coords, elevs});
+  // }
+
+  getPathFromPoints(coords: Array<TsCoordinate>) {
+    return this.http.post<any>('http://' + this.hostName + ':3000/get-path-from-points/', {coords});
   }
 
   registerUser(userData) {
