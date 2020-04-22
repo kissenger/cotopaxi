@@ -65,8 +65,8 @@ const upload = multer({
 
     debugMsg('import-route');
 
-    const pathFromFile = readGPX(req.file.buffer.toString());
-    const path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
+    const pathFromGPX = readGPX(req.file.buffer.toString());
+    const path = new Route(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev);
 
     path.init().then( () => {
       mongoModel('route').create( path.asMongoObject(req.userId, false) ).then( (doc) => {
@@ -299,7 +299,7 @@ app.post('/get-path-from-points/', auth.verifyToken, (req, res) => {
 
   // simplify the path when creating a route in order to keep as
   // responsive as possible for long routes - do this by passing true to init
-  path.init(true).then( () => {
+  path.init().then( () => {
     res.status(201).json({
       hills: geoHills.fromPath(path).toGeoHills()
     });

@@ -4,8 +4,7 @@ const authRoute = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const debugMsg = require('./utils').debugMsg;
-const KEY = 'ma8MKeK&&n1wlJNOm@ne08';
-const DEBUG = true;
+const KEY = 'zjuAa4ItuPrL|woJk^zXn#c2wwt6&,<KS3k!9"<CbiA?E}Ps&WmWy/+Xhu+zZ?y';
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
 const MongoUsers = require('./models/user-models');
@@ -14,9 +13,8 @@ const MongoUsers = require('./models/user-models');
  * middleware to confirm user has an acceptable token. returns userId in req if all is ok
  */
 function verifyToken(req, res, next) {
-  debugMsg('verifyToken');
 
-  // console.log(req.headers)
+  debugMsg('verifyToken');
 
   if (!req.headers.authorization) {
     return res.status(401).send('Unauthorised request');
@@ -39,23 +37,14 @@ function verifyToken(req, res, next) {
 
 
 authRoute.post('/update-user-data', verifyToken, (req, res) => {
+
   debugMsg('updateUserData');
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
-  // let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
-
   delete req.body._id;
-  console.log(req.body)
-  // query database, updating changed data and setting isSaved to true
   MongoUsers.Users
-    .updateOne( {_id: userId}, {$set: req.body}, {upsert: false, writeConcern: {j: true}})
+    .updateOne( {_id: req.userId}, {$set: req.body}, {upsert: false, writeConcern: {j: true}})
     .then( (doc) => {
-      res.status(201).json( {doc} );
+      res.status(201).json( {success: 'success'} );
     })
 
 })
@@ -66,6 +55,7 @@ authRoute.post('/register', (req, res) => {
 // save to db, get json token and return to front end
 
   debugMsg('register');
+
   const saltRounds = 10;
 
   // confirm that email address does not exist in db
@@ -93,7 +83,7 @@ authRoute.post('/register', (req, res) => {
     }
 
   }).catch( (err) => {
-    if (DEBUG) { console.log(' >> ERROR: ' + err); }
+    debugMsg('ERROR: ' + err);
     res.status(401).send(err);
   })
 
@@ -101,6 +91,7 @@ authRoute.post('/register', (req, res) => {
 });
 
 authRoute.post('/login', (req, res) => {
+
   debugMsg('login');
 
   // check that user exists and return data in variable user
@@ -128,7 +119,7 @@ authRoute.post('/login', (req, res) => {
     }
 
   }).catch( (err) => {
-    if (DEBUG) { console.log(' >> ERROR: ' + err); }
+    debugMsg('ERROR: ' + err);
     res.status(401).send(err.toString());
   })
 

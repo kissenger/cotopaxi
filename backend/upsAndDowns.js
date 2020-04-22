@@ -14,9 +14,13 @@
  * options argument removed, bilin interp function removed (still in v2 if needed)
  */
 
-const TIFF_PATH = '../../__TIFF/';
+ // we need to determine the environment to adjust for mocha testing
+const path = require('path');
+const runPath = path.dirname(require.main.filename);
+const TIFF_PATH = runPath.indexOf('mocha') >= 0 ? '../../../__TIFF/' : '../../__TIFF/';
 const GeoTIFF = require('geotiff');             // https://geotiffjs.github.io/geotiff.js/
-// const pool = new GeoTIFF.Pool();
+
+// const pool = new GeoTIFF.Pool();   // use this to enable 'web workers'
 
 /**
  *

@@ -49,7 +49,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         password,
         isHomeLocSet: false,
         units: <TsUnits>{
-          distance: 'miles',
+          distance: 'mi',
           elevation: 'm'
         }
       };

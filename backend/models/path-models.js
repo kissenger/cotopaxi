@@ -30,7 +30,6 @@ const pathSchema = mongoose.Schema({
     category: {type: String},
     // nationalTrail: {type: Boolean},
     // isFavourite: {type: Boolean},
-    isSimplified: {type: Boolean},
     name: {type: String},
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'
@@ -57,6 +56,7 @@ const pathSchema = mongoose.Schema({
       maxLat: Number
     },
     nPoints: {type: Number},
+    simplificationRatio: {type: Number},
     duration: {type: Number},
     distance: {type: Number},
     pace: {type: Number},

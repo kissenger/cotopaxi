@@ -1,7 +1,7 @@
 const PointsList = require('./_Point.js').PointsList;
 const upsAndDowns = require('./upsAndDowns').upsAndDowns;
 const debugMsg = require('./utils').debugMsg;
-const LONG_PATH_THRESHOLD = require('./globals').LONG_PATH_THRESHOLD;
+// const LONG_PATH_THRESHOLD = require('./globals').LONG_PATH_THRESHOLD;
 
 
 /**
@@ -27,9 +27,8 @@ class Path  {
 
   /**
    * Initalise the object
-   * @param {} booSimplify boolean true if wish to get the path simplified
    */
-  init(booSimplify = false) {
+  init() {
 
     debugMsg('Path.init()');
 
@@ -39,13 +38,10 @@ class Path  {
 
       // instantiate the pointsList without elevations so we can simplify if needed before getting elevations
       // note elevations are provided in the instantiation so if they were provided then theyll be simplified too
-      this.pointsList = new PointsList(this.lngLat, this.elevs, booSimplify);
+      this.pointsList = new PointsList(this.lngLat, this.elevs);
 
       // remember to update the class variables in case there was any simplification (2 hrs lost debugging this)
       this.lngLat = this.pointsList.lngLats();
-
-      // then get elevations if needed and add them to the class
-      if (this.pointsList.isLong) { debugMsg('Path.init(): Long Path!!'); }
 
       if (!this.pointsList.isLong && this.elevs.length === 0) {
         this.getElevations(this.lngLat).then( (elevs) => {
@@ -98,7 +94,9 @@ class Path  {
       stats: this.pointsList.getStats(),
       info: {
         ...this.pointsList.getInfo(),
-        pathType: this.pathType
+        pathType: this.pathType,
+        name: this.name,
+        description: this.description
       }
     }
   }

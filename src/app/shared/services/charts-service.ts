@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from './data.service';
 import { GeoService } from './geo.service';
+import { AuthService} from 'src/app/shared/services/auth.service';
 import * as globals from 'src/app/shared/globals';
+import { TsUnits } from '../interfaces';
 
 declare var google: any;
 
@@ -11,10 +13,13 @@ declare var google: any;
 })
 export class ChartsService {
 
+  private units: TsUnits = this.auth.getUser().units;
+
   constructor(
     public httpService: HttpService,
     public geoService: GeoService,
-    public dataService: DataService
+    public dataService: DataService,
+    public auth: AuthService
   ) {
   }
 
@@ -34,7 +39,7 @@ export class ChartsService {
       const maxX = chartData[0][chartData[0].length - 1];
 
       const options = {
-        title: 'Elevation (' + globals.units.elevation + ') vs distance (' + globals.units.distance + ')',
+        title: 'Elevation (' + this.units.elevation + ') vs distance (' + this.units.distance + ')',
         colors: colourArray,
         hAxis: {
           format: maxX > 10 ? '0' : '0.0',
@@ -92,14 +97,14 @@ export class ChartsService {
 
       // arrange elevation data for plttoing on charts - first step convert to dsired units
       let xData;
-      if (globals.units.distance === 'miles') {
+      if (this.units.distance === 'mi') {
         xData = chData[0].map( (m) => m / 1000.0 * globals.KM_TO_MILE);
       } else {
         xData = chData[0].map( (m) => m / 1000.0);
       }
 
       let yData = chData.slice(1);
-      if (globals.units.elevation === 'ft' ) {
+      if (this.units.elevation === 'ft' ) {
         yData = yData.map( (col) => col.map( (m) => m === null ? null : m * globals.M_TO_FT));
       } else {
         yData = yData.map( (col) => col.map( (m) => m ));

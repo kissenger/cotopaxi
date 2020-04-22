@@ -108,7 +108,7 @@ export class MapService {
     this.activeLayers[pathId] = [];
 
     // used for debugging - allows points to be shown
-    // this.addPointsToGeoJson(pathAsGeoJSON);
+    this.addPointsLayer(pathAsGeoJSON);
 
     // add the layer to the map
     this.tsMap.addLayer({

@@ -6,6 +6,7 @@ import * as globals from 'src/app/shared/globals';
 import { HttpService } from '../../services/http.service';
 import { Subscription } from 'rxjs';
 import { AlertService } from '../../services/alert.service';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-profile',
@@ -23,7 +24,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   public user: TsUser;
   // public homeLocation: any;
   public hideTemplate = false;
-  public units: TsUnits;
+  // public units: TsUnits;
   public isChanged = false;
   public isElevChecked: boolean;
   public isDistChecked: boolean;
@@ -38,15 +39,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private mapService: MapService,
     private http: HttpService,
     private alert: AlertService,
+    private dataService: DataService
   ) { }
 
   ngOnInit(): void {
     this.user = this.auth.getUser();
-    this.units = globals.units;
     this.locationCoords = this.user.homeLngLat;
     this.locationString = this.user.isHomeLocSet ? this.coordToString(this.user.homeLngLat) : 'Not set';
-    this.isDistChecked = this.units.distance === 'kms';
-    this.isElevChecked = this.units.elevation === 'ft';
+    this.isDistChecked = this.user.units.distance === 'km';
+    this.isElevChecked = this.user.units.elevation === 'ft';
   }
 
   coordToString(lngLat: TsCoordinate) {
@@ -66,6 +67,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onToggleClick() {
     this.isChanged = true;
+    console.log(this.isDistChecked, this.isElevChecked);
   }
 
   onSaveClick() {
@@ -73,13 +75,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.user.homeLngLat = this.locationCoords;
     this.user.isHomeLocSet = this.locationUpdated || this.user.isHomeLocSet;
     this.user.units = {
-      distance: this.isDistChecked ? 'kms' : 'miles',
-      elevation: this.isDistChecked ? 'ft' : 'm'
+      distance: this.isDistChecked ? 'km' : 'mi',
+      elevation: this.isElevChecked ? 'ft' : 'm'
     };
+    console.log(this.isDistChecked, this.isElevChecked);
+    console.log(this.user.units.distance, this.user.units.elevation);
 
     this.httpSubscription = this.http.updateUserData(this.user).subscribe( (res) => {
       console.log(res);
       this.auth.setUser(this.user);
+      this.dataService.unitsUpdateEmitter.emit();
       this.close.next();
       this.alert.showAsElement('Success!', 'User data updated', true, false).subscribe( (alertBoxResponse: boolean) => {
       });

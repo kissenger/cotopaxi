@@ -48,7 +48,7 @@ class Point {
  */
 class PointsList {
 
-  constructor(coords, elevs = [], booSimplify = false) {
+  constructor(coords, elevs = []) {
 
     debugMsg('PointsList');
 
@@ -61,25 +61,41 @@ class PointsList {
     // also delete any elevations that came with the instantiation
     // do this before doing any calculations on the points, although tempting to combine
 
+
+    // do a prelim simplification loop - this has a number of purposes
+    // 1) It guards against duplicate points, which throw off grad calc
+    // 2) It goes some way to harminising distance between points for paths from different sources
+    const simple = simplify(this.points, 2);
+    this.points = simple.points;
+    this.simplificationRatio = simple.ratio;
     this.isLong = this.points.length > LONG_PATH_THRESHOLD;
+
     if (this.isLong) {
-
-      // if nPoints is above threshold, then simplify the path
-      this.points = simplify(this.points, SIMPLIFY_TOLERANCE);
-      this.isSimplified = true;
-
-      // if still too long, then flag as such and remove elevations
-      this.isLong = this.points.length > LONG_PATH_THRESHOLD;
-      if (this.isLong) {
-        this.discardElevs();
-      }
-
+      debugMsg('Path.init(): path is long');
+      this.discardElevs();
     }
 
-    if (booSimplify && !this.isSimplified) {
-      this.points = simplify(this.points, SIMPLIFY_TOLERANCE);
-      this.isSimplified = true;
-    }
+    // if (this.isLong) {
+
+    //   debugMsg('Path.init(): Long Path, trying to simplify');
+
+    //   // if nPoints is above threshold, then simplify the path
+    //   this.points = simplify(this.points, SIMPLIFY_TOLERANCE);
+    //   this.isSimplified = true;
+
+    //   // if still too long, then flag as such and remove elevations
+    //   this.isLong = this.points.length > LONG_PATH_THRESHOLD;
+    //   if (this.isLong) {
+    //     debugMsg('Path.init(): Still long');
+    //     this.discardElevs();
+    //   }
+
+    // }
+
+    // if (booSimplify && !this.isSimplified) {
+    //   this.points = simplify(this.points, SIMPLIFY_TOLERANCE);
+    //   this.isSimplified = true;
+    // }
 
     // now calculate other class properties
     this.nPoints = this.points.length;
@@ -90,14 +106,12 @@ class PointsList {
   }
 
   getInfo() {
+    const category = this.getCategory();
     return {
-      name: '',
-      description: '',
       isLong: this.isLong,
       isElevations: this.elevs().length > 0,
-      isSimplified: this.isSimplified,
-      category: this.getCategory(),
-      direction: this.getDirection()
+      category,
+      direction: this.getDirection(category)
     }
   }
 
@@ -111,6 +125,7 @@ class PointsList {
     stats = {
       bbox: boundingBox(this.points),
       nPoints: this.nPoints,
+      simplificationRatio: this.simplificationRatio,
       ...stats
     }
 
@@ -205,8 +220,9 @@ class PointsList {
 
     debugMsg('PointsList.calcElevationData()');
 
-    // elevations - note all elevations are calculated off the smoothed average
-    const elevs = movingAverage(this.elevs(), MOVING_AVERAGE_PERIOD);
+    // elevations - note all elevations are calculated off the smoothed average - dont smooth for a short path
+    // TODO need to error catch points with very small time increment or coincident points, when dist = 0, grad = inf and error
+    const elevs = this.elevs().length < MOVING_AVERAGE_PERIOD * 2 ? this.elevs() : movingAverage(this.elevs(), MOVING_AVERAGE_PERIOD)
     const grads = elevs.map( (e, i, eArr) => i === 0 ? 0 : (e - eArr[i-1]) / dist.dDistance[i] * 100 );
 
     // initilise loop variables
@@ -244,12 +260,23 @@ class PointsList {
         hillSum += de;
       } else {
         // direction change, check threshold and store hill if needed
-        if (Math.abs(hillSum) > HILL_THRESH) { hillsArr.push([p0 - 1, i - 1]); }
+        if (Math.abs(hillSum) > HILL_THRESH) {
+          hillsArr.push([p0 - 1, i - 1]);
+        }
         hillSum = de;
         p0 = i;
       }
 
     } // close for loop
+
+    // check we didnt end on a hill
+    if (Math.abs(dSum) > ASCENT_THRESH) {
+      if (dSum > 0) { ascent += dSum; }
+      else { descent += dSum; }
+    }
+    if (Math.abs(hillSum) > HILL_THRESH) {
+      hillsArr.push([p0 - 1, this.nPoints - 1]);
+    }
 
     // get stats for each hill in the list
     const hills = hillsArr.map( hill => ({
@@ -337,7 +364,7 @@ class PointsList {
     if ( !isStartAtEnd && pcShared < PC_THRESH_LOW ) { return 'One way'; }
 
     // if nothing else fits then call it a hybrid
-    return 'Hybrid';
+    return 'None';
 
   }
 
@@ -351,10 +378,10 @@ class PointsList {
    * - Hybrid / Out and back:
    *  Direction is meaningless --> returns empty string ""
    */
-  getDirection() {
+  getDirection(cat) {
     debugMsg('PointsList.getDirection()');
 
-    if ( this.category === 'Circular' ) {
+    if ( cat === 'Circular' ) {
 
       // cwSum is incremented if current bearing > last bearing, or decremented if <
       // the direction of the path is determine on whether the final brgShift is +ve or -ve
@@ -380,22 +407,22 @@ class PointsList {
       if ( cwSum === 0 ) { return 'Unknown Direction'; }
 
 
-    } else if ( this.category === 'One way' ) {
+    } else if ( cat === 'One way' ) {
 
       const thisBrg = bearing(this.points[0], this.points[this.points.length - 1]);
 
       if (thisBrg > 5.890 || thisBrg <= 0.393) { return 'South to North'; }
-      if (thisBrg > 0.393 && thisBrg <= 1.178) { return 'South-West to North-East'; }
+      if (thisBrg > 0.393 && thisBrg <= 1.178) { return 'SW to NE'; }
       if (thisBrg > 1.178 && thisBrg <= 1.963) { return 'West to East'; }
-      if (thisBrg > 1.963 && thisBrg <= 2.749) { return 'North-West to South-East'; }
+      if (thisBrg > 1.963 && thisBrg <= 2.749) { return 'NW to SE'; }
       if (thisBrg > 2.749 && thisBrg <= 3.534) { return 'North to South'; }
-      if (thisBrg > 3.534 && thisBrg <= 4.320) { return 'North-East to South West'; }
+      if (thisBrg > 3.534 && thisBrg <= 4.320) { return 'NE to SW'; }
       if (thisBrg > 4.320 && thisBrg <= 5.105) { return 'East to West'; }
-      if (thisBrg > 5.105 && thisBrg <= 5.890) { return 'South-East to North-West'; }
+      if (thisBrg > 5.105 && thisBrg <= 5.890) { return 'SE to NW'; }
 
     } else {
 
-      return '';
+      return 'N/A';
 
     }
   }

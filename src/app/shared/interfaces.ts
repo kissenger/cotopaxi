@@ -1,7 +1,7 @@
 
 // Define unit type for definition of user units
 export interface TsUnits {
-    distance: 'miles' | 'kms';
+    distance: 'mi' | 'km';
     elevation: 'm' | 'ft';
 }
 
@@ -33,6 +33,8 @@ interface TsListItem {
   creationDate: string;
   pathId: string;
   count: number;
+  isElevations: boolean;
+  isLong: boolean;
   isActive?: boolean;
 }
 
@@ -147,7 +149,6 @@ export interface TsInfo {
     pathType: string;           // 'route' or 'track'
     startTime: string;
     isLong: boolean;
-    isSimplified: boolean;
 }
 
 export interface TsParams {
@@ -167,6 +168,7 @@ export interface TsPathStats {
         maxLat: number
     };
     nPoints: number;
+    simplificationRatio: number;
     duration: number;
     distance: number;
     pace:  number;

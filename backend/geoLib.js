@@ -276,9 +276,10 @@ function simplify(points, TOLERANCE) {
   }
 
   // show console how succesful weve been
-  debugMsg('simplified ' + startLength + '-->' + j.length + ' points(' + ((j.length/startLength)*100.0).toFixed(1) + '%)');
+  const ratio =  (j.length/startLength).toFixed(3);
+  debugMsg('simplified ' + startLength + '-->' + j.length + ' points, ratio=' + ratio);
 
-  return j.map( x => points[x] );
+  return {points: j.map( x => points[x]), ratio};
 
 }
 

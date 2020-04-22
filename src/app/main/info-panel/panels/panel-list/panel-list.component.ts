@@ -5,6 +5,7 @@ import { DataService } from 'src/app/shared/services/data.service';
 import { Subscription } from 'rxjs';
 import { TsUnits, TsListArray } from 'src/app/shared/interfaces';
 import { MapCreateService } from 'src/app/shared/services/map-create.service';
+import { AuthService} from 'src/app/shared/services/auth.service';
 
 @Component({
   selector: 'app-panel-list',
@@ -14,25 +15,26 @@ import { MapCreateService } from 'src/app/shared/services/map-create.service';
 export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
   @Input() callingPage: string;
+
   private getPathsSubscription: Subscription;
   private mapUpdateSubscription: Subscription;
   private listOffset = 0;
   private boundingBox: Array<number> = [];
   private activePathsArray: Array<string> = [];
+  private limit = 9;  // number of paths to display in one go - more can be pulled if needed
 
-  private limit = 10;  // number of paths to display in one go - more can be pulled if needed
   public listData: TsListArray = [];
   public pathId: string;
   public isEndOfList = false; // value is read in the html do dont be tempted to delete
-  public units: TsUnits = globals.units;
+  public units: TsUnits = this.auth.getUser().units;
   public numberOfRoutes: number;
   public numberOfLoadedRoutes: number;
-
 
   constructor(
     private httpService: HttpService,
     private dataService: DataService,
     private mapCreateService: MapCreateService,
+    private auth: AuthService
   ) {}
 
   ngOnInit() {
@@ -53,6 +55,10 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
     } else {
       this.updateList(true);
     }
+
+    this.dataService.unitsUpdateEmitter.subscribe( () => {
+      this.units = this.auth.getUser().units;
+    })
   }
 
 

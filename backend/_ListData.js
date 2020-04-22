@@ -14,6 +14,8 @@ class ListData  {
         pathType: d.info.pathType,
         startTime: d.startTime,
         creationDate: d.creationDate,
+        isElevations: d.info.isElevations,
+        isLong: d.info.isLong,
         pathId: d._id,
         count: c
       })

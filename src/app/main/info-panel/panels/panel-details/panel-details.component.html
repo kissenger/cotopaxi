@@ -10,23 +10,24 @@
 
     <ng-template #weHaveDataToShowDiv>
 
-
-
       <!-- Name and Description Block -->
-      <!-- String Type -->
+
+      <!-- If we are listing data only, then we dont need form inputs-->
       <div *ngIf="isListPage; else showForm">
 
-        <div *ngIf="!pathName; else makeUpName" class="h5 mt-1 text-center border-bottom">
+        <div *ngIf="!pathName; else makeUpName" class="h5 mt-1 mb-1 pt-1 pb-1 text-center border-bottom">
             {{pathCategory}} {{pathType}}
         </div>
 
         <ng-template #makeUpName>
-          <div class="h5 mt-1 text-center">{{pathName}}</div>
+          <div class="h5 mt-1 mb-1 pt-1 pb-1 text-center border-bottom">{{pathName}}</div>
         </ng-template>
 
-        <div class="mt-1 mb-2">{{pathDescription}}</div>
+        <!-- <div class="mt-1 mb-2">{{pathDescription}}</div> -->
+        <div *ngIf="pathDescription" class="mt-1 mb-1 pt-1 pb-1 border-bottom">{{pathDescription}}</div>
 
       </div>
+
 
       <!-- Form type -->
       <ng-template #showForm>
@@ -42,38 +43,56 @@
       </ng-template>
       <!-- End of Name and Description Block -->
 
-      <!-- Basic stats (distance, nPoints) Block -->
-      <div class="py-1 border-bottom w-100 mx-auto">
-          <div class="row mx-auto text-left">
-              <div class="ml-2 col-6 p-0 m-0">Distance </div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.distance | units: 'distance': units.distance}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Points</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.nPoints | number: '1.0-0'}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Long</div>
-              <div class="ml-2 col-4 p-0 m-0">{{isLong}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Category</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathCategory}}</div>
-          </div>
-      </div>
-      <!-- End of basic stats (distance, nPoints) Block -->
+      <div class="mt-1 mb-1 pt-1 pb-1 border-bottom">
+        <table class="table table-sm m-0 p-0">
+          <tbody>
+            <tr>
+              <td>Distance</td>
+              <td>{{pathStats.distance | units: 'distance': units.distance}}</td>
+            </tr>
+            <tr>
+              <td>Points</td>
+              <td>{{pathStats.nPoints | number: '1.0-0'}}</td>
+            </tr>
+            <tr>
+              <td>Category</td>
+              <td>{{pathCategory}}</td>
+            </tr>
+            <tr>
+              <td>Direction</td>
+              <td>{{pathDirection}}</td>
+            </tr>
 
+            <!-- Elevations shown only if isElevations is true -->
 
-      <!-- Basic elevations block (ascent, descent etc) -->
-      <div *ngIf="isElevations" class="py-1 border-bottom w-100 mx-auto">
-          <div class="row mx-auto text-left">
-              <div class="ml-2 col-6 p-0 m-0">Ascent</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.ascent | units: 'elevation': units.elevation}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Descent</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.descent | units: 'elevation': units.elevation}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Max Elev</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.maxElev | units: 'elevation': units.elevation}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Min Elev</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.minElev | units: 'elevation': units.elevation}}</div>
-              <div class="ml-2 col-6 p-0 m-0">Lumpiness</div>
-              <div class="ml-2 col-4 p-0 m-0">{{pathStats.elevations.lumpiness | units: 'lumpiness': units.elevation: units.distance}}</div>
-          </div>
+            <tr *ngIf="isElevations">
+              <!-- <th scope="row"></th> -->
+              <td>Ascent</td>
+              <td>{{pathStats.elevations.ascent | units: 'elevation': units.elevation}}</td>
+            </tr>
+            <tr *ngIf="isElevations">
+              <!-- <th scope="row"></th> -->
+              <td>Descent</td>
+              <td>{{pathStats.elevations.descent | units: 'elevation': units.elevation}}</td>
+            </tr>
+            <tr *ngIf="isElevations">
+              <!-- <th scope="row"></th> -->
+              <td>Max Elev</td>
+              <td>{{pathStats.elevations.maxElev | units: 'elevation': units.elevation}}</td>
+            </tr>
+            <tr *ngIf="isElevations">
+              <!-- <th scope="row"></th> -->
+              <td>Min Elev</td>
+              <td>{{pathStats.elevations.minElev | units: 'elevation': units.elevation}}</td>
+            </tr>
+            <tr *ngIf="isElevations">
+              <!-- <th scope="row"></th> -->
+              <td>Lumpiness</td>
+              <td>{{pathStats.elevations.lumpiness | units: 'elevation': units.elevation: units.distance}}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <!-- End of basic elevations block (ascent, descent etc) -->
 
   </ng-template>
 

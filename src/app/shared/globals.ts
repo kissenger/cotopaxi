@@ -1,5 +1,5 @@
 'use strict';
-import { TsUnits, TsLineStyle, TsFeatureCollection, TsProperties } from 'src/app/shared/interfaces';
+import { TsUnits, TsLineStyle, TsFeatureCollection, TsProperties, TsPathStats } from 'src/app/shared/interfaces';
 
 export const mapboxAccessToken = 'pk.eyJ1Ijoia2lzc2VuZ2VyIiwiYSI6ImNrMWYyaWZldjBtNXYzaHFtb3djaDJobmUifQ.ATRTeTi2mygBXAoXd42KSw';
 
@@ -16,10 +16,10 @@ export const links = {
 
 // the following will eventually be set by user profile
 
-export const units: TsUnits = {
-        distance: 'miles',
-        elevation: 'ft'
-      };
+// export const units: TsUnits = {
+//         distance: 'miles',
+//         elevation: 'ft'
+//       };
 
 // export const userHomeLocation: TsCoordinate = {lat: 51, lng: -4};
 
@@ -29,6 +29,49 @@ export const routeLineStyle: TsLineStyle = {lineWidth: 4, lineColour: 'red', lin
 export const overlayLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 0.3};
 export const createRouteLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 1.0};
 // export const routeReviewLineStyle: TsLineStyle = {lineWidth: 2, lineColour: 'red', lineOpacity: 1.0};
+
+
+// used by props below, but also called in by panel details
+export const emptyStats: TsPathStats = {
+  bbox: {
+    minLng: 0,
+    minLat: 0,
+    maxLng: 0,
+    maxLat: 0
+  },
+  nPoints: 0,
+  simplificationRatio: 0,
+  duration: 0,
+  distance: 0,
+  pace:  0,
+  elevations: {
+    ascent: 0,
+    descent: 0,
+    maxElev: 0,
+    minElev: 0,
+    lumpiness: 0,
+    distance: 0,
+    nPoints: 0,
+    badElevData: false
+  },
+  p2p: {
+    max: 0,
+    ave: 0
+  },
+  movingStats: {
+    movingTime: 0,
+    movingDist: 0,
+    movingPace: 0,
+  },
+  hills: [],
+  splits: {
+    kmSplits: [],
+    mileSplits: []
+  }
+};
+
+
+
 
 const emptyProps: TsProperties = {
   pathId: '',
@@ -40,8 +83,7 @@ const emptyProps: TsProperties = {
     description: '',
     pathType: '',
     startTime: '',
-    isLong: false,
-    isSimplified: false
+    isLong: false
   },
   params: {
     elev: [],
@@ -50,53 +92,7 @@ const emptyProps: TsProperties = {
     cadence: [],
     cumDistance: []
   },
-  stats: {
-    bbox: {
-      minLng: 0,
-      minLat: 0,
-      maxLng: 0,
-      maxLat: 0
-    },
-    nPoints: 0,
-    duration: 0,
-    distance: 0,
-    pace:  0,
-    elevations: {
-      ascent: 0,
-      descent: 0,
-      maxElev: 0,
-      minElev: 0,
-      lumpiness: 0,
-      distance: 0,
-      nPoints: 0,
-      badElevData: false
-    },
-    p2p: {
-      max: 0,
-      ave: 0
-    },
-    movingStats: {
-      movingTime: 0,
-      movingDist: 0,
-      movingPace: 0,
-    },
-    hills: [],
-    // hills: [{
-    //   dHeight: 0,
-    //   dDist: 0,
-    //   dTime: 0,
-    //   pace: 0,
-    //   ascRate: 0,
-    //   gradient: {
-    //       max: 0,
-    //       ave: 0
-    //   }
-    // }],
-    splits: {
-      kmSplits: [],
-      mileSplits: []
-    },
-  },
+  stats: emptyStats,
   colour: '',
   creationDate: '',
   lastEditDate: '',
