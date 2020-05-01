@@ -3,9 +3,7 @@ import { MapService } from 'src/app/shared/services/map.service';
 import { DataService } from 'src/app/shared/services/data.service';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { Subscription } from 'rxjs';
-import * as globals from 'src/app/shared/globals';
 import { TsLineStyle, TsPlotPathOptions } from 'src/app/shared/interfaces';
-import { GeoService } from 'src/app/shared/services/geo.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 
 @Component({
@@ -29,9 +27,7 @@ export class RoutesListComponent implements OnInit, OnDestroy {
   constructor(
     private dataService: DataService,
     private mapService: MapService,
-    private httpService: HttpService,
-    private geoService: GeoService,
-    private auth: AuthService
+    private httpService: HttpService
     ) { }
 
   /**
@@ -80,12 +76,21 @@ export class RoutesListComponent implements OnInit, OnDestroy {
   initialiseMapIfNeeded() {
 
     return new Promise( (resolve, reject) => {
+
       if (!this.mapService.isMap()) {
-        // console.log(this.mapService.isMap());
-        this.mapService.initialiseMap(this.geoService.getPathCoG(this.geoJSON.bbox), 10).then( () => {
-          resolve();
-        });
-      } else { resolve(); }
+
+        const cog = {
+          lng: ( this.geoJSON.bbox[0] + this.geoJSON.bbox[2] ) / 2,
+          lat: ( this.geoJSON.bbox[1] + this.geoJSON.bbox[3] ) / 2 };
+
+        this.mapService.initialiseMap(cog, 10)
+          .then( () => resolve() )
+          .catch( e => reject(e) );
+
+      } else {
+        resolve();
+      }
+
     });
 
   }

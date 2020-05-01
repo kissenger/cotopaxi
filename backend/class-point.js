@@ -1,9 +1,9 @@
 
-const debugMsg = require('./utils').debugMsg;
-const simplify = require('./geoLib.js').simplify;
-const boundingBox = require('./geoLib').boundingBox;
-const p2p = require('./geoLib').p2p;
-const bearing = require('./geoLib').bearing;
+const debugMsg = require('./utilities').debugMsg;
+const simplify = require('./geo-lib.js').simplify;
+const boundingBox = require('./geo-lib').boundingBox;
+const p2p = require('./geo-lib').p2p;
+const bearing = require('./geo-lib').bearing;
 
 const SIMPLIFY_TOLERANCE = require('./globals').SIMPLIFY_TOLERANCE;
 const LONG_PATH_THRESHOLD = require('./globals').LONG_PATH_THRESHOLD;
@@ -456,6 +456,7 @@ function movingAverage(array, period) {
 
 
 module.exports = {
+  Point,
   PointsList
 }
 

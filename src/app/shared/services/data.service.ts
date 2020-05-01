@@ -1,5 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { TsUnits } from '../interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,11 @@ export class DataService {
     private router: Router
   ) {
   }
+
+
+
+  public unitsUpdateEmitter = new EventEmitter();
+  // private units: TsUnits;
 
   /**
    * Collection of variables and methods to enable emission, storage and retrieval of the
@@ -55,35 +61,14 @@ export class DataService {
   }
 
 
+  // setUnits(units: TsUnits) {
+  //   this.units = units;
+  // }
 
-
-
-
-  // getPageName() {
-  //   return new Promise<string>( (resolve, rej) => {
-  //     let timer = setInterval( () => {
-  //       if (this.router.url !== '/') {
-  //         clearInterval(timer);
-  //         resolve(this.router.url.split('/')[2]);
-  //       }
-  //     }, 1);
-  //   });
+  // getUnits() {
+  //   return this.units;
   // }
 
 
 }
 
-// export class dataStore {
-
-//   private
-//   constructor(storeName: string, emit: boolean) {
-//   }
-
-//   save() {
-
-//   }
-
-//   get() {
-//     return
-//   }
-// }

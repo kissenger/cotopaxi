@@ -1,7 +1,6 @@
-// file system and timestamp only used for debugging
-const DEBUG = true;
 const fs = require('fs');
-const debugMsg = require('./utils').debugMsg;
+const DEBUG = require('./globals').DEBUG;
+const debugMsg = require('./utilities').debugMsg;
 
  /**
   * readGPX(data)

@@ -1,13 +1,13 @@
-// Libraries and stuff
+// Libraries and other modules
 const express = require('express');
 const authRoute = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const debugMsg = require('./utils').debugMsg;
-const KEY = 'zjuAa4ItuPrL|woJk^zXn#c2wwt6&,<KS3k!9"<CbiA?E}Ps&WmWy/+Xhu+zZ?y';
-
-// Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
+const debugMsg = require('./utilities').debugMsg;
 const MongoUsers = require('./models/user-models');
+
+// Module globals
+const KEY = 'zjuAa4ItuPrL|woJk^zXn#c2wwt6&,<KS3k!9"<CbiA?E}Ps&WmWy/+Xhu+zZ?y';
 
 /**
  * middleware to confirm user has an acceptable token. returns userId in req if all is ok

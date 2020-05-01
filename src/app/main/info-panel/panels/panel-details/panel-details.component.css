@@ -9,6 +9,18 @@
   overflow-x: hidden;
 }
 
+.table thead tr th, .table tbody tr td {
+  height: 10px;
+  border: none;
+  padding: 0px;
+  margin: 0px;
+  /* margin-top: 0px; */
+ }
+/*
+.table tbody tr {
+  height: 10px;
+} */
+
 /* .outer {
   border: 1px blue solid;
 }

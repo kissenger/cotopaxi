@@ -1,4 +1,4 @@
-import { Component, Injector } from '@angular/core';
+import { Component, Injector, OnInit } from '@angular/core';
 import { createCustomElement } from '@angular/elements';
 import { AlertBoxComponent } from 'src/app/shared/components/alert-box/alert-box.component';
 import { SpinnerComponent } from 'src/app/shared/components/spinner/spinner.component';
@@ -11,7 +11,7 @@ import { ProfileComponent } from './shared/components/profile/profile.component'
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'cotopaxi';
 
   constructor(
@@ -36,6 +36,20 @@ export class AppComponent {
     customElements.define('profile-box', ProfileElement);
 
    }
+
+   ngOnInit() {
+     const pleadString =
+     '\n\n<promote-self>\n' +
+     'Looking for a full-stack developer with ' +
+     'Angular2+, NodeJS, Express, Mongo, Google Maps API ' +
+     'Mapbox API experience, and driven to develop projects ' +
+     'like this in his spare time?  \n' +
+     'Visit www.kissenger-codes.co.uk for portfolio and contact ' +
+     'details\n' +
+      '</promote-self>\n\n';
+
+     console.log('%c' + pleadString, 'background: #FFFFFF; color: #bada55');
+  }
 
 
 }

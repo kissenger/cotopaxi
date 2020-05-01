@@ -1,8 +1,11 @@
-const PointsList = require('./_Point.js').PointsList;
-// const upsAndDowns = require('./upsAndDowns').upsAndDowns;
-const debugMsg = require('./utils').debugMsg;
+
+// Modules
+const PointsList = require('./class-point.js').PointsList;
+const debugMsg = require('./utilities').debugMsg;
 const jael = require('jael');
 const globals = require('./globals');
+
+// Path to elevation TIFFs
 jael.setPath(globals.PATH_TO_GEOTIFFS);
 
 /**
@@ -13,8 +16,6 @@ jael.setPath(globals.PATH_TO_GEOTIFFS);
  * @param {*} elevs array of elevations
  * @param {*} pathType string 'route' or 'track'
  */
-
-
 
 class Path  {
 

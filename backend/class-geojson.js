@@ -1,5 +1,8 @@
-const debugMsg = require('./utils').debugMsg;
 
+// Libraries and modules
+const debugMsg = require('./utilities').debugMsg;
+
+// Module globals
 const UP_COLOUR = '#FF0000';
 const DOWN_COLOUR = '#00FF00';
 const FLAT_COLOUR = '#0000FF';

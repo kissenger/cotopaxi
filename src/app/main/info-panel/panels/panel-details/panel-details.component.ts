@@ -6,6 +6,7 @@ import { HttpService } from 'src/app/shared/services/http.service';
 import { Subscription } from 'rxjs';
 import { ChartsService } from 'src/app/shared/services/charts-service';
 import { TsUnits, TsPathStats } from 'src/app/shared/interfaces';
+import { AuthService} from 'src/app/shared/services/auth.service';
 
 @Component({
   selector: 'app-panel-details',
@@ -27,57 +28,53 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
   public isElevations: boolean;
   public isHills: boolean;
   public isData = false;
-  public units: TsUnits = globals.units;
+  public units: TsUnits = this.auth.getUser().units;
   public wikiLink: string = globals.links.wiki.elevations;
   public pathCategory: string;
   public pathType: string;
-  public pathStats: TsPathStats = this.emptyPathStats();
+  public pathStats: TsPathStats = globals.emptyStats;
+  public pathDirection: string;
 
   constructor(
     private dataService: DataService,
     private httpService: HttpService,
     private router: Router,
-    private chartsService: ChartsService
+    private chartsService: ChartsService,
+    private auth: AuthService
   ) {}
 
   ngOnInit() {
 
     // show form inputs and buttons only for review or create pages, not for list
     this.isListPage = this.callingPage === 'list';
-    // this.isData = true;
-
-
 
     // both created and imported paths data are sent from map-service when the geoJSON is plotted: listen for the broadcast
     this.activePathSubscription = this.dataService.activePathEmitter.subscribe( (geoJson) => {
 
-      console.log(geoJson);
+      this.pathStats = geoJson.properties.stats;
+      this.pathName = geoJson.properties.info.name;
+      this.pathDescription = geoJson.properties.info.description;
+      this.pathCategory = geoJson.properties.info.category;
+      this.pathDirection = geoJson.properties.info.direction;
+      this.pathType = geoJson.properties.info.pathType;
 
       this.isData = true;
-      // if (geoJson.features.length === 0) {
-      //   this.resetPathStats();
-      // } else {
-        this.pathStats = geoJson.properties.stats;
-        this.pathName = geoJson.properties.info.name;
-        this.pathDescription =  geoJson.properties.info.description;
-        this.pathCategory = geoJson.properties.info.category;
-        this.pathType = geoJson.properties.info.pathType;
-        this.isLong = geoJson.properties.info.isLong;
-        this.isElevations = geoJson.properties.info.isElevations && !this.isLong;
-        this.isHills = this.pathStats.hills.length > 0;
-      // }
-          // work out the data to plot on chart
-      // loops through the features, creating an array of the form:
-      // [[x1, x2, x3, x4, x5, ....],
-      //  [e1, e2,   ,   ,   , ....],
-      //  [  ,   , e3, e4, e5, ....]]
-      // where x is cumDist, e is elevation point, and spaces are null points
+      this.isLong = geoJson.properties.info.isLong;
+      this.isElevations = geoJson.properties.info.isElevations && !this.isLong;
+      this.isHills = this.pathStats.hills.length > 0;
+
+      /**
+       * Calculate data to plot on chart - complex due to plotting hills in different colours
+       * Need one array for cumulative distance, and one array each for each subsequent segment on the chart, eg
+       *    [[x1, x2, x3, x4, x5, ....],
+       *     [e1, e2,   ,   ,   , ....],
+       *     [  ,   , e3, e4, e5, ....]]
+       * where x is cumDist, e is elevation point, and spaces are null points
+       */
       this.chartData = [geoJson.properties.params.cumDistance];
       this.colourArray = [];
       let x = 0;
-
       geoJson.features.forEach( feature => {
-        // console.log(feature);
         const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
         this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
         x += feature.properties.params.elev.length - 1;
@@ -88,32 +85,10 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
 
     });
 
-  }
+    this.dataService.unitsUpdateEmitter.subscribe( () => {
+      this.units = this.auth.getUser().units;
+    });
 
-  emptyPathStats() {
-    return {
-      bbox: null,
-      nPoints: 0,
-      duration: null,
-      distance: 0,
-      pace: null,
-      elevations: {
-          ascent: 0,
-          descent: 0,
-          maxElev: 0,
-          minElev: 0,
-          lumpiness: 0,
-          distance: 0,
-          nPoints: 0
-      },
-      p2p: {
-          max: 0,
-          ave: 0
-      },
-      movingStats: null,
-      hills: null,
-      splits: null
-    };
   }
 
   onSave() {
@@ -127,8 +102,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
     // path created on map, backend needs the whole shebang but as new path object will be created, we should only send it what it needs
     if (newPath.properties.pathId === '0000') {    // pathId for created route is set to 0000 in the backend
       const sendObj = {
-        coords: newPath.features[0].geometry.coordinates,
-        elevs: newPath.features[0].properties.params.elev,
+        coords: newPath.features.reduce( (coords, feature ) => coords.concat(feature.geometry.coordinates), []),
+        elevs: newPath.features.reduce( (elevs, feature) => elevs.concat(feature.properties.params.elev), []),
         name: this.pathName,
         description: this.pathDescription
       };

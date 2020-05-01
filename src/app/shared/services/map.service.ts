@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from 'src/app/shared/services/http.service';
 import { DataService } from './data.service';
-import { GeoService } from './geo.service';
 import * as mapboxgl from 'mapbox-gl';
 import * as globals from 'src/app/shared/globals';
 import { TsCoordinate, TsPlotPathOptions, TsLineStyle, TsFeatureCollection, TsLineString, TsFeature, TsPosition } from 'src/app/shared/interfaces';
@@ -22,7 +21,6 @@ export class MapService {
 
   constructor(
     public httpService: HttpService,
-    public geoService: GeoService,
     public dataService: DataService,
     public auth: AuthService
   ) {
@@ -107,7 +105,7 @@ export class MapService {
     this.activeLayers[pathId] = [];
 
     // used for debugging - allows points to be shown
-    // this.addPointsToGeoJson(pathAsGeoJSON);
+    // this.addPointsLayer(pathAsGeoJSON);
 
     // add the layer to the map
     this.tsMap.addLayer({
@@ -125,7 +123,8 @@ export class MapService {
       }
     });
 
-    this.addPointsLayer(pathAsGeoJSON);
+    // this is for debugging only, but dont delete cos it is useful
+    // this.addPointsLayer(pathAsGeoJSON);
 
     // plot a marker at the start and end of the route, pushing the new markers to activeLayers
     const nFeatures = pathAsGeoJSON.features.length;
@@ -305,6 +304,11 @@ export class MapService {
 
     const CIRCLE_RADIUS = 30; // desired radius of circle in metres
 
+    if (this.tsMap.getLayer('circles')) {
+      this.tsMap.removeLayer('circles');
+      this.tsMap.removeSource('circles');
+    }
+
     this.tsMap.addLayer({
       id: 'circles',
       type: 'circle',
@@ -326,7 +330,10 @@ export class MapService {
       }
     });
 
-    console.log(this.getMatchPairsGeoJson(geoJson));
+    if (this.tsMap.getLayer('matchPairs')) {
+      this.tsMap.removeLayer('matchPairs');
+      this.tsMap.removeSource('matchPairs');
+    }
 
     this.tsMap.addLayer({
       id: 'matchPairs',

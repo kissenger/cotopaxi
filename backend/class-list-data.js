@@ -25,7 +25,6 @@ class ListData  {
 
   }
 
-
 }
 
 module.exports = {

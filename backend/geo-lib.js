@@ -1,5 +1,6 @@
-const Point = require('./_Point').Point;
-const debugMsg = require('./utils').debugMsg;
+
+const Point = require('./class-point').Point;
+const debugMsg = require('./utilities').debugMsg;
 
 /**
  * function p2p

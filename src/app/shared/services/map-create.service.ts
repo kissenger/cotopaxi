@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MapService } from './map.service';
 import { HttpService } from './http.service';
-import { GeoService } from './geo.service';
 import { DataService } from './data.service';
 import { TsCoordinate, TsPlotPathOptions, TsLineStyle } from 'src/app/shared/interfaces';
 import { SpinnerService } from 'src/app/shared/services/spinner.service';
@@ -31,12 +30,11 @@ export class MapCreateService extends MapService {
 
   constructor(
     httpService: HttpService,
-    geoService: GeoService,
     dataService: DataService,
     auth: AuthService,
     private spinner: SpinnerService
   ) {
-    super(httpService, geoService, dataService, auth);
+    super(httpService, dataService, auth);
   }
 
   public getOptions() {
@@ -109,14 +107,23 @@ export class MapCreateService extends MapService {
 
     return new Promise( (resolve, reject) => {
       this.getNextPathCoords(start, end).then( (newCoords: Array<TsCoordinate>) => {
-        this.httpService.processPoints(this.history.coords().concat(newCoords), this.history.elevs()).subscribe( (result) => {
-
-          // save the incoming geoJSON, add the new set of elevations to the history and update display
+        this.httpService.getPathFromPoints(this.history.coords().concat(newCoords)).subscribe( (result) => {
           this.history.add(result.hills);
           this.removeLayerFromMap('0000');
           this.addLayerToMap(this.history.geoJson(), this.styleOptions, this.plotOptions);
           resolve();
         });
+
+
+
+        // this.httpService.processPoints(this.history.coords().concat(newCoords), this.history.elevs()).subscribe( (result) => {
+
+        //   // save the incoming geoJSON, add the new set of elevations to the history and update display
+        //   this.history.add(result.hills);
+        //   this.removeLayerFromMap('0000');
+        //   this.addLayerToMap(this.history.geoJson(), this.styleOptions, this.plotOptions);
+        //   resolve();
+        // });
 
       });
     });

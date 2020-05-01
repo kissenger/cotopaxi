@@ -5,6 +5,7 @@ import { DataService } from 'src/app/shared/services/data.service';
 import { Subscription } from 'rxjs';
 import { TsUnits, TsListArray } from 'src/app/shared/interfaces';
 import { MapCreateService } from 'src/app/shared/services/map-create.service';
+import { AuthService} from 'src/app/shared/services/auth.service';
 
 @Component({
   selector: 'app-panel-list',
@@ -14,24 +15,26 @@ import { MapCreateService } from 'src/app/shared/services/map-create.service';
 export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
   @Input() callingPage: string;
+
   private getPathsSubscription: Subscription;
   private mapUpdateSubscription: Subscription;
   private listOffset = 0;
   private boundingBox: Array<number> = [];
   private activePathsArray: Array<string> = [];
+  private limit = 9;  // number of paths to display in one go - more can be pulled if needed
 
   public listData: TsListArray = [];
   public pathId: string;
   public isEndOfList = false; // value is read in the html do dont be tempted to delete
-  public units: TsUnits = globals.units;
+  public units: TsUnits = this.auth.getUser().units;
   public numberOfRoutes: number;
   public numberOfLoadedRoutes: number;
-
 
   constructor(
     private httpService: HttpService,
     private dataService: DataService,
     private mapCreateService: MapCreateService,
+    private auth: AuthService
   ) {}
 
   ngOnInit() {
@@ -52,6 +55,10 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
     } else {
       this.updateList(true);
     }
+
+    this.dataService.unitsUpdateEmitter.subscribe( () => {
+      this.units = this.auth.getUser().units;
+    });
   }
 
 
@@ -61,7 +68,8 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
   */
   updateList(booAutoSelectPathId: boolean) {
 
-    this.getPathsSubscription = this.httpService.getPathsList('route', this.listOffset, this.boundingBox).subscribe( pathsList => {
+    this.getPathsSubscription = this.httpService.getPathsList('route', this.listOffset, this.limit, this.boundingBox)
+      .subscribe( pathsList => {
 
       if (this.callingPage === 'create') {
         // this approach is limiting - dont know what will happen when more than 9 paths are returned
@@ -109,23 +117,6 @@ export class PanelRoutesListListComponent implements OnInit, OnDestroy {
 
     // for overlaid paths, toggle highlighting on row
     if (this.callingPage === 'create') {
-      // const listItemIndex = this.listData.findIndex(el => el.pathId === idFromClick);
-      // this.listData[listItemIndex].isActive = !this.listData[listItemIndex].isActive;
-      // if (!!this.listData[listItemIndex].isActive) {
-      //   this.listData[listItemIndex].isActive = false;
-
-      // }
-      // // find the list item containing the current pathId
-      // const idIndex = this.activeListItemsArray.findIndex(el => el.pathId === idFromClick);
-      // if (idIndex >= 0) {
-      //   // found the id in the active list, so toggle it off
-      //   this.activeListItemsArray.splice(idIndex, 1);
-      // } else {
-      //   // id not found so add list item to the array
-      //   const listElement = this.listData.find(el => el.pathId === idFromClick);
-      //   this.activeListItemsArray.push(listElement);
-      // }
-
 
       if (this.activePathsArray.includes(idFromClick)) {
         this.activePathsArray.splice(this.activePathsArray.indexOf(idFromClick), 1);

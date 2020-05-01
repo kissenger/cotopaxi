@@ -1,20 +1,20 @@
-// Libraries and stuff
+// Libraries and modules
 const express = require('express');
 const app = express();
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const auth = require('./auth.js');
+const mongoose = require('mongoose');
 
-// Local functions
-const Route = require('./_Path').Route;
-const GeoJSON = require('./_GeoJson.js').GeoJSON;
-const ListData = require('./_ListData.js').ListData;
+// Local modules
+const Route = require('./class-path').Route;
+const GeoJSON = require('./class-geojson.js').GeoJSON;
+const ListData = require('./class-list-data.js').ListData;
 const readGPX = require('./gpx.js').readGPX;
 const writeGPX = require('./gpx.js').writeGPX;
-const debugMsg = require('./utils').debugMsg;
+const debugMsg = require('./utilities').debugMsg;
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
-const mongoose = require('mongoose');
 const MongoPath = require('./models/path-models');
 
 /******************************************************************

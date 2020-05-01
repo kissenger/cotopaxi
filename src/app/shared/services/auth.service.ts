@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { TsUser } from 'src/app/shared/interfaces';
+
 @Injectable()
+
 export class AuthService {
 
   constructor() {
@@ -20,7 +22,6 @@ export class AuthService {
   }
 
   setUser(user: TsUser) {
-    console.log(user);
     sessionStorage.setItem('user', JSON.stringify(user));
   }
 

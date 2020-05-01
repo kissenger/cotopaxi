@@ -47,13 +47,29 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
   }
 
 
+  /**
+   * Export a path to a .gpx file, getting the active geoJSON from the dataStore
+   */
   onExportGpxClick() {
-    const pathId = this.dataService.getFromStore('activePath', false).pathAsGeoJSON.properties.pathId;
+
+    const pathId = this.dataService.getFromStore('activePath', false).properties.pathId;
     const pathType = 'route';
+
     this.subscription = this.httpService.exportToGpx(pathType, pathId).subscribe( (fname) => {
-      // window.location.href = this.httpService.downloadFile(fname.fileName);
-      window.location.href = 'http://localhost:3000/download/' + fname.fileName;
+
+      // this was the original attempt which does not work with authentication injection, so needed a new approach
+      // window.location.href = 'http://localhost:3000/download';
+      // using the angular httpClient, authentication works, but the browser attempts to read the response rather than download it
+      // solution here is from https://stackoverflow.com/questions/52154874/angular-6-downloading-file-from-rest-api
+
+      this.httpService.downloadFile(fname.fileName).subscribe( (response) => {
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(response);
+        link.download = fname.fileName + '.gpx';
+        link.click();
+      });
     });
+
   }
 
 
@@ -96,7 +112,6 @@ export class PanelRoutesListOptionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log('destroy optinos');
     if (this.subscription) { this.subscription.unsubscribe(); }
   }
 
