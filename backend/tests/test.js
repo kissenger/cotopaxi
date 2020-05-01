@@ -5,13 +5,13 @@
  */
 
 
-var chai = require("chai");
-var expect = require('chai').expect;
-var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
+import { use } from "chai";
+import { expect } from 'chai';
+import chaiAsPromised from "chai-as-promised";
+use(chaiAsPromised);
 
-const Route = require('./_Path').Route;
-const fs = require('fs');
+import { Route } from './_Path';
+import { readFile } from 'fs';
 
 
 before( function() {
@@ -55,7 +55,7 @@ it('shoud equal 1', function () { // a hack to get the 'before' to deliver promi
 function getPath(fn) {
   // returns Path object created from gpx import stored in provided file
   return new Promise ( (res, rej) => {
-    fs.readFile(fn, (err, data) => {
+    readFile(fn, (err, data) => {
       const testObject = JSON.parse(data);
       // console.log(testObject);
       const path = new Route(testObject.nameOfPath, undefined, testObject.lngLat, testObject.elev);
@@ -67,7 +67,7 @@ function getPath(fn) {
 
 function getTests(fn) {
   return new Promise ( (res, rej) => {
-    fs.readFile(fn, (err, data) => {
+    readFile(fn, (err, data) => {
       res(JSON.parse(data));
     });
   })

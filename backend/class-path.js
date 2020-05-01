@@ -1,9 +1,9 @@
 
 // Modules
-const PointsList = require('./class-point.js').PointsList;
-const debugMsg = require('./utilities').debugMsg;
-const jael = require('jael');
-const globals = require('./globals');
+import { PointsList } from './class-point.js';
+import { debugMsg } from './utilities.js';
+import jael from 'jael';
+import * as globals from './globals.js';
 
 // Path to elevation TIFFs
 jael.setPath(globals.PATH_TO_GEOTIFFS);
@@ -139,7 +139,7 @@ class Route extends Path {
   }
 }
 
-module.exports = {
+export {
   Path, Track, Route
 };
 

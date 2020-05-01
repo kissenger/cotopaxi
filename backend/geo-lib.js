@@ -1,6 +1,6 @@
 
-const Point = require('./class-point').Point;
-const debugMsg = require('./utilities').debugMsg;
+import { Point } from './class-point.js';
+import { debugMsg } from './utilities.js';
 
 /**
  * function p2p
@@ -222,7 +222,7 @@ function simplify(points, TOLERANCE) {
 
 }
 
-module.exports = {
+export default {
   p2p,
   p2l,
   bearing,

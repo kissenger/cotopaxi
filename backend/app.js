@@ -1,27 +1,27 @@
 // Libraries and modules
-const express = require('express');
-const app = express();
-const multer = require('multer');
-const bodyParser = require('body-parser');
-const auth = require('./auth.js');
-const mongoose = require('mongoose');
+import express from 'express';
+import multer from 'multer';
+import bodyParser from 'body-parser';
+import { authRoute, verifyToken } from './auth.js';
+import mongoose from 'mongoose';
 
 // Local modules
-const Route = require('./class-path').Route;
-const GeoJSON = require('./class-geojson.js').GeoJSON;
-const ListData = require('./class-list-data.js').ListData;
-const readGPX = require('./gpx.js').readGPX;
-const writeGPX = require('./gpx.js').writeGPX;
-const debugMsg = require('./utilities').debugMsg;
+import { Route } from './class-path.js';
+import { GeoJSON } from './class-geojson.js';
+import { readGPX } from './gpx.js';
+import { writeGPX } from './gpx.js';
+import { debugMsg } from './utilities.js';
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
-const MongoPath = require('./models/path-models');
+import { Routes, Tracks } from './models/path-models.js';
 
 /******************************************************************
  *
  * SETUP
  *
  ******************************************************************/
+
+const app = express();
 
 app.use( (req, res, next) => {
   // inject a header into the response
@@ -33,7 +33,7 @@ app.use( (req, res, next) => {
 });
 
 app.use(bodyParser.json());
-app.use(auth.authRoute);
+app.use(authRoute);
 
 // local connection
 // mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb',
@@ -64,7 +64,7 @@ const upload = multer({
  * import a route from a gpx file
  */
 
-  app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
+  app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) => {
 
     debugMsg('import-route');
 
@@ -90,7 +90,7 @@ const upload = multer({
  * changing isSaved flag to true; id of path is provided
  *****************************************************************/
 
-app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
+app.post('/save-imported-path/', verifyToken, (req, res) => {
 
   debugMsg('save-imported-path');
 
@@ -116,7 +116,7 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
  * Save a user-created route to database; geoJSON is supplied in POST body
  *****************************************************************/
 
-app.post('/save-created-route/', auth.verifyToken, (req, res) => {
+app.post('/save-created-route/', verifyToken, (req, res) => {
 
   debugMsg('save-created-route' );
 
@@ -137,7 +137,7 @@ app.post('/save-created-route/', auth.verifyToken, (req, res) => {
  *  id of required path is supplied
  *****************************************************************/
 
-app.get('/get-path-by-id/:type/:id', auth.verifyToken, (req, res) => {
+app.get('/get-path-by-id/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('get-path-by-id');
 
@@ -162,7 +162,7 @@ app.get('/get-path-by-id/:type/:id', auth.verifyToken, (req, res) => {
  * Flush database of all unsaved entries
  * note we are only flushing routes at the moment
  *****************************************************************/
-app.post('/flush/', auth.verifyToken, (req, res) => {
+app.post('/flush/', verifyToken, (req, res) => {
 
   debugMsg('flush db');
 
@@ -185,7 +185,7 @@ app.post('/flush/', auth.verifyToken, (req, res) => {
  * offset is used by list to request chunks of x paths at a time
  *****************************************************************/
 
-app.get('/get-paths-list/:pathType/:offset/:limit', auth.verifyToken, (req, res) => {
+app.get('/get-paths-list/:pathType/:offset/:limit', verifyToken, (req, res) => {
 
   debugMsg('get-paths-list');
 
@@ -204,7 +204,7 @@ app.get('/get-paths-list/:pathType/:offset/:limit', auth.verifyToken, (req, res)
     .then( count => {
       mongoModel(req.params.pathType)
         .find(condition, filter).sort(sort).limit(parseInt(req.params.limit)).skip(req.params.limit*(req.params.offset))
-        .then(documents => res.status(201).json(new ListData(documents, count)))
+        .then(documents => res.status(201).json( getListData(documents, count) ))
       })
     .catch( (err) => {
       res.status(500).json(err.toString());
@@ -219,7 +219,7 @@ app.get('/get-paths-list/:pathType/:offset/:limit', auth.verifyToken, (req, res)
  * and delete will occur at the next flush
  *****************************************************************/
 
-app.delete('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
+app.delete('/delete-path/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('delete-path');
 
@@ -246,7 +246,7 @@ app.delete('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
  *****************************************************************/
 
  // Step 1, write the data to gpx file
-app.get('/write-path-to-gpx/:type/:id', auth.verifyToken, (req, res) => {
+app.get('/write-path-to-gpx/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('Write path to gpx');
 
@@ -273,7 +273,7 @@ app.get('/write-path-to-gpx/:type/:id', auth.verifyToken, (req, res) => {
 })
 
 // Step 2, download the file to browser
-app.get('/download-file/:fname', auth.verifyToken, (req, res) => {
+app.get('/download-file/:fname', verifyToken, (req, res) => {
 
   debugMsg('Download file from server');
 
@@ -311,7 +311,7 @@ app.get('/download-file/:fname', auth.verifyToken, (req, res) => {
  * creates a Path object in order to get elevations and statistics,
  * and returns it back to the front end
  *****************************************************************/
-app.post('/get-path-from-points/', auth.verifyToken, (req, res) => {
+app.post('/get-path-from-points/', verifyToken, (req, res) => {
 
   debugMsg('get-path-from-points')
 
@@ -343,8 +343,8 @@ app.post('/get-path-from-points/', auth.verifyToken, (req, res) => {
 function mongoModel(pathType) {
   switch(pathType) {
     case 'challenge': return MongoChallenges.Challenges;
-    case 'route': return MongoPath.Routes;
-    case 'track': return MongoPath.Tracks;
+    case 'route': return Routes;
+    case 'track': return Tracks;
     case 'match': return MongoMatch.Match;
   }
 }
@@ -380,5 +380,28 @@ function bbox2Polygon(bbox) {
 }
 
 
-module.exports = app;
+ /**
+  * Returns an object expected by the front end when a list query is made
+  * Called by get-paths-list()
+  */
+function getListData() {
+
+  return docs.map( d => ({
+    name: d.info.name,
+    stats: d.stats,
+    category: d.info.category,
+    direction: d.info.direction,
+    pathType: d.info.pathType,
+    startTime: d.startTime,
+    creationDate: d.creationDate,
+    isElevations: d.info.isElevations,
+    isLong: d.info.isLong,
+    pathId: d._id,
+    count: c
+    })
+  );
+
+}
+
+export default app;
 

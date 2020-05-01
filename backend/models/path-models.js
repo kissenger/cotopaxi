@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const pathSchema = mongoose.Schema({
 
@@ -99,11 +99,9 @@ pathSchema.index({ userId: 1, creationDate: 1});
 pathSchema.index({ userId: 1, startTime: 1});
 
 //const Challenges = mongoose.model('challenges', pathSchema);
-const Tracks = mongoose.model('tracks', pathSchema);
-const Routes = mongoose.model('routes', pathSchema);
+export const Tracks = mongoose.model('tracks', pathSchema);
+export const Routes = mongoose.model('routes', pathSchema);
 
 
-module.exports = {
-  Tracks: Tracks,
-  Routes: Routes
-};
+// export const Tracks = Tracks;
+// export const Routes = Routes;

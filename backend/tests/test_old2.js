@@ -1,12 +1,12 @@
 // const assert = require('assert');
 
-var chai = require("chai");
-var expect = require('chai').expect;
-var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
+import { use } from "chai";
+import { expect } from 'chai';
+import chaiAsPromised from "chai-as-promised";
+use(chaiAsPromised);
 
-const Route = require('./_Path').Route;
-const fs = require('fs');
+import { Route } from './_Path';
+import { readFile } from 'fs';
 
 // before( function() {
 //   return getTests('./defTest.js').then( function(retArr) {
@@ -58,7 +58,7 @@ getTests('./test-data/_defTest.js').then( function(testArr) {
 
 function getTests(fn) {
   return new Promise ( (res, rej) => {
-    fs.readFile(fn, (err, data) => {
+    readFile(fn, (err, data) => {
       res(JSON.parse(data));
     });
   })
@@ -67,7 +67,7 @@ function getTests(fn) {
 function getPath(fName) {
 
   return new Promise ( (res, rej) => {
-    fs.readFile(fName, (err, data) => {
+    readFile(fName, (err, data) => {
       const testObject = JSON.parse(data);
 
       const Path = new Route(testObject.nameOfPath, undefined, testObject.lngLat, testObject.elev);

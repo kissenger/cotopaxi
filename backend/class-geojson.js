@@ -1,6 +1,6 @@
 
 // Libraries and modules
-const debugMsg = require('./utilities').debugMsg;
+import { debugMsg } from './utilities.js';
 
 // Module globals
 const UP_COLOUR = '#FF0000';
@@ -144,4 +144,4 @@ class GeoJSON {
 
 }
 
-module.exports = {GeoJSON}
+export {GeoJSON}

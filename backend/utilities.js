@@ -1,5 +1,6 @@
 
-const readline = require('readline');
+import { clearLine, cursorTo } from 'readline';
+import * as globals from './globals.js';
 // const progressBar = require('./utils.js').progressBar;
 
 /**
@@ -7,7 +8,7 @@ const readline = require('readline');
  * @param {*} msgString debug string to display
  */
 function debugMsg(msgString) {
-  if (DEBUG) {
+  if (globals.DEBUG) {
     console.log(timeStamp() + ' >> ' + msgString);
   }
 }
@@ -89,8 +90,8 @@ class ProgressBar{
     const dotStr   = new Array(nDots+1).join(":");
     const spaceStr = new Array(nSpaces+1).join(" ");
 
-    readline.clearLine(process.stdout, 0)
-    readline.cursorTo(process.stdout, 0, null)
+    clearLine(process.stdout, 0)
+    cursorTo(process.stdout, 0, null)
     process.stdout.write("|" + dotStr + spaceStr + "|");
   }
 
@@ -116,7 +117,7 @@ function timeStamp() {
 
 }
 
-module.exports = {
+export {
   getRGB,
   padInt,
   getContourPalette,
@@ -124,5 +125,4 @@ module.exports = {
   ProgressBar,
   timeStamp,
   debugMsg
-
 };

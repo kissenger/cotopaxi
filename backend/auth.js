@@ -1,12 +1,12 @@
 // Libraries and other modules
-const express = require('express');
-const authRoute = express.Router();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const debugMsg = require('./utilities').debugMsg;
-const MongoUsers = require('./models/user-models');
+import express from 'express';
+import jsonwebtoken from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import { debugMsg } from './utilities.js';
+import { Users } from './models/user-models.js';
 
 // Module globals
+const authRoute = express.Router();
 const KEY = 'zjuAa4ItuPrL|woJk^zXn#c2wwt6&,<KS3k!9"<CbiA?E}Ps&WmWy/+Xhu+zZ?y';
 
 /**
@@ -25,7 +25,7 @@ function verifyToken(req, res, next) {
     return res.status(401).send('Unauthorised request');
   }
 
-  const payload = jwt.verify(token, KEY);
+  const payload = jsonwebtoken.verify(token, KEY);
   if ( !payload ) {
     return res.status(401).send('Unauthorised request');
   }
@@ -41,7 +41,7 @@ authRoute.post('/update-user-data', verifyToken, (req, res) => {
   debugMsg('updateUserData');
 
   delete req.body._id;
-  MongoUsers.Users
+  Users
     .updateOne( {_id: req.userId}, {$set: req.body}, {upsert: false, writeConcern: {j: true}})
     .then( (doc) => {
       res.status(201).json( {success: 'success'} );
@@ -59,7 +59,7 @@ authRoute.post('/register', (req, res) => {
   const saltRounds = 10;
 
   // confirm that email address does not exist in db
-  MongoUsers.Users
+  Users
     .findOne( {email: req.body.email}, {} )
     .then( (user) => {
 
@@ -70,8 +70,8 @@ authRoute.post('/register', (req, res) => {
         // email is new
         bcrypt.hash(req.body.password, saltRounds).then( (hash) => {
 
-          MongoUsers.Users.create({...req.body, hash}).then( (regUser) => {
-            const token = jwt.sign( {subject: regUser._id}, KEY);
+          Users.create({...req.body, hash}).then( (regUser) => {
+            const token = jsonwebtoken.sign( {subject: regUser._id}, KEY);
             res.status(200).send({token, user: regUser});
           }).catch( (err) => {
             throw err.toString();
@@ -95,7 +95,7 @@ authRoute.post('/login', (req, res) => {
   debugMsg('login user');
 
   // check that user exists and return data in variable user
-  MongoUsers.Users
+  Users
     .findOne( {userName: req.body.userName}, {} )
     .then( (user) => {
 
@@ -107,7 +107,7 @@ authRoute.post('/login', (req, res) => {
       bcrypt.compare(req.body.password, user.hash).then( (result) => {
 
         if (result) {
-          const token = jwt.sign({ subject: user._id }, KEY);
+          const token = jsonwebtoken.sign({ subject: user._id }, KEY);
           res.status(200).send({token, user});
         } else {
           throw 'Password did not match';
@@ -126,4 +126,4 @@ authRoute.post('/login', (req, res) => {
 });
 
 
-module.exports = { authRoute, verifyToken };
+export { authRoute, verifyToken };

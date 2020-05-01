@@ -1,6 +1,6 @@
-const fs = require('fs');
-const DEBUG = require('./globals').DEBUG;
-const debugMsg = require('./utilities').debugMsg;
+import { writeFile, createWriteStream } from 'fs';
+import * as globals from './globals.js';
+import { debugMsg } from './utilities.js';
 
  /**
   * readGPX(data)
@@ -133,9 +133,9 @@ function readGPX(data) {
   };
 
   // print to console and dump to file to support testing/debugging
-  if (DEBUG) {
+  if (globals.DEBUG) {
     debugMsg('readGPX() finished!');
-    fs.writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
+    writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
   };
 
   return returnObject;
@@ -151,26 +151,22 @@ function readGPX(data) {
  */
 
 function writeGPX(path){
+
   debugMsg('writeGPX()');
 
   return new Promise( (resolve, reject) => {
 
-    const creator = 'Aconcagua Beta https://kissenger.github.io/cotopaxi/';
+    const creator = 'Trailscape https://kissenger.github.io/trailscape/';
     const xmlns = 'http://www.topografix.com/GPX/1/0';
 
-
     const fileName = path.name !== "" ? path.name : path.category + ' ' + path.pathType;
-    const file = fs.createWriteStream('../' + fileName + '.gpx');
+    const file = createWriteStream('../' + fileName + '.gpx');
     const s = '   ';
     const eol = '\r\n'
-    // let i = 0;
 
     file.on('finish', () => { resolve(true) });
     file.on('error', reject);
     file.on('open', () => {
-
-      // file.on('finish', () => { resolve(true) });
-      // file.on('error', reject);
 
       file.write(s.repeat(0) + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + eol);
       file.write(s.repeat(0) + "<gpx version=\"1.1\" creator=\"" + creator + "\" xmlns=\"" + xmlns + "\">" + eol);
@@ -181,14 +177,12 @@ function writeGPX(path){
 
         if ( path.elevs[i] ) {
           // elevation data exists, use conventional tag
-
           file.write(s.repeat(2) + "<rtept lat=\"" + lngLat[1] + "\" lon=\"" + lngLat[0] + "\">" + eol);
           file.write(s.repeat(3) + "<ele>" + path.elevs[i] + "</ele>" + eol);
           file.write(s.repeat(2) + "</rtept>" + eol);
 
         } else {
           // only lat/lon exists, use self-closing tag
-
           file.write(s.repeat(2) + "<rtept lat=\"" + lngLat[1] + "\" lon=\"" + lngLat[0] + "\" />" + eol);
 
         }
@@ -209,147 +203,33 @@ function writeGPX(path){
 
 
 /**
- * export geoJson to file
+ * export geoJson to file - for debugging
  * @param {Path} path
  */
-function exportGeoJSON(geoJSON) {
+// function exportGeoJSON(geoJSON) {
 
-  const fs = require('fs');
+//   const fs = require('fs');
 
-  JSON.stringify(geoJSON)
-  fs.writeFile('../myjsonfile.json', JSON.stringify(geoJSON), 'utf8', (err) => {console.log(err)});
+//   JSON.stringify(geoJSON)
+//   fs.writeFile('../myjsonfile.json', JSON.stringify(geoJSON), 'utf8', (err) => {console.log(err)});
 
-}
+// }
 
 
 /**
- * export data to CSV
+ * export data to CSV - For debugging
  * @param {Path} path
  */
-function exportCSV(path) {
+// function exportCSV(path) {
 
-  const fs = require('fs');
-  let file = fs.createWriteStream("../node.out");
+//   const fs = require('fs');
+//   let file = fs.createWriteStream("../node.out");
 
-  path.points.forEach ( point => {
-    file.write([point.lng, point.lat, point.time, point.elev].join(',') + '\n')
-  })
+//   path.points.forEach ( point => {
+//     file.write([point.lng, point.lat, point.time, point.elev].join(',') + '\n')
+//   })
 
-}
-
-/**
- * parse returned data from OSM query
- * @param {OSM data} data
- * @param {Array} bbox
- * returns array of lngLats describing each path
- */
-function parseOSM(data, bbox) {
-
-  const MAX_LOOPS = 1000000;
-  let beg = 0;
-  let end;
-  let points = [];
-  const chunks = [];
-  const lengthOfData = data.length;
-
-  /**
-   * Loop through each line of data sequentially
-   */
-
-  for (let i = 0; i < MAX_LOOPS; i++) {
-
-    beg = end+2;                              // move start point to after line break
-    end = data.indexOf("\n",beg);       // find next end of line
-    var lineData = data.slice(beg, end);
-
-    // detect end of file
-    if ( end > lengthOfData - 5 ) {
-      break;
-    }
-
-    // gather list of nodes
-    if (lineData.indexOf("node") !== -1) {
-
-      // id
-      a = lineData.indexOf("id=");
-      b = lineData.indexOf(" ", a);
-
-      if ( a !== -1 && b !== -1 ) {
-        id = parseFloat(lineData.slice(a, b).match(/[-0123456789.]/g).join(""));
-      }
-
-      // lat and long
-      a = lineData.indexOf("lat=");
-      b = lineData.indexOf("lon=");
-
-      if ( a !== -1 && b !== -1 ) {
-        if ( b > a ) {
-          latValue = parseFloat(lineData.slice(a, b).match(/[-0123456789.]/g).join(""));
-          lngValue = parseFloat(lineData.slice(b, end).match(/[-0123456789.]/g).join(""));
-        } else {
-          lngValue = parseFloat(lineData.slice(b, a).match(/[-0123456789.]/g).join(""));
-          latValue = parseFloat(lineData.slice(a, end).match(/[-0123456789.]/g).join(""));
-        }
-        if (lngValue > bbox[0] && lngValue < bbox[2] && latValue > bbox[1] && latValue < bbox[3]) {
-          points.push({id: id, lngLat: [lngValue, latValue]});
-        }
-      }
+// }
 
 
-    }
-
-
-    // get nodes associated with roads
-    if (lineData.indexOf("<way") !== -1) {
-
-      const tempids = [];
-      for (let j=0; j < 1000; j++) {
-
-        if (lineData.indexOf("</way") !== -1) {
-          break;
-        }
-
-        if (lineData.indexOf("<nd") !== -1) {
-          ref = parseInt(lineData.match(/[-0123456789.]/g).join(""));
-          tempids.push(ref);
-        }
-
-        // only catch data if its tagged as a highway
-        if ( (lineData.indexOf("highway") !== -1 && lineData.indexOf("footway") !== -1 ) ||
-            lineData.indexOf('bridleway') !== -1 ||
-            lineData.indexOf('towpath') !== -1) {
-          chunks.push(tempids);
-        }
-
-        beg = end+2;                              // move start point to after line break
-        end = data.indexOf("\n",beg);             // find next end of line
-        lineData = data.slice(beg, end);
-
-      }
-
-    }
-  }
-
-  returnArray = [];
-  chunks.forEach( (chunk) => {
-    const temp = [];
-    chunk.forEach( (id) => {
-      if (chunk.length > 1) {
-        for (let i = 0; i < points.length; i++) {
-          if (id === points[i].id) {
-            temp.push(points[i].lngLat)
-          }
-        }
-      }
-    })
-    returnArray.push(temp);
-  })
-
-
-  return returnArray;
-
-}
-
-
-
-module.exports = { readGPX, writeGPX, parseOSM, exportGeoJSON };
+export { readGPX, writeGPX };

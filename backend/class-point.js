@@ -1,17 +1,7 @@
 
-const debugMsg = require('./utilities').debugMsg;
-const simplify = require('./geo-lib.js').simplify;
-const boundingBox = require('./geo-lib').boundingBox;
-const p2p = require('./geo-lib').p2p;
-const bearing = require('./geo-lib').bearing;
-
-const SIMPLIFY_TOLERANCE = require('./globals').SIMPLIFY_TOLERANCE;
-const LONG_PATH_THRESHOLD = require('./globals').LONG_PATH_THRESHOLD;
-const MATCH_DISTANCE = require('./globals').MATCH_DISTANCE;
-const MATCH_BUFFER = require('./globals').MATCH_BUFFER;
-const MOVING_AVERAGE_PERIOD = require('./globals').MOVING_AVERAGE_PERIOD;
-const ASCENT_THRESH = require('./globals').ASCENT_THRESH;
-const HILL_THRESH = require('./globals').HILL_THRESH;
+import { debugMsg } from './utilities.js';
+import * as geoLib from './geo-lib.js';
+import * as globals from './globals.js';
 
 /**
  * Point class is used to associate point data together, so the coordinates, elevation etc
@@ -65,7 +55,7 @@ class PointsList {
     // do a prelim simplification loop - this has a number of purposes
     // 1) It guards against duplicate points, which throw off grad calc
     // 2) It goes some way to harminising distance between points for paths from different sources
-    const simple = simplify(this.points, 2);
+    const simple = geoLib.simplify(this.points, 2);
     this.points = simple.points;
     this.simplificationRatio = simple.ratio;
     this.isLong = this.points.length > LONG_PATH_THRESHOLD;
@@ -123,7 +113,7 @@ class PointsList {
 
     // add in other stuff we do need
     stats = {
-      bbox: boundingBox(this.points),
+      bbox: geoLib.boundingBox(this.points),
       nPoints: this.nPoints,
       simplificationRatio: this.simplificationRatio,
       ...stats
@@ -191,7 +181,7 @@ class PointsList {
 
     debugMsg('PointsList.calcDistanceData()');
 
-    const dDistance = this.points.map( (p, i, pts) => i === 0 ? 0 : p2p(p, pts[i-1]) );
+    const dDistance = this.points.map( (p, i, pts) => i === 0 ? 0 : geoLib.p2p(p, pts[i-1]) );
     const cumDistance = dDistance.map( (p, i) => dDistance.slice(0, i + 1).reduce( (sum, d) => sum + d, 0) );
 
     return{
@@ -246,7 +236,7 @@ class PointsList {
 
       } else {
         // change of direction, check threshold and increment if needed
-        if (Math.abs(dSum) > ASCENT_THRESH) {
+        if (Math.abs(dSum) > globals.ASCENT_THRESH) {
           if (dSum > 0) { ascent += dSum; }
           else { descent += dSum; }
         }
@@ -260,7 +250,7 @@ class PointsList {
         hillSum += de;
       } else {
         // direction change, check threshold and store hill if needed
-        if (Math.abs(hillSum) > HILL_THRESH) {
+        if (Math.abs(hillSum) > globals.HILL_THRESH) {
           hillsArr.push([p0 - 1, i - 1]);
         }
         hillSum = de;
@@ -270,11 +260,11 @@ class PointsList {
     } // close for loop
 
     // check we didnt end on a hill
-    if (Math.abs(dSum) > ASCENT_THRESH) {
+    if (Math.abs(dSum) > globals.ASCENT_THRESH) {
       if (dSum > 0) { ascent += dSum; }
       else { descent += dSum; }
     }
-    if (Math.abs(hillSum) > HILL_THRESH) {
+    if (Math.abs(hillSum) > globals.HILL_THRESH) {
       hillsArr.push([p0 - 1, this.nPoints - 1]);
     }
 
@@ -312,16 +302,16 @@ class PointsList {
 
     const mp = [];
     for ( let i = 0; i < this.nPoints; i++ ) {  // look at each point
-      for ( let j = i + MATCH_BUFFER; j < this.nPoints; j++ ) {  // look at each point ahead of it
+      for ( let j = i + globals.MATCH_BUFFER; j < this.nPoints; j++ ) {  // look at each point ahead of it
 
-        const dist = p2p(this.points[i], this.points[j]);  // get distance btwn points i and j
-        if ( dist < MATCH_DISTANCE ) {
+        const dist = geoLib.p2p(this.points[i], this.points[j]);  // get distance btwn points i and j
+        if ( dist < globals.MATCH_DISTANCE ) {
           mp.push([i, j]);
           break;
 
         // if dist is a high number, skip some points as we know the next point is not going to be a match also
         // number of points to skip is the calculated distance over the threshold
-        } else if ( dist > MATCH_DISTANCE * 10 ) {
+        } else if ( dist > globals.MATCH_DISTANCE * 10 ) {
           // j += Math.round(0.8*dist / MATCH_DISTANCE);
         }
       }
@@ -351,17 +341,14 @@ class PointsList {
   getCategory() {
     debugMsg('PointsList.getCategory()');
 
-    const START_AT_END_THRESH = 250;  // distance in metres, if start and end points are this close then consider as matching
-    const PC_THRESH_UPP = 90;        // if % shared points > PC_THRESH_UPP then consider as 'out and back' route
-    const PC_THRESH_LOW = 10;        // if % shared points < PC_THRESH_LOW the consider as 'one way' or 'circular' depending on whether start is returned toKs
 
     const pcShared = this.matchedPoints.length / this.nPoints * 100 * 2;  //(x2 becasue only a max 1/2 of points can be matched)
-    const isStartAtEnd = p2p(this.points[0], this.points[this.nPoints - 1]) < (START_AT_END_THRESH);
+    const isStartAtEnd = geoLib.p2p(this.points[0], this.points[this.nPoints - 1]) < (globals.START_AT_END_THRESH);
 
-    if ( pcShared > PC_THRESH_UPP ) { return 'Out and back'; }
-    if ( isStartAtEnd && pcShared < PC_THRESH_LOW ) { return 'Circular'; }
-    if ( !isStartAtEnd && pcShared > PC_THRESH_UPP ) { return 'Out and back'; }
-    if ( !isStartAtEnd && pcShared < PC_THRESH_LOW ) { return 'One way'; }
+    if ( pcShared > globals.PC_THRESH_UPP ) { return 'Out and back'; }
+    if ( isStartAtEnd && pcShared < globals.PC_THRESH_LOW ) { return 'Circular'; }
+    if ( !isStartAtEnd && pcShared > globals.PC_THRESH_UPP ) { return 'Out and back'; }
+    if ( !isStartAtEnd && pcShared < globals.PC_THRESH_LOW ) { return 'One way'; }
 
     // if nothing else fits then call it a hybrid
     return 'None';
@@ -391,7 +378,7 @@ class PointsList {
 
       for ( let i = 1; i < this.points.length; i += n ) {
 
-        const thisBrg = bearing(this.points[i-1], this.points[i]);
+        const thisBrg = geoLib.bearing(this.points[i-1], this.points[i]);
         if (i !== 1) {
           const deltaBrg = thisBrg - lastBrg;
           if (Math.abs(deltaBrg) < Math.PI) {    // ignore point if delta is > 180deg (assume moved across 0degs)
@@ -409,7 +396,7 @@ class PointsList {
 
     } else if ( cat === 'One way' ) {
 
-      const thisBrg = bearing(this.points[0], this.points[this.points.length - 1]);
+      const thisBrg = geoLib.bearing(this.points[0], this.points[this.points.length - 1]);
 
       if (thisBrg > 5.890 || thisBrg <= 0.393) { return 'South to North'; }
       if (thisBrg > 0.393 && thisBrg <= 1.178) { return 'SW to NE'; }
@@ -443,10 +430,10 @@ function movingAverage(array, period) {
   //TODO proper error handling
   if (period % 2 === 0) return 'period should be odd';
 
-  const SHIFT = (period - 1) / 2;
+  const shift = (period - 1) / 2;
   const movingAverage = array.map( (p, i, arr) => {
-    const low = Math.max(i - SHIFT, 0);
-    const upp = Math.min(i + SHIFT + 1, array.length);
+    const low = Math.max(i - shift, 0);
+    const upp = Math.min(i + shift + 1, array.length);
     return arr.slice(low, upp).reduce((a,b) => a + b, 0) / (upp - low);
   })
 
@@ -455,7 +442,7 @@ function movingAverage(array, period) {
 }
 
 
-module.exports = {
+export {
   Point,
   PointsList
 }
