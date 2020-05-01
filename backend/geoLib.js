@@ -1,24 +1,5 @@
 const Point = require('./_Point').Point;
-const timeStamp = require('./utils').timeStamp;
-const DEBUG = false;
-// const elevationAPIQuery = require('./http').elevationAPIQuery;
-
-  /**
-   * Get elevation data from elevations api https://elevation-api.io/
-   * TODO - the data is publically available see - work out how to query it locally to save paying
-   * https://lpdaac.usgs.gov/products/astgtmv003/
-   * https://elevation-api.io/acknowledgements
-   * @param coords as geojeon long/lats
-   * Note that api required list of lat/lng so need to swap the values around
-   * maximum query length is 250 points, but no limit on no requests per second
-   * So chunks the data into arrays of 250 points max length and sends each with a promise
-   * loop, and returns when the last promise is resolved.
-   * TODO - pretty sure this can be neatened up...
-   */
-
-
-
-
+const debugMsg = require('./utils').debugMsg;
 
 /**
  * function p2p
@@ -38,12 +19,12 @@ const DEBUG = false;
  */
 function p2p(p1, p2) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
-    console.log("Error from p2p: arguments should be of Point class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
+  //   console.log("Error from p2p: arguments should be of Point class");
+  //   return 0;
+  // }
 
-  const R = 6378.137;     // radius of earth
+  const R = 6378.137;     // radius of earth in km
 
   const lat1 = degs2rads(p1.lat);
   const lat2 = degs2rads(p2.lat);
@@ -77,10 +58,10 @@ function degs2rads(degs) {
 
 function p2l(p1, p2, p3) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) || !(p3 instanceof Point)) {
-    console.log("Error from p2l: arguments should be of Points class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) || !(p3 instanceof Point)) {
+  //   console.log("Error from p2l: arguments should be of Points class");
+  //   return 0;
+  // }
 
   const d13 = p2p(p1, p3) / 1000.0;
   const brg12 = bearing(p1, p2);
@@ -102,10 +83,10 @@ function p2l(p1, p2, p3) {
  */
 function bearing(p1, p2) {
 
-  if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
-    console.log("Error from bearing: arguments should be of Points class");
-    return 0;
-  }
+  // if ( !(p1 instanceof Point) || !(p2 instanceof Point) ) {
+  //   console.log("Error from bearing: arguments should be of Points class");
+  //   return 0;
+  // }
 
   const lat1 = degs2rads(p1.lat);
   const lat2 = degs2rads(p2.lat);
@@ -118,22 +99,6 @@ function bearing(p1, p2) {
 	return Math.atan2(y, x)
 
 }
-
-
-// /**
-//  * Returns bounding box in the form [minLng, minLat, maxLng, maxLat]
-//  * @param {*} lngLatArray
-//  */
-// function boundingBox(lngLatArray) {
-//   const bbox = [ 180, 90, -180, -90 ];
-//   for (let i = 0, n = lngLatArray.length; i < n; i++) {
-//     bbox[0] = lngLatArray[i][0] < bbox[0] ? lngLatArray[i][0] : bbox[0];
-//     bbox[1] = lngLatArray[i][1] < bbox[1] ? lngLatArray[i][1] : bbox[1];
-//     bbox[2] = lngLatArray[i][0] > bbox[2] ? lngLatArray[i][0] : bbox[2];
-//     bbox[3] = lngLatArray[i][1] > bbox[3] ? lngLatArray[i][1] : bbox[3];
-//   };
-//   return bbox;
-// }
 
 /**
  * Returns bounding box object
@@ -158,20 +123,7 @@ function boundingBox(pointsArray) {
 
 }
 
-// /**
-//  * Returns an outer bounding box for a given array of inner bounding boxes
-//  * @param {Array<number>} arrayOfBboxes
-//  */
-// function outerBoundingBox(arrayOfBboxes) {
-//   let outerBbox = [ 180, 90, -180, -90 ];
-//   arrayOfBboxes.forEach( (x) => {
-//     outerBbox[0] = x[0] < outerBbox[0] ? x[0] : outerBbox[0];
-//     outerBbox[1] = x[1] < outerBbox[1] ? x[1] : outerBbox[1];
-//     outerBbox[2] = x[2] > outerBbox[2] ? x[2] : outerBbox[2];
-//     outerBbox[3] = x[3] > outerBbox[3] ? x[3] : outerBbox[3];
-//   });
-//   return outerBbox;
-// }
+
 /**
  * Returns an outer bounding box for a given array of inner bounding boxes
  * @param {Array<number>} arrayOfBboxes
@@ -196,36 +148,22 @@ function outerBoundingBox(arrayOfBboxes) {
 }
 
 
-// /**
-//  * Calculates distance in metres covered by path
-//  * @param {Array<number>} lngLats array containing [lng, lat] coordinates
-//  */
-// function pathDistance(lngLats) {
-
-//   let distance = 0;
-//   let lastPoint, thisPoint;
-
-//   for (let i = 0, n = lngLats.length; i < n; i++) {
-//     thisPoint = new Point([lngLats[i]]);
-//     if (i > 0) distance += p2p(thisPoint, lastPoint);
-//     lastPoint = thisPoint;
-//   }
-
-//   return distance;
-// }
-
 
 /**
  * Calculates distance in metres covered by path
- * @param {Array<Point>} points array of Points
+ * @param {Array<Point>} pts array of Points
  */
-function pathDistance(points) {
+function pathDistance(pts) {
 
-  let distance = 0;
-  for (let i = 0, n = points.length; i < n; i++) {
-    if (i > 0) distance += p2p(points[i-1], points[i]);
-  }
-  return distance;
+  return pts.reduce( (cumd, _, i) => i === 0 ? 0 : cumd + ptp(pts[i] , pts[i-1]), 0);
+
+  // re-written but not tested, old code commented
+
+  // let distance = 0;
+  // for (let i = 0, n = points.length; i < n; i++) {
+  //   if (i > 0) distance += p2p(points[i-1], points[i]);
+  // }
+  // return distance;
 
 }
 
@@ -248,16 +186,15 @@ function isPointInBBox(point, bbox) {
  * function simplifyPath
  * simplify path using perpendicular distance method
  * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.5882&rep=rep1&type=pdf
+ * Note that supplied points array is not modified, a new array is returned
  * @param {*} points array of Point instances defining the path to be simplified
  */
-function simplify(points, tolerance) {
+function simplify(points, TOLERANCE) {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> Simplify Path '); }
-
-  // const TOLERANCE = 0;     // tolerance value in metres; the higher the value to greater the simplification
-  const origLength = points.length;
+  debugMsg('simplify path');
 
   // j is an array of indexes - the index of removed points are removed from this array
+  const startLength = points.length;
   let j = Array.from(points, (x, i) => i)
 
   // Repeat loop until no nodes are deleted
@@ -268,7 +205,7 @@ function simplify(points, tolerance) {
     flag = false;   // if remains false then simplification is complete; loop will break
     while ( i < ( j.length - 2 ) ) {
       const pd = p2l( points[j[i]], points[j[i+2]], points[j[i+1]] );
-      if ( Math.abs(pd) < tolerance ) {
+      if ( Math.abs(pd) < TOLERANCE ) {
         j.splice(i+1, 1); // delete a point
         flag = true;
       }
@@ -277,31 +214,12 @@ function simplify(points, tolerance) {
   }
 
   // show console how succesful weve been
-  if (DEBUG) { console.log(timeStamp() + ' >> Simplified ' + origLength + '-->' + j.length + ' points(' +
-              ((j.length/origLength)*100.0).toFixed(1) + '%)'); }
+  const ratio =  (j.length/startLength).toFixed(3);
+  debugMsg('simplified ' + startLength + '-->' + j.length + ' points, ratio=' + ratio);
 
-  return j.map( x => points[x] );
+  return {points: j.map( x => points[x]), ratio};
 
 }
-
-
-
-// /**
-//  * Objectifies a point to ensure correct format for library methods
-//  * @param {Array<number>} array
-//  */
-// class Point {
-
-//   constructor(array) {
-//     this.lng = array[0][0];
-//     this.lat = array[0][1];
-//     if ( typeof array[1] !== 'undefined' ) this.elev = array[1];
-//     if ( typeof array[2] !== 'undefined' ) this.time = array[2];
-//     if ( typeof array[3] !== 'undefined' ) this.hr = array[3];
-//     if ( typeof array[4] !== 'undefined' ) this.cad = array[4];
-//   }
-
-// }
 
 module.exports = {
   p2p,

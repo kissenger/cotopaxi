@@ -1,6 +1,16 @@
 
 const readline = require('readline');
-const progressBar = require('./utils.js').progressBar;
+// const progressBar = require('./utils.js').progressBar;
+
+/**
+ * Just console.logs a message to screen is global var DEBUG is true
+ * @param {*} msgString debug string to display
+ */
+function debugMsg(msgString) {
+  if (DEBUG) {
+    console.log(timeStamp() + ' >> ' + msgString);
+  }
+}
 
 /**
  * Returns a colour selected at random, in hex rgb format
@@ -13,6 +23,7 @@ function getRandomColour() {
   }
   return colour;
 }
+
 
 /**
  *
@@ -56,11 +67,6 @@ function padInt(num, size) {
   while (s.length < size) s = '0' + s
   return s;
 }
-
-function printGeoJSON2file(geojson) {
-  
-}
-
 
 class ProgressBar{
 
@@ -116,6 +122,7 @@ module.exports = {
   getContourPalette,
   getRandomColour,
   ProgressBar,
-  timeStamp
+  timeStamp,
+  debugMsg
 
 };

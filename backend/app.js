@@ -3,20 +3,15 @@ const express = require('express');
 const app = express();
 const multer = require('multer');
 const bodyParser = require('body-parser');
+const auth = require('./auth.js');
 
 // Local functions
 const Route = require('./_Path').Route;
-const GeoRoute = require('./_GeoJson.js').GeoRoute;
-const GeoHills = require('./_GeoJson.js').GeoHills;
+const GeoJSON = require('./_GeoJson.js').GeoJSON;
 const ListData = require('./_ListData.js').ListData;
-const auth = require('./auth.js');
 const readGPX = require('./gpx.js').readGPX;
-const writeGpx = require('./gpx.js').writeGPX;
-const timeStamp = require('./utils.js').timeStamp;
-const getElevations = require('./upsAndDowns').upsAndDowns;
-
-// global constants
-const DEBUG = true;
+const writeGPX = require('./gpx.js').writeGPX;
+const debugMsg = require('./utils').debugMsg;
 
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
 const mongoose = require('mongoose');
@@ -24,214 +19,84 @@ const MongoPath = require('./models/path-models');
 
 /******************************************************************
  *
- * setup
+ * SETUP
  *
  ******************************************************************/
 
-// Set up Cross Origin Resource Sharing (CORS )
 app.use( (req, res, next) => {
   // inject a header into the response
   res.setHeader("Access-Control-Allow-Origin","*");
-  res.setHeader("Access-Control-Allow-Headers","Origin, X-Request-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Headers","Origin, X-Request-With, Content-Type, Accept, Authorization, Content-Disposition");
   res.setHeader("Access-Control-Allow-Methods","GET, POST, PATCH, DELETE, OPTIONS");
 
   next();
 });
 
-// TODO this is legacy stuff, is it all needed?
 app.use(bodyParser.json());
 app.use(auth.authRoute);
-// app.use(express.static('backend/files'));
 
-/******************************************************************
- *
- * mongo
- *
- ******************************************************************/
-
-// getting-started.js
-mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb', {useNewUrlParser: true});
-
-var db = mongoose.connection;
+// local connection
+// mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb',
+mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/trailscape?retryWrites=true',
+  {useUnifiedTopology: true, useNewUrlParser: true });
+const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
-  console.log('connected!');
-  // we're connected!
+  debugMsg('MongoDB connected');
 });
 
-/*****************************************************************
- *
- * new file data is submitted from the front end
- *
- *****************************************************************/
-var storageOptions = multer.memoryStorage()
-
-var upload = multer({
+// multer is used for file uploads, set-up options here
+const storageOptions = multer.memoryStorage();
+const upload = multer({
   storage: storageOptions,
   limits: {
     fileSize: 10 * 1024 * 1024
   }
 });
 
-
-/*****************************************************************
+/******************************************************************
  *
- * request elevations
+ * ROUTES
  *
- *****************************************************************/
-app.post('/ups-and-downs/v1/', auth.verifyToken, (req, res) => {
+ ******************************************************************/
 
-  // check options array - if it's not present then fill it in with falses
-  let options = req.body.options;
-  if (!options) {
-    options = {
-      interpolate: false,
-      writeResultsToFile: false
-    }
-  }
-
-  // this is where the work gets donw
-  getElevations(req.body.coordsArray, options).then( result => {
-    res.status(200).json( {result} );
-  })
-
-});
-
-
-/*****************************************************************
- *
- *  Import route from file
- *
- *
- *****************************************************************/
-  // app.post('/import-route-postman-tests/', upload.single('filename'), (req, res) => {
-
-  //   console.log("Hello World");
-
-  //   console.log(req);
-  //   getMongoFromGpx().then( (mongoPath) => {
-
-  //     MongoPath.Routes.create(mongoPath).then( (doc) => {
-  //       res.status(201).json({
-  //         geoJson: new GeoRoute(doc),
-  //         hills: new GeoHills(doc)
-  //       });
-  //     });
-  //   })
-
-  //   function getMongoFromGpx() {
-
-  //     return new Promise ( (res, rej) => {
-  //       console.log('here');
-  //       // Get a mongo object from the path data
-  //       try {
-  //         console.log('there');
-  //         const pathFromFile = readGPX(req.file.buffer.toString());
-  //         console.log('where');
-  //         var path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
-  //       } catch(error) {
-  //         rej(error);
-  //       }
-
-  //       // once Path is instantiated, it needs to be initialised (returns a promise)
-  //       path.getElevations().then( () => {
-  //         const mongoPath = path.asMongoObject('njrev', false);
-  //         res(mongoPath);
-  //       }).catch( (err) => {
-  //         rej(err);
-  //       })
-
-  //     })
-
-  //   };
-  //   // res.status(201).json("Hello World");
-  // })
-
+/**
+ * import a route from a gpx file
+ */
 
   app.post('/import-route/', auth.verifyToken, upload.single('filename'), (req, res) => {
 
-    if (DEBUG) { console.log(timeStamp() + ' >> import-route'); }
+    debugMsg('import-route');
 
-    // ensure user is authorised
-    const userId = req.userId;
-    if ( !userId ) {
-      res.status(401).send('Unauthorised');
-      if (DEBUG) { console.log(' >> Unauthorised') };
-    }
+    const pathFromGPX = readGPX(req.file.buffer.toString());
+    const path = new Route(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev);
+    const geoHills = new GeoJSON();
 
-    // console.log(req);
-
-    // const userId = 0;
-
-    getMongoFromGpx(userId).then( (mongoPath) => {
-
-      MongoPath.Routes.create(mongoPath).then( (doc) => {
-        res.status(201).json({
-          geoJson: new GeoRoute(doc),
-          hills: new GeoHills(doc)
-        });
-        if (DEBUG) { console.log(timeStamp() + ' >> import-route finished'); }
-
-      }).catch( (err) => {
-        throw err // catch error in the outside catch rather than handle twice
-      });
-
-    }).catch( (err) => {
-      res.status(500).json(err.toString());
-      if (DEBUG) { console.log(' >> ERROR:' + err); }
-     });
-
-
-    function getMongoFromGpx(uid) {
-
-      return new Promise ( (res, rej) => {
-        // Get a mongo object from the path data
-        try {
-          const pathFromFile = readGPX(req.file.buffer.toString());
-          var Path = new Route(pathFromFile.nameOfPath, undefined, pathFromFile.lngLat, pathFromFile.elev);
-          Path.userId = uid;  // inject userID into path object
-        } catch(error) {
-          rej(error);
-        }
-
-        // once Path is instantiated, it needs to be initialised (returns a promise)
-        Path.getElevations().then( () => {
-          const mongoPath = Path.asMongoObject(userId, false);
-          res(mongoPath);
-        }).catch( (err) => {
-          rej(err);
-        })
-
+    path.init()
+      .then( () => mongoModel('route').create( path.asMongoObject(req.userId, false) ) )
+      .then( (doc) => res.status(201).json( {hills: geoHills.fromDocument(doc).toGeoHills()} ))
+      .catch( (err) => {
+        res.status(500).json(err.toString());
+        debugMsg('ERROR:' + err);
       })
 
-    };
-
-  })
+  });
 
 
 
 /*****************************************************************
- *
- *  Save a path to database - path has already been saved to the
- *  database, all we are doing is updating some fields, and
- *  changing isSaved flag to true; id of path is provided
- *
+ * Save a path to database - path has already been saved to the
+ * database, all we are doing is updating some fields, and
+ * changing isSaved flag to true; id of path is provided
  *****************************************************************/
 
 app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('save-imported-path');
 
-  // construct query based on incoming payload
-  if (DEBUG) { console.log(timeStamp() + ' >> save-imported-path' )};
-
-  let condition = {_id: req.body.pathId, userId: userId};
-  let filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
+  // set up query
+  const condition = {_id: req.body.pathId, userId: req.userId};
+  const filter = {isSaved: true, "info.name": req.body.name, "info.description": req.body.description};
 
   // query database, updating changed data and setting isSaved to true
   mongoModel(req.body.pathType)
@@ -239,240 +104,178 @@ app.post('/save-imported-path/', auth.verifyToken, (req, res) => {
     .then( () => {
       res.status(201).json( {pathId: req.body.pathId} );
     })
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    })
 
 });
 
 
 /*****************************************************************
- * Save a user-created route to database; geoJSON is supplied
- *
- *
- *
+ * Save a user-created route to database; geoJSON is supplied in POST body
  *****************************************************************/
+
 app.post('/save-created-route/', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('save-created-route' );
 
-  // console.log(req.body);
+  const path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevs);
+  path.init()
+    .then( () => mongoModel('route').create( path.asMongoObject(req.userId, true) ))
+    .then( (doc) => res.status(201).json( {pathId: doc._id} ))
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });
 
-  if (DEBUG) { console.log(timeStamp() + ' >> save-created-route' )};
-  var path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevs);
-// console.log(path);
-  // get elevations wont get new ones if elevations are supplied
-  path.getElevations().then( () => {
-    // console.log(path);
-    const mongoPath = path.asMongoObject(userId, true);
-    mongoModel('route').create(mongoPath).then( (document) => {
-      res.status(201).json( {pathId: document._id} );
-    })
-  });
-})
-
+});
 
 
 /*****************************************************************
  *  Retrieve a single path from database
  *  id of required path is supplied
  *****************************************************************/
+
 app.get('/get-path-by-id/:type/:id', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('get-path-by-id');
 
-  // query the database and return result to front end
-  getPathDocFromId(req.params.id, req.params.type).then( path => {
-    // console.log(path);
+  const geoHills = new GeoJSON();   // used for standard route display
+  const geoRoute = new GeoJSON();   // used when overlaying a route in create mode
+
+  getPathDocFromId(req.params.id, req.params.type, req.userId)
+    .then( doc => {
       res.status(201).json({
-        geoJson: new GeoRoute(path),
-        hills: new GeoHills(path)
+        hills: geoHills.fromDocument(doc).toGeoHills(),
+        geoJson: geoRoute.fromDocument(doc).toGeoRoute()
       });
-  })
+    })
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });
 })
 
 
 /*****************************************************************
- *
- *  Flush database of all unsaved entries
- *
+ * Flush database of all unsaved entries
+ * note we are only flushing routes at the moment
  *****************************************************************/
 app.post('/flush/', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('flush db');
 
-  mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} ).then( () => {
-    // MongoPath.Tracks.deleteMany( {'isSaved': false} ).then( () => {
-      // MongoChallenges.Challenges.deleteMany( {'isSaved': false} ).then( () => {
-        if (DEBUG) { console.log(timeStamp() + ' >> database flush' )};
-        res.status(201).json( {'result': 'db flushed'} );
-      // });
-    // });
-  });
+  mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} )
+    // .then( () => mongoModel('tracks').deleteMany( {'userId': userId, 'isSaved': false} )
+    .then( () => res.status(201).json( {'result': 'db flushed'} ))
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });
 
 })
 
 /*****************************************************************
- *
- *  Retrieve a list of paths from database
- *
+ * Retrieve a list of paths from database - if bbox is supplied it
+ * will return only paths intersecting with the bbox, otherwise returns
+ * all
+ * bbox is delivered as a req parameter - either array or 0 if not reqd
+ * pathType is the type of path (obvs)
+ * offset is used by list to request chunks of x paths at a time
  *****************************************************************/
 
-app.get('/get-paths-list/:pathType/:offset', auth.verifyToken, (req, res) => {
+app.get('/get-paths-list/:pathType/:offset/:limit', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> get-paths-list, pathType=',
-    req.params.pathType, ', offset=', req.params.offset, ', bbox=', req.query.bbox )};
-  const LIMIT = 9 //number of items to return in one query
+  debugMsg('get-paths-list');
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
+  // setup query
+  let condition = {isSaved: true, userId: req.userId};
+  if (req.query.bbox !== '0') {
+    const geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
+    condition = {...condition, geometry: { $geoIntersects: { $geometry: geometry} } }
   }
-
-  // get the appropriate model and setup query
-  let condition;
-  // if bbox=0, search for all paths, otherwise search for paths intersecting the bounding box
-  if (req.query.bbox === '0') {
-    condition = {isSaved: true, userId: userId};
-  } else {
-    let geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
-    condition = {isSaved: true, userId: userId, geometry: { $geoIntersects: { $geometry: geometry} } }
-  }
-  let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
-  let sort = req.params.pathType === 'track' ? {startTime: -1} : {creationDate: -1};
+  const filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
+  const sort = req.params.pathType === 'track' ? {startTime: -1} : {creationDate: -1};
 
   // the front end would like to know how many paths there are in total, so make that the first query
-  mongoModel(req.params.pathType).countDocuments(condition).then( (count) => {
-    mongoModel(req.params.pathType)
-      .find(condition, filter).sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
-      .then(documents => {
-        res.status(201).json(new ListData(documents, count))
-      });
-  })
+  mongoModel(req.params.pathType)
+    .countDocuments(condition)
+    .then( count => {
+      mongoModel(req.params.pathType)
+        .find(condition, filter).sort(sort).limit(parseInt(req.params.limit)).skip(req.params.limit*(req.params.offset))
+        .then(documents => res.status(201).json(new ListData(documents, count)))
+      })
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });
+
 })
 
-
 /*****************************************************************
- *
- *  Get a list of routes that intersect with a provided bounding box
- *
- *****************************************************************/
-
-// app.get('/get-intersecting-routes/:type/:offset', auth.verifyToken, (req, res) => {
-
-//   if (DEBUG) { console.log(timeStamp() + ' >> get-overlay-list, pathType=', req.params.type, ', offset=', req.params.offset )};
-
-//   const LIMIT = 9 //number of items to return in one query
-
-//   // ensure user is authorised
-//   const userId = req.userId;
-//   if ( !userId ) {
-//     res.status(401).send('Unauthorised');
-//     if (DEBUG) { console.log(' >> Unauthorised') };
-//   }
-
-//   // let condition = {userId: userId};
-//   let filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
-//   let geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
-//   let sort = req.params.type === 'track' ? {startTime: -1} : {creationDate: -1};
-
-//   // the front end would like to know how many paths there are in total, so make that the first query
-//   mongoModel(req.params.type).countDocuments(condition).then( (count) => {
-//     mongoModel(req.params.type)
-//     .find( {userId: userId, geometry: { $geoIntersects: { $geometry: geometry} } }, filter)
-//     .sort(sort).limit(LIMIT).skip(LIMIT*(req.params.offset))
-//       .then(documents => {
-//         res.status(201).json(new ListData(documents, count))
-//       });
-//   })
-
-// })
-
-
-/*****************************************************************
- *  Delete a path from database
- *  id of path is provided - doesnt actually delete, just sets isSaved to false
+ * Delete a path from database
+ * id of path is provided - doesnt actually delete, just sets isSaved to false
+ * and delete will occur at the next flush
  *****************************************************************/
 
 app.delete('/delete-path/:type/:id', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> delete-path')};
+  debugMsg('delete-path');
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
-
-  // construct query based on incoming payload
-  let condition = {_id: req.params.id, userId: userId};
+  // construct query
+  let condition = {_id: req.params.id, userId: req.userId};
   let filter = {isSaved: false};
 
   // query database, updating change data and setting isSaved to true
   mongoModel(req.params.type)
     .updateOne(condition, {$set: filter})
-    .then( () => { res.status(201).json( {'result': 'delete ok'} ) },
-        (err) => { res.status(201).json(err) });
+    .then( () => res.status(201).json( {'result': 'delete ok'} ) )
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });
 
 });
 
 /*****************************************************************
- * Export a path to file
- *
- *
- *
+ * Export of a path to file comes in two steps:
+ * 1) write-path-to-gpx: retrieve the path from db and call writeGPX, which saves the
+ *    data to file, returning the filename
+ * 2) download-file: allow the browser to download the file
  *****************************************************************/
-app.post('/export-path', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + ' >> export path' )};
+ // Step 1, write the data to gpx file
+app.get('/write-path-to-gpx/:type/:id', auth.verifyToken, (req, res) => {
 
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('Write path to gpx');
 
+  mongoModel(req.params.type)
+    .find({_id: req.params.id, userId: req.userId})
+    .then( document => {
 
-  mongoModel(req.body.pathType).find({_id: req.body.pathId}).then(document => {
+      const pathToExport = {
+        name: document[0].info.name,
+        description: document[0].info.description,
+        lngLat: document[0].geometry.coordinates,
+        elevs: document[0].params.elev
+      }
 
-    let route = new Route(
-      document[0].info.name,
-      document[0].info.description,
-      document[0].geometry.coordinates,
-      document[0].params.elev);
+      writeGPX(pathToExport).then( (fileName) => {
+        res.status(201).json({fileName});
+      });
 
-    writeGpx(route).then( (fileName) => {
-      res.status(201).json({fileName});
-    });
-
-  });
+    })
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    });;
 })
 
+// Step 2, download the file to browser
+app.get('/download-file/:fname', auth.verifyToken, (req, res) => {
 
-app.get('/download/:fname', auth.verifyToken, (req, res) => {
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('Download file from server');
 
   res.download('../' + req.params.fname + '.gpx', (err) => {
     if (err) {
@@ -480,20 +283,18 @@ app.get('/download/:fname', auth.verifyToken, (req, res) => {
     } else {
       console.log('success');
     }
-  } );
+  });
 
 })
 
 
 
-
-
 /*****************************************************************
- *
  *  Simplify a path provided by the front end, and return it.
  *  Does this by simply creating a route object on the as this
  *  automatically invokes simplification algorithm
  *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
+ *
  *****************************************************************/
 // app.post('/simplify-path/', (req, res) => {
 
@@ -506,38 +307,28 @@ app.get('/download/:fname', auth.verifyToken, (req, res) => {
 // })
 
 /*****************************************************************
- *
- *  Simplify a path provided by the front end, and return it.
- *  Does this by simply creating a route object on the as this
- *  automatically invokes simplification algorithm
- *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
+ * Recieves a set of points (lngLats array) from the front end and
+ * creates a Path object in order to get elevations and statistics,
+ * and returns it back to the front end
  *****************************************************************/
-app.post('/process-points/', auth.verifyToken, (req, res) => {
+app.post('/get-path-from-points/', auth.verifyToken, (req, res) => {
 
-  if (DEBUG) { console.log(timeStamp() + '>> process-points-from-front') };
-
-  // ensure user is authorised
-  const userId = req.userId;
-  if ( !userId ) {
-    res.status(401).send('Unauthorised');
-    if (DEBUG) { console.log(' >> Unauthorised') };
-  }
+  debugMsg('get-path-from-points')
 
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
+  const path = new Route('', '', lngLats, []);
+  const geoHills = new GeoJSON();
 
-  var path = new Route('', '', lngLats, req.body.elevs);
-  // console.log(req.body);
-  path.getElevations().then( () => {
-    res.status(201).json({
-      geoJson: new GeoRoute(path),
-      hills: new GeoHills(path)
-    });
-  });
+  // simplify the path when creating a route in order to keep as
+  // responsive as possible for long routes - do this by passing true to init
+  path.init()
+    .then( () => res.status(201).json( {hills: geoHills.fromPath(path).toGeoHills() } ))
+    .catch( (err) => {
+      res.status(500).json(err.toString());
+      debugMsg('ERROR:' + err);
+    })
 
 })
-
-
-
 
 
 /*****************************************************************
@@ -562,11 +353,12 @@ function mongoModel(pathType) {
  * get a mongo db entry from a provided path id
  * @param {string} pid path id
  * @param {string} ptype path type - 'challenge', 'route', 'track' or 'match'
+ * @returns mongo document
  */
-function getPathDocFromId(pid, ptype) {
+function getPathDocFromId(pid, ptype, uid) {
 
   return new Promise( resolve => {
-    mongoModel(ptype).find({_id: pid}).then( (path) => {
+    mongoModel(ptype).find({_id: pid, userId: uid}).then( (path) => {
       resolve(path[0]);
     })
   })

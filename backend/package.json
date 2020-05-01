@@ -3,7 +3,11 @@
     "test": "mocha"
   },
   "devDependencies": {
-  "chai": "*",
-  "mocha": "*",
-  "chai-as-promised": "*"
-}}
+    "chai": "*",
+    "mocha": "*",
+    "chai-as-promised": "*"
+  },
+  "dependencies": {
+    "jael": "^1.0.2"
+  }
+}

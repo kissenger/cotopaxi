@@ -17,8 +17,8 @@ const pathSchema = mongoose.Schema({
   params: {
     elev: {type: [Number]},
     time: {type: [Number]},
-    heartRate: {type: [Number]},
-    cadence: {type: [Number]},
+    // heartRate: {type: [Number]},
+    // cadence: {type: [Number]},
     cumDistance: {type: [Number]},
     smoothedElev: {type: [Number]},
     matchedPoints: {type: [[Number]]}
@@ -28,12 +28,12 @@ const pathSchema = mongoose.Schema({
   info: {
     direction: {type: String},
     category: {type: String},
-    nationalTrail: {type: Boolean},
-    isFavourite: {type: Boolean},
+    // nationalTrail: {type: Boolean},
+    // isFavourite: {type: Boolean},
     name: {type: String},
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'
-    startTime: {type: String},
+    // startTime: {type: String},
     isLong: {type: Boolean},
     isElevations: {type: Boolean}
   },
@@ -56,6 +56,7 @@ const pathSchema = mongoose.Schema({
       maxLat: Number
     },
     nPoints: {type: Number},
+    simplificationRatio: {type: Number},
     duration: {type: Number},
     distance: {type: Number},
     pace: {type: Number},
@@ -78,12 +79,9 @@ const pathSchema = mongoose.Schema({
     hills: {type: [
       { dHeight: {type: Number},
         dDist: {type: Number},
-        startDist: {type: Number},
+        // startDist: {type: Number},
         startPoint: {type: Number},
         endPoint: {type: Number},
-        dTime: {type: Number},
-        pace:  {type: Number},
-        ascRate: {type: Number},
         maxGrad: {type: Number},
         aveGrad: {type: Number}
       }

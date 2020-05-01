@@ -1,4 +1,10 @@
 
+/**
+ * This test imports test route, creates a Path object and compares the calculated
+ * path properties against our expectations
+ */
+
+
 var chai = require("chai");
 var expect = require('chai').expect;
 var chaiAsPromised = require("chai-as-promised");
@@ -9,7 +15,8 @@ const fs = require('fs');
 
 
 before( function() {
-  return getTests('./test-data/_test-def.js').then( function(T) {
+  return getTests('./data/_test-def.js').then( function(T) {
+    console.log(T);
     testList = T;
   })
 })
@@ -21,17 +28,19 @@ it('shoud equal 1', function () { // a hack to get the 'before' to deliver promi
 
     return function () {
       before( function() {
+        this.timeout(30000);
         return getPath('./test-data/'+test.filename+'.js').then(function(P) {
-          Path = P;
+          pathInfo = P.asMongoObject().info;
+          console.log(pathInfo.category, pathInfo.direction)
         });
       });
 
       it('should have category ' + test.category, function() {
-        expect(Path.category).to.equal(test.category);
+        expect(pathInfo.category).to.equal(test.category);
       });
 
       it('should have direction ' + test.direction === "" ? "none": test.direction, function() {
-          expect(Path.direction).to.equal(test.direction);
+          expect(pathInfo.direction).to.equal(test.direction);
       });
     };
   }; // testWithData
@@ -48,8 +57,10 @@ function getPath(fn) {
   return new Promise ( (res, rej) => {
     fs.readFile(fn, (err, data) => {
       const testObject = JSON.parse(data);
-      const Path = new Route(testObject.nameOfPath, undefined, testObject.lngLat, testObject.elev);
-      res(Path);
+      // console.log(testObject);
+      const path = new Route(testObject.nameOfPath, undefined, testObject.lngLat, testObject.elev);
+      path.init().then( () => res(path));
+
     });
   })
 }

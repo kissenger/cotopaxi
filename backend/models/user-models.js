@@ -7,8 +7,14 @@ const userSchema = mongoose.Schema({
   firstName: {type: String},
   lastName: {type: String},
   homeLngLat: {
-    lat: {type: Number},
-    lng: {type: Number}
+    lat: {
+      type: Number,
+      default: 51.47685
+    },
+    lng: {
+      type: Number,
+      default: -0.00005
+    }
   },
   isHomeLocSet: {type: Boolean},
   units: {
