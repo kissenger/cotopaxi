@@ -1,3 +1,5 @@
+"use strict"
+
 // Libraries and modules
 import express from 'express';
 import multer from 'multer';
@@ -69,12 +71,13 @@ const upload = multer({
     debugMsg('import-route');
 
     const pathFromGPX = readGPX(req.file.buffer.toString());
-    const path = new Route(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev);
-    const geoHills = new GeoJSON();
-
-    path.init()
-      .then( () => mongoModel('route').create( path.asMongoObject(req.userId, false) ) )
-      .then( (doc) => res.status(201).json( {hills: geoHills.fromDocument(doc).toGeoHills()} ))
+    checkAndGetElevations(pathFromGPX.nameOfPath, pathFromGPX.elev)
+      .then( elevations => {
+        const path = new Route(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, elevations);
+        mongoModel('route').create( path.asMongoObject(req.userId, false) ) })
+      .then( (doc) => {
+        const geoHills = new GeoJSON();
+        res.status(201).json( {hills: geoHills.fromDocument(doc).toGeoHills()} )})
       .catch( (err) => {
         res.status(500).json(err.toString());
         debugMsg('ERROR:' + err);
@@ -120,9 +123,10 @@ app.post('/save-created-route/', verifyToken, (req, res) => {
 
   debugMsg('save-created-route' );
 
-  const path = new Route(req.body.name, req.body.description, req.body.coords, req.body.elevs);
-  path.init()
-    .then( () => mongoModel('route').create( path.asMongoObject(req.userId, true) ))
+  checkAndGetElevations(req.body.coords, req.body.elevs)
+    .then( elevations => {
+      const path = new Route(req.body.name, req.body.description, req.body.coords, elevations);
+      mongoModel('route').create( path.asMongoObject(req.userId, true) ) })
     .then( (doc) => res.status(201).json( {pathId: doc._id} ))
     .catch( (err) => {
       res.status(500).json(err.toString());
@@ -316,13 +320,12 @@ app.post('/get-path-from-points/', verifyToken, (req, res) => {
   debugMsg('get-path-from-points')
 
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
-  const path = new Route('', '', lngLats, []);
-  const geoHills = new GeoJSON();
 
-  // simplify the path when creating a route in order to keep as
-  // responsive as possible for long routes - do this by passing true to init
-  path.init()
-    .then( () => res.status(201).json( {hills: geoHills.fromPath(path).toGeoHills() } ))
+  checkAndGetElevations(lngLats, [])
+    .then( elevations => {
+      const path = new Route('', '', lngLats, elevations);
+      const geoHills = new GeoJSON();
+      res.status(201).json( {hills: geoHills.fromPath(path).toGeoHills() }) })
     .catch( (err) => {
       res.status(500).json(err.toString());
       debugMsg('ERROR:' + err);
@@ -402,6 +405,33 @@ function getListData() {
   );
 
 }
+
+
+function checkAndGetElevations(lngLats, elevs) {
+
+  const shouldPathHaveElevations = lngLats < globals.LONG_PATH_THRESHOLD;
+  const elevationsWereNotProvided = lngLats.length !== elevs.length;
+
+  return new Promise( (resolve, reject) => {
+
+    if (shouldPathHaveElevations) {
+      if (elevationsWereNotProvided) {
+        const jaelRequest = {points: this.pointsList.lngLats().map( pt => ({lng: pt[0], lat: pt[1]}) ) };
+        jael.getElevs(jaelRequest)
+          .then(elevs => resolve( elevs.map(e => e.elev) ))
+          .catch(error => reject(error))
+      } else {
+        resolve(elevs);
+      }
+    } else {
+      resolve([]);
+    }
+
+  })
+
+}
+
+
 
 export default app;
 

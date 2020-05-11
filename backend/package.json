@@ -5,10 +5,11 @@
   },
   "devDependencies": {
     "chai": "*",
-    "mocha": "*",
-    "chai-as-promised": "*"
+    "chai-as-promised": "*",
+    "mocha": "^7.1.2"
   },
   "dependencies": {
+    "geo-points-and-paths": "^1.2.0",
     "jael": "^1.0.2"
   }
 }
