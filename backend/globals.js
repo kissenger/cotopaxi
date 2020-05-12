@@ -11,4 +11,12 @@ export const START_AT_END_THRESH = 250;  // distance in metres, if start and end
 export const PC_THRESH_UPP = 90;        // if % shared points > PC_THRESH_UPP then consider as 'out and back' route
 export const PC_THRESH_LOW = 10;        // if % shared points < PC_THRESH_LOW the consider as 'one way' or 'circular' depending on whether start is returned toKs
 export const PATH_TO_GEOTIFFS = '../_ASTGTM/';
+export const PRE_FLIGHT_SIMPLIFICATION_FACTOR = 2
+
+
+// GeoJSON colours
+export const UP_COLOUR = '#FF0000';
+export const DOWN_COLOUR = '#00FF00';
+export const FLAT_COLOUR = '#0000FF';
+export const ROUTE_COLOUR = '#0000FF';
 

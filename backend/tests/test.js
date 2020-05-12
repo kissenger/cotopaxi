@@ -4,71 +4,97 @@
  * path properties against our expectations
  */
 
-
-import { use } from "chai";
-import { expect } from 'chai';
+import chai from 'chai';
 import chaiAsPromised from "chai-as-promised";
-use(chaiAsPromised);
+var expect = chai.expect;
+var reject = chai.reject;
+chai.use(chaiAsPromised);
 
-import { Route } from './_Path';
+import { Route } from '../class-path.js';
 import { readFile } from 'fs';
+import { getRouteInstance } from '../app.js';
+// console.log(app)
+// var getRouteInstance = app.getRouteInstance;
 
 
-before( function() {
-  return getTests('./data/_test-def.js').then( function(T) {
-    console.log(T);
-    testList = T;
-  })
-})
+const testList = [
+  {
+    "filename": "mendip-way",
+    "direction": "West to East",
+    "category": "One way"
+  },
+  {
+    "filename": "short-circular",
+    "direction": "Anti-Clockwise",
+    "category": "Circular"
+  },
+  {
+    "filename": "short-near-loop",
+    "direction": "Clockwise",
+    "category": "Circular"
+  },
+  {
+    "filename": "short-out-and-back-complex",
+    "direction": "",
+    "category": "Out and back"
+  },
+  {
+    "filename": "very-out-and-back",
+    "direction": "",
+    "category": "Out and back"
+  }
+];
 
-it('shoud equal 1', function () { // a hack to get the 'before' to deliver promisified data
 
+
+
+
+// it('shoud equal 1', function () { // a hack to get the 'before' to deliver promisified data
+
+
+  // this is a closure to define the actual tests - needed to cope with a loop of tests each with promises
   let testWithData = function (test) {
-    // this is a closure to define the actual tests - needed to cope with a loop of tests each with promises
 
     return function () {
-      before( function() {
-        this.timeout(30000);
-        return getPath('./test-data/'+test.filename+'.js').then(function(P) {
-          pathInfo = P.asMongoObject().info;
-          console.log(pathInfo.category, pathInfo.direction)
-        });
-      });
 
       it('should have category ' + test.category, function() {
-        expect(pathInfo.category).to.equal(test.category);
+        // this.timeout(30000);
+        return expect(getPath('./data/'+test.filename+'.js')).to.eventually.deep.equal({category: test.category, direction: test.direction})
       });
 
-      it('should have direction ' + test.direction === "" ? "none": test.direction, function() {
-          expect(pathInfo.direction).to.equal(test.direction);
-      });
     };
   }; // testWithData
 
+
+  //  loops through all the provided test cases, using the closure as an argument
   testList.forEach( function(testInfo) {
-    // this loops through all the provided test cases, using the closure as an argument
     describe("Testing file: " + testInfo.filename , testWithData(testInfo));
   });
 
-}) // it (hack)
 
+// }); // it (hack)
+
+
+/**
+ * Imports the requested data file and runs the standard workflow to instantiate a
+ * Path, returning the Path instance as a promise
+ */
 function getPath(fn) {
-  // returns Path object created from gpx import stored in provided file
   return new Promise ( (res, rej) => {
+
     readFile(fn, (err, data) => {
+
       const testObject = JSON.parse(data);
-      // console.log(testObject);
-      const path = new Route(testObject.nameOfPath, undefined, testObject.lngLat, testObject.elev);
-      path.init().then( () => res(path));
+      getRouteInstance(testObject.name, null, testObject.lngLat, [])
+        .then( route => {
+          const mongoObj = route.asMongoObject();
+          res({category: mongoObj.info.category, direction: mongoObj.info.direction}) })
+        .catch( error => rej(error));
+      });
 
-    });
-  })
+  });
 }
 
-function getTests(fn) {
-  return new Promise ( (res, rej) => {
-    readFile(fn, (err, data) => {
-      res(JSON.parse(data));
-    });
-  })
-}
+
+
+

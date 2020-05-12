@@ -2,41 +2,76 @@
 
 /**
  * Extends geo-points-and-paths Path class to provide application specific data
- * handling and processing
+ * handling and processing.  Two classes provided today:
+ * - PathWithStats extends the basic Path class and doeas all the running around
+ * - Route extends PathWithStats and is the 'public' interface
  */
 
 import { debugMsg } from './utilities.js';
 import * as globals from './globals.js';
-import { getCategory, getDirection, getMatchedPoints, analyseElevations } from './analyse-path-funcs.js';
+
+import { getCategory, getDirection, getMatchedPoints, analyseElevations } from './analysis.js';
 import geolib from 'geo-points-and-paths';
 const {Point, Path, geoFunctions} = geolib;
 
+import jael from 'jael';
+jael.setPath('C:\\__FILES\\Gordon\\PROJECT\\Angular\\_ASTGTM');
 
+/**
+ *
+ */
 
 export class PathWithStats extends Path{
 
-  constructor(name, description, coords, elevs) {
+  constructor(name, description, lngLat, elevs) {
 
     debugMsg('PathWithStats');
 
-    super(coords);
+    super(lngLat);
 
     if (elevs.length > 0) {
-      this.addParamToPoints(elev);
+      this.addParam('elev', elevs);
       this._isElevations = true;
     } else {
       this._isElevations = false;
     }
 
-    this.simplify(2);
+    // dont reorder, these need bt be on the instance before the .applys are called below
     this._name = name;
     this._description = description;
     this._isLong = this.length > globals.LONG_PATH_THRESHOLD;
-    this._distanceData = this.getDistanceData;  // this needs to be available on the path before analyse elevations is called
+    this._distanceData = this.distanceData;
+
     this._elevationData = analyseElevations.apply(this);
     this._matchedPoints = getMatchedPoints.apply(this);
 
   }
+
+
+  // Perform pre-flight checks on provided points and elevations - get elevations from jael if needed
+  static preFlight(lngLats, elevs) {
+
+    return new Promise( (resolve, reject) => {
+
+      const isElevationsProvided = lngLats.length === elevs.length;
+      const path = new Path(lngLats);
+      if (isElevationsProvided) { path.addParam('elev', elev); };
+      path.simplify(2);
+
+      if (path.length < globals.LONG_PATH_THRESHOLD) {
+        if (!isElevationsProvided) {
+          jael.getElevs( {points: path.pointLikes} )
+            .then(elevs => resolve( {lngLat: path.lngLats, elev: elevs.map(e => e.elev)} ))
+            .catch(error => reject(error))
+        } else {
+          resolve( {lngLat: path.lngLats, elev: path.getParam('elev')} );
+        }
+      } else {
+        resolve( {lngLat: path.lngLats, elev: []});
+      }
+    })
+  }
+
 
   get info() {
     return {
@@ -53,7 +88,7 @@ export class PathWithStats extends Path{
 
   get stats() {
 
-    stats = {
+    const stats = {
       ...this._distanceData,
       ...this._elevationData,
       bbox: this.boundingBox,
@@ -69,14 +104,14 @@ export class PathWithStats extends Path{
 
   get params() {
 
-    let params = {
+    const params = {
       matchedPoints: this._matchedPoints,
-      cumDistance: this.cumDistance,
+      cumDistance: this.cumulativeDistance,
     };
 
     if (this._isElevations) {
       params.smoothedElev = this._elevationData.smoothedElev;
-      params.elev = this.getParamFromPoints(elevs);
+      params.elev = this.getParam('elev');
     }
 
     return params;
@@ -99,6 +134,16 @@ export class PathWithStats extends Path{
   }
 
 
+  get properties() {
+    return {
+      pathId: '0000',    // assumes that path is 'created'
+      params: this.params,
+      stats: this.stats,
+      info: this.info
+    }
+  }
+
+
   asMongoObject(userId, isSaved) {
     return {
       userId: userId,
@@ -117,11 +162,11 @@ export class PathWithStats extends Path{
 
 
 export class Route extends PathWithStats {
+
   constructor(name, description, lngLat, elev){
     super(name, description, lngLat, elev);
     this._pathType = 'route';
   }
-
 
 }
 

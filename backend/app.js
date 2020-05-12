@@ -62,29 +62,22 @@ const upload = multer({
  *
  ******************************************************************/
 
-/**
+
+/*****************************************************************
  * import a route from a gpx file
- */
+ ******************************************************************/
 
-  app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) => {
+app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) => {
 
-    debugMsg('import-route');
+  debugMsg('import-route');
 
-    const pathFromGPX = readGPX(req.file.buffer.toString());
-    checkAndGetElevations(pathFromGPX.nameOfPath, pathFromGPX.elev)
-      .then( elevations => {
-        const path = new Route(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, elevations);
-        mongoModel('route').create( path.asMongoObject(req.userId, false) ) })
-      .then( (doc) => {
-        const geoHills = new GeoJSON();
-        res.status(201).json( {hills: geoHills.fromDocument(doc).toGeoHills()} )})
-      .catch( (err) => {
-        res.status(500).json(err.toString());
-        debugMsg('ERROR:' + err);
-      })
+  const pathFromGPX = readGPX(req.file.buffer.toString());
+  getRouteInstance(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev)
+    .then( route => createMongoModel('route', route.asMongoObject(req.userId, false)) )
+    .then( doc => returnObject( {hills: new GeoJSON().fromDocument(doc).toGeoHills()} ))
+    .catch( (err) => returnError(err) )
 
-  });
-
+});
 
 
 /*****************************************************************
@@ -104,13 +97,8 @@ app.post('/save-imported-path/', verifyToken, (req, res) => {
   // query database, updating changed data and setting isSaved to true
   mongoModel(req.body.pathType)
     .updateOne(condition, {$set: filter}, {upsert: true, writeConcern: {j: true}})
-    .then( () => {
-      res.status(201).json( {pathId: req.body.pathId} );
-    })
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    })
+    .then( () => returnObject({pathId: req.body.pathId}) )
+    .catch( (err) => returnError(err) )
 
 });
 
@@ -123,15 +111,11 @@ app.post('/save-created-route/', verifyToken, (req, res) => {
 
   debugMsg('save-created-route' );
 
-  checkAndGetElevations(req.body.coords, req.body.elevs)
-    .then( elevations => {
-      const path = new Route(req.body.name, req.body.description, req.body.coords, elevations);
-      mongoModel('route').create( path.asMongoObject(req.userId, true) ) })
-    .then( (doc) => res.status(201).json( {pathId: doc._id} ))
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });
+  const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
+  getRouteInstance(req.body.name, req.body.description, lngLats, req.body.elev)
+    .then( route => mongoModel('route').create( route.asMongoObject(req.userId, true) ))
+    .then( () => returnObject( {pathId: doc._id} ))
+    .catch( (err) => returnError(err) )
 
 });
 
@@ -145,20 +129,12 @@ app.get('/get-path-by-id/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('get-path-by-id');
 
-  const geoHills = new GeoJSON();   // used for standard route display
-  const geoRoute = new GeoJSON();   // used when overlaying a route in create mode
-
   getPathDocFromId(req.params.id, req.params.type, req.userId)
-    .then( doc => {
-      res.status(201).json({
-        hills: geoHills.fromDocument(doc).toGeoHills(),
-        geoJson: geoRoute.fromDocument(doc).toGeoRoute()
-      });
-    })
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });
+    .then( doc => returnObject({
+      hills: new GeoJSON().fromDocument(doc).toGeoHills(),
+      basic: new GeoJSON().fromDocument(doc).toBasic()
+    }) )
+    .catch( (err) => returnError(err) )
 })
 
 
@@ -171,14 +147,11 @@ app.post('/flush/', verifyToken, (req, res) => {
   debugMsg('flush db');
 
   mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} )
-    // .then( () => mongoModel('tracks').deleteMany( {'userId': userId, 'isSaved': false} )
-    .then( () => res.status(201).json( {'result': 'db flushed'} ))
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });
+    .then( () => returnObject( {result: 'db flushed'} ))
+    .catch( (err) => returnError(err) )
 
 })
+
 
 /*****************************************************************
  * Retrieve a list of paths from database - if bbox is supplied it
@@ -201,21 +174,17 @@ app.get('/get-paths-list/:pathType/:offset/:limit', verifyToken, (req, res) => {
   }
   const filter = {stats: 1, info: 1, startTime: 1, creationDate: 1};
   const sort = req.params.pathType === 'track' ? {startTime: -1} : {creationDate: -1};
+  const limit = req.params.limit;
+  const offset = req.params.offset
 
   // the front end would like to know how many paths there are in total, so make that the first query
-  mongoModel(req.params.pathType)
-    .countDocuments(condition)
-    .then( count => {
-      mongoModel(req.params.pathType)
-        .find(condition, filter).sort(sort).limit(parseInt(req.params.limit)).skip(req.params.limit*(req.params.offset))
-        .then(documents => res.status(201).json( getListData(documents, count) ))
-      })
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });
+  mongoModel(req.params.pathType).countDocuments(condition)
+    .then( count => getFindFromMongo(condition, filter, sort, limit, offset) )
+    .then( documents => returnObject(getListData(documents, count)))
+    .catch( (err) => returnError(err) )
 
 })
+
 
 /*****************************************************************
  * Delete a path from database
@@ -232,15 +201,12 @@ app.delete('/delete-path/:type/:id', verifyToken, (req, res) => {
   let filter = {isSaved: false};
 
   // query database, updating change data and setting isSaved to true
-  mongoModel(req.params.type)
-    .updateOne(condition, {$set: filter})
-    .then( () => res.status(201).json( {'result': 'delete ok'} ) )
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });
+  mongoModel(req.params.type).updateOne(condition, {$set: filter})
+    .then( () => returnObject( {'result': 'delete ok'} ))
+    .catch( error => returnError(error) )
 
 });
+
 
 /*****************************************************************
  * Export of a path to file comes in two steps:
@@ -256,25 +222,11 @@ app.get('/write-path-to-gpx/:type/:id', verifyToken, (req, res) => {
 
   mongoModel(req.params.type)
     .find({_id: req.params.id, userId: req.userId})
-    .then( document => {
-
-      const pathToExport = {
-        name: document[0].info.name,
-        description: document[0].info.description,
-        lngLat: document[0].geometry.coordinates,
-        elevs: document[0].params.elev
-      }
-
-      writeGPX(pathToExport).then( (fileName) => {
-        res.status(201).json({fileName});
-      });
-
-    })
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    });;
+    .then( document => documentToGpx(document))
+    .then( fileName => returnObject( {fileName} ))
+    .catch( error => returnError(error))
 })
+
 
 // Step 2, download the file to browser
 app.get('/download-file/:fname', verifyToken, (req, res) => {
@@ -290,7 +242,6 @@ app.get('/download-file/:fname', verifyToken, (req, res) => {
   });
 
 })
-
 
 
 /*****************************************************************
@@ -310,26 +261,25 @@ app.get('/download-file/:fname', verifyToken, (req, res) => {
 
 // })
 
+
 /*****************************************************************
  * Recieves a set of points (lngLats array) from the front end and
  * creates a Path object in order to get elevations and statistics,
  * and returns it back to the front end
  *****************************************************************/
+
 app.post('/get-path-from-points/', verifyToken, (req, res) => {
 
   debugMsg('get-path-from-points')
 
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
 
-  checkAndGetElevations(lngLats, [])
-    .then( elevations => {
-      const path = new Route('', '', lngLats, elevations);
-      const geoHills = new GeoJSON();
-      res.status(201).json( {hills: geoHills.fromPath(path).toGeoHills() }) })
-    .catch( (err) => {
-      res.status(500).json(err.toString());
-      debugMsg('ERROR:' + err);
-    })
+  getRouteInstance(null, null, lngLats, null)
+    .then( route => returnObject({
+      hills: new GeoJSON().fromPath(route).toGeoHills(),
+      basic: new GeoJSON().fromPath(route).toBasic()
+    }))
+    .catch( (err) => returnError(err) )
 
 })
 
@@ -339,10 +289,14 @@ app.post('/get-path-from-points/', verifyToken, (req, res) => {
  *  LOCAL FUNCTIONS
  *
  *****************************************************************/
+
+/*******************
+ * Mongo Related
+ *******************/
+
 /**
- * Returns the model definition for a given path type
- * @param {string} pathType 'challenge', 'route', 'track' or 'match'
- */
+* returns the desired mongo model object
+*/
 function mongoModel(pathType) {
   switch(pathType) {
     case 'challenge': return MongoChallenges.Challenges;
@@ -352,11 +306,9 @@ function mongoModel(pathType) {
   }
 }
 
+
 /**
  * get a mongo db entry from a provided path id
- * @param {string} pid path id
- * @param {string} ptype path type - 'challenge', 'route', 'track' or 'match'
- * @returns mongo document
  */
 function getPathDocFromId(pid, ptype, uid) {
 
@@ -368,9 +320,38 @@ function getPathDocFromId(pid, ptype, uid) {
 
 }
 
+
+/**
+* Abstract model creation
+*/
+ function createMongoModel(model, pathType) {
+  return new Promise( (resolve, reject) => {
+    mongoModel(pathType).create(model)
+      .then( doc => resolve(doc) )
+      .catch( error => reject(error))
+  });
+}
+
+
+/**
+* Find a set of documents
+*/
+function getFindFromMongo(condition, filter, sort, limit, offset) {
+  return new Promise( (resolve, reject) => {
+    mongoModel(req.params.pathType)
+      .find(condition, filter)
+      .sort(sort)
+      .limit(parseInt(limit))
+      .skip(limit*(offset))
+    .then( result => resolve(result) )
+    .catch( error => reject(error) )
+  })
+}
+
+
 /**
  * Converts standard bounding box to polygon for mongo geometry query
- * @param {number} bbox bounding box as [minlng, minlat, maxlng, maxlat]
+ * bbox bounding box as [minlng, minlat, maxlng, maxlat]
  */
 function bbox2Polygon(bbox) {
   return [[
@@ -382,6 +363,10 @@ function bbox2Polygon(bbox) {
   ]]
 }
 
+
+/*******************
+ * Other
+ *******************/
 
  /**
   * Returns an object expected by the front end when a list query is made
@@ -407,31 +392,49 @@ function getListData() {
 }
 
 
-function checkAndGetElevations(lngLats, elevs) {
-
-  const shouldPathHaveElevations = lngLats < globals.LONG_PATH_THRESHOLD;
-  const elevationsWereNotProvided = lngLats.length !== elevs.length;
+function documentToGpx(document) {
 
   return new Promise( (resolve, reject) => {
 
-    if (shouldPathHaveElevations) {
-      if (elevationsWereNotProvided) {
-        const jaelRequest = {points: this.pointsList.lngLats().map( pt => ({lng: pt[0], lat: pt[1]}) ) };
-        jael.getElevs(jaelRequest)
-          .then(elevs => resolve( elevs.map(e => e.elev) ))
-          .catch(error => reject(error))
-      } else {
-        resolve(elevs);
-      }
-    } else {
-      resolve([]);
+    const pathToExport = {
+      name: document[0].info.name,
+      description: document[0].info.description,
+      lngLat: document[0].geometry.coordinates,
+      elevs: document[0].params.elev
     }
 
+    writeGPX(pathToExport)
+      .then( fileName => resolve(fileName))
+      .catch( error => reject(error))
   })
 
 }
 
 
+function returnObject(object) {
+  res.status(201).json( object );
+}
+
+
+function returnError(error) {
+  res.status(500).json(err.toString());
+  debugMsg('ERROR:' + err);
+}
+
+
+/**
+ * Abstracts the workflow to instantiate a Route given a data array from an import
+ */
+export function getRouteInstance(name, description, lngLat, elevs) {
+
+  return new Promise ( (resolve, reject) => {
+    Route.preFlight(lngLat, elevs)
+      .then( prePath => resolve( new Route(name, description, prePath.lngLat, prePath.elev) ))
+      .catch( error => reject(error) )
+  });
+
+}
 
 export default app;
+
 

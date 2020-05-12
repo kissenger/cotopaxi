@@ -24,6 +24,7 @@ export function getMatchedPoints() {
 
       const dist = geoFunctions.p2p(this.getPoint(i), this.getPoint(j));
       if ( dist < globals.MATCH_DISTANCE ) {
+        // console.log(dist, globals.MATCH_DISTANCE)
         mp.push([i, j]);
         break;
 
@@ -145,29 +146,28 @@ function getDirectionOfOneWayPath(firstPoint, lastPoint) {
 
 
  /**
-  * Return only the stats relevant to elevations - seperate routine as elevations are not calculated
-  * for 'long' paths
-  * Note this contains both 'params' and 'stats' and will be split out later
+  * Return only the stats relevant to elevations
+  * NOTE this is called using 'apply' from PathWithStats class so this refers to that scope
   *
   * TODO: Improvements to be made:
   * needs another refactor - those ascent calcs should be seperate routines
   * filter hills array in postprocessing to remove aveGrad < thresh
   * Also detect adjacent hill with few points or small drop between and combine (or better algorithm in the first place)
   */
-export function analyseElevations(path) {
+export function analyseElevations() {
 
-  if (this.isParamExistsOnAnyPoint('elev')) {
+  if (!this.isParamExistsOnAnyPoint('elev')) {
     return {};
   }
 
   // distance data needed to caculate gradients
-  dDistance = path._distanceData.dDistance();
-  distance = path._distanceData.distance;
-  cumDistance = path.cumulativeDistance;
+  const dDistance = this._distanceData.dDistance;
+  const distance = this._distanceData.distance;
+  const cumDistance = this.cumulativeDistance;
 
-  const elevations = this.getParamFromPoints('elev');
-  const smoothedElevations = getSmoothedElevations(elevations);
-  const grads = elevs.map( (e, i, eArr) => i === 0 ? 0 : (e - eArr[i-1]) / dDistance[i] * 100 );
+  // const elevations = this.getParamFromPoints('elev');
+  const smoothedElevations = getSmoothedElevations.apply(this);
+  const grads = smoothedElevations.map( (e, i, eArr) => i === 0 ? 0 : (e - eArr[i-1]) / dDistance[i] * 100 );
 
   // initilise loop variables
   let de = 0;                 // cumulative change in elevation
@@ -179,9 +179,9 @@ export function analyseElevations(path) {
   let descent = 0;
 
   // loop through points to calculate ascent and descent, and to detect hills
-  for (let i = 1; i < this.nPoints; i++ ) {
+  for (let i = 1; i < this.length; i++ ) {
 
-    de = elevs[i] - elevs[i-1];
+    de = smoothedElevations[i] - smoothedElevations[i-1];
 
     // Calculates the ascent and descent statistics
     if (Math.sign(dSum) === Math.sign(de)) {
@@ -224,22 +224,22 @@ export function analyseElevations(path) {
 
   // get stats for each hill in the list
   const hills = hillsArr.map( hill => ({
-      dHeight: elevs[hill[1]] - elevs[hill[0]],
+      dHeight: smoothedElevations[hill[1]] - smoothedElevations[hill[0]],
       dDist: cumDistance[hill[1]] - cumDistance[hill[0]],
       maxGrad: Math.max( ...grads.slice(hill[0], [hill[1]+1]).map( g => Math.abs(g) ) ),
-      aveGrad: (elevs[hill[1]] - elevs[hill[0]]) / (cumDistance[hill[1]] - cumDistance[hill[0]]) * 100,
+      aveGrad: (smoothedElevations[hill[1]] - smoothedElevations[hill[0]]) / (cumDistance[hill[1]] - cumDistance[hill[0]]) * 100,
       startPoint: hill[0],
       endPoint: hill[1]
     })
   );
 
   return {
-    smoothedElev: elevs,
+    smoothedElev: smoothedElevations,
     elevations: {
       ascent,
       descent,
-      maxElev: Math.max(...elevs),
-      minElev: Math.min(...elevs),
+      maxElev: Math.max(...smoothedElevations),
+      minElev: Math.min(...smoothedElevations),
       lumpiness: (ascent - descent) / distance
     },
     hills
@@ -251,14 +251,15 @@ export function analyseElevations(path) {
 
 
 
-function getSmoothedElevations(path) {
+function getSmoothedElevations() {
 
-  const isPathReallyShort = () => path.length < globals.MOVING_AVERAGE_PERIOD * 2;
+  const isPathReallyShort = () => this.length < (globals.MOVING_AVERAGE_PERIOD * 2);
+  const elevations = this.getParam('elev');
 
-  if (isPathReallyShort) {
-    return path.getParamFromPoints('elev');
+  if (isPathReallyShort()) {
+    return elevations;
   } else {
-    return movingAverage(this.elevs(), globals.MOVING_AVERAGE_PERIOD)
+    return movingAverage(elevations, globals.MOVING_AVERAGE_PERIOD)
   }
 
 }
