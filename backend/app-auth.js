@@ -1,11 +1,16 @@
-// Libraries and other modules
+
+"use strict"
+
+/**
+ * Module provides the necessary functions for user authentication
+ */
+
 import express from 'express';
 import jsonwebtoken from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { debugMsg } from './utilities.js';
+import { debugMsg } from './debugging.js';
 import { Users } from './models/user-models.js';
 
-// Module globals
 const authRoute = express.Router();
 const KEY = 'zjuAa4ItuPrL|woJk^zXn#c2wwt6&,<KS3k!9"<CbiA?E}Ps&WmWy/+Xhu+zZ?y';
 

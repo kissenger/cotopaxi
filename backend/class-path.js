@@ -1,16 +1,25 @@
 "use strict"
 
 /**
+ * Module provides the classes:
+ *
+ * PathWithStats
  * Extends geo-points-and-paths Path class to provide application specific data
- * handling and processing.  Two classes provided today:
- * - PathWithStats extends the basic Path class and doeas all the running around
- * - Route extends PathWithStats and is the 'public' interface
+ * handling and processing, particularly the assembly of all the stats and info
+ * needed by the front-end.  Accessed through its child classes, its effectively a
+ * private class.
+ * Includes the static method 'preFlight', which should be called first in order
+ * to perform the preProcessing of path such as getting elevations if needed.
+ *
+ * Route
+ * Extends PathWithStats and is the 'public' interface
+ *
  */
 
-import { debugMsg } from './utilities.js';
+import { debugMsg } from './debugging.js';
 import * as globals from './globals.js';
 
-import { getCategory, getDirection, getMatchedPoints, analyseElevations } from './analysis.js';
+import { getCategory, getDirection, getMatchedPoints, analyseElevations } from './class-path-functions.js';
 import geolib from 'geo-points-and-paths';
 const {Point, Path, geoFunctions} = geolib;
 
@@ -18,7 +27,7 @@ import jael from 'jael';
 jael.setPath('C:\\__FILES\\Gordon\\PROJECT\\Angular\\_ASTGTM');
 
 /**
- *
+ * Extends Path class to provide additional Path analsysis and stats
  */
 
 export class PathWithStats extends Path{

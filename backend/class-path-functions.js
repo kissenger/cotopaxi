@@ -1,18 +1,18 @@
 "use strict"
 
 /**
- * Functions supporting analysis and categorisation of a path
+ * Functions directly supporting the PathWithStats class
  */
 
-import { debugMsg } from './utilities.js';
+import { debugMsg } from './debugging.js';
 import * as globals from './globals.js';
 import geolib from 'geo-points-and-paths';
 const {Point, Path, geoFunctions} = geolib;
 
 
-
 /**
  * Returns an array of matched point pairs, useful for route categorisation but also sent to front end for debugging
+ * Run within the scope of PathWithStats
  */
 export function getMatchedPoints() {
 
@@ -45,7 +45,9 @@ export function getMatchedPoints() {
 
 /**
  * Categorises the path based on shape (circular, out-and-back, etc)
- * Principal is to find the number of points on the route that are 'coincident', i.e.
+ * Run within the scope of PathWithStats
+ *
+ * Principle is to find the number of points on the route that are 'coincident', i.e.
  * if a point on the way out is close to a point on the way back
  * - Circular
  *     1/ starts and ends at the same point
@@ -58,7 +60,6 @@ export function getMatchedPoints() {
  *     2/ has few coincident points (n < PC_THRESH_LOW)
  * - Hybrid
  *     Doesn't really match any of the above - uncategorisable
- *
  */
 export function getCategory() {
 // gets called in the context of path class
@@ -79,9 +80,9 @@ export function getCategory() {
 
 
 
-
 /**
- *
+ * Find the direction that a one-way or circular route is taking
+ * Run within the scope of PathWithStats
  */
 export function getDirection() {
 
@@ -96,9 +97,6 @@ export function getDirection() {
   }
 
 }
-
-
-
 
 
 /**
@@ -130,8 +128,6 @@ function getDirectionOfCircularPath() {
 }
 
 
-
-
 /**
  *  Simply takes the bearing from the first to last point and converts this into a direction
  */
@@ -142,11 +138,8 @@ function getDirectionOfOneWayPath(firstPoint, lastPoint) {
 }
 
 
-
-
-
  /**
-  * Return only the stats relevant to elevations
+  * Return stats relevant to elevations
   * NOTE this is called using 'apply' from PathWithStats class so this refers to that scope
   *
   * TODO: Improvements to be made:
@@ -248,9 +241,6 @@ export function analyseElevations() {
 }
 
 
-
-
-
 function getSmoothedElevations() {
 
   const isPathReallyShort = () => this.length < (globals.MOVING_AVERAGE_PERIOD * 2);
@@ -265,21 +255,13 @@ function getSmoothedElevations() {
 }
 
 
-
-
-
-
 /**
  * Moving average function, used to smooth elevations
  * Note that number of points to average over is smaller at the start and end of the
- * array, due to the way I have chosen to implemen ti
- * @param {*} array array to be smoothed
- * @param {*} period number of points over which to perform the moving average
- * @returns new array of same size as input array, with smoothed data
+ * array, due to the way I have chosen to implement it
  */
 function movingAverage(array, period) {
 
-  //TODO proper error handling
   if (period % 2 === 0) throw Error('Moving average period should be odd');
 
   const shift = (period - 1) / 2;

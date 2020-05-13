@@ -1,16 +1,23 @@
+"use strict"
+
+/**
+ * Module provides GPX file read/write functions
+ * TODO: Refactor long overdue - look into npm library or writing one
+ */
+
 import { writeFile, createWriteStream } from 'fs';
 import * as globals from './globals.js';
-import { debugMsg } from './utilities.js';
+import { debugMsg } from './debugging.js';
 
- /**
-  * readGPX(data)
-  * @param {*} data input data from multer file read
-  * @param return object containing path name, coords, elevs and timestamp
-  * Parses track data from a provided GPX file.
-  * Does not distiguish between a route and a track - it disguards this knowledge
-  * and simplyy returns an object with supported parameters
-  */
-function readGPX(data) {
+/**
+* readGPX(data)
+* @param {*} data input data from multer file read
+* @param return object containing path name, coords, elevs and timestamp
+* Parses track data from a provided GPX file.
+* Does not distiguish between a route and a track - it disguards this knowledge
+* and simplyy returns an object with supported parameters
+*/
+export function readGPX(data) {
   debugMsg('readGPX()');
 
   // declare function variables
@@ -150,7 +157,7 @@ function readGPX(data) {
  *
  */
 
-function writeGPX(path){
+export function writeGPX(path){
 
   debugMsg('writeGPX()');
 
@@ -202,34 +209,3 @@ function writeGPX(path){
 }
 
 
-/**
- * export geoJson to file - for debugging
- * @param {Path} path
- */
-// function exportGeoJSON(geoJSON) {
-
-//   const fs = require('fs');
-
-//   JSON.stringify(geoJSON)
-//   fs.writeFile('../myjsonfile.json', JSON.stringify(geoJSON), 'utf8', (err) => {console.log(err)});
-
-// }
-
-
-/**
- * export data to CSV - For debugging
- * @param {Path} path
- */
-// function exportCSV(path) {
-
-//   const fs = require('fs');
-//   let file = fs.createWriteStream("../node.out");
-
-//   path.points.forEach ( point => {
-//     file.write([point.lng, point.lat, point.time, point.elev].join(',') + '\n')
-//   })
-
-// }
-
-
-export { readGPX, writeGPX };

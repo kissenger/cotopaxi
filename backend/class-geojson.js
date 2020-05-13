@@ -1,7 +1,5 @@
 
 "use strict"
-import * as globals from './globals.js';
-import { PathWithStats } from './class-path.js';
 
  /**
   * Class GeoJSON to handle creation of geoJson object to return to the front end.
@@ -10,16 +8,17 @@ import { PathWithStats } from './class-path.js';
   *   const newGeoJson = new GeoJson().fromPath(path).toGeoHills();
   */
 
+import * as globals from './globals.js';
+import { PathWithStats } from './class-path.js';
+
 export class GeoJSON {
 
   constructor() {
   }
 
-
   /**
    * Public Methods
    */
-
 
   // populates the class instance with data from supplied Path instance
   fromPath(path) {
