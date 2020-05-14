@@ -77,8 +77,6 @@ export class PathWithStats extends Path{
 
       if (path.length < globals.LONG_PATH_THRESHOLD) {
         if (!isElevationsProvided) {
-          console.log(path);
-          console.log(path.pointLikes);
           jael.getElevs( {points: path.pointLikes} )
             .then(elev => resolve( {lngLat: path.lngLats, elev: elev.map(e => e.elev)} ))
             .catch(error => reject(error))

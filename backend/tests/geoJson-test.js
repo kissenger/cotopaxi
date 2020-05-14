@@ -51,7 +51,6 @@ it('wrapper it to wait for promise.all to complete', function () {
             doesStartOnHill = geoJson.properties.stats.hills[0].startPoint === 0;
             doesEndOnHill = geoJson.properties.stats.hills[nHills-1].EndPoint === nPointsOnPath;
 
-            // console.log(geoJson);
           })
           .catch( function(error) {
             console.log(error);
