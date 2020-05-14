@@ -23,7 +23,7 @@ export class GeoJSON {
   // populates the class instance with data from supplied Path instance
   fromPath(path) {
     this._checkIsPath(path);
-    this._lngLats = path.lngLat;
+    this._lngLats = path.lngLats;
     this._properties = path.properties
     this._elevs = this._properties.params.elev;
     this._bbox = this._properties.stats.bbox;

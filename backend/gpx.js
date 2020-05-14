@@ -2,8 +2,28 @@
 
 /**
  * Module provides GPX file read/write functions
- * TODO: Refactor long overdue - look into npm library or writing one
+ * TODO: Refactor long overdue
  * https://github.com/sports-alliance/sports-lib
+ * Or use a generic xml parser as a base to build on??
+ *
+ * Suggested new approach:
+ * Catch one point in turn, and catch all named params on that point, regardless of what
+ * they are.  Save result as json:
+ * [{lng: xxx, lat: xxx, HR: xxx, elev:xxx},
+ *  {lng: xxx, lat: xxx, elev:xxx},
+ *   ...etc]
+ * That way we immediately associate params with points, and we can use geoPointsAndPaths to
+ * strip them out as needed.
+ * Maybe then deprecate load by lngLat from geoPointsAndPaths as not needed - check impact on
+ * the front end.
+ * Could also produce a meta-data object:
+ * {
+ *  name: 'mendip-Way',
+ *  source: 'gpx import',
+ *  ...etc
+ * }
+ * This could be used in Path substantiation and in Mongo save to ensure we track the srouce of
+ * parameters
  */
 
 import { createWriteStream } from 'fs';
@@ -37,7 +57,7 @@ export function readGPX(data) {
   let elev = [];
   let nameOfPath = '';
   let lineData;
-  let typeOfPath;
+  let typeOfPath;   // value does not get read at the moment
   let typeTag;
   let ptStart, ptEnd, ptData;
 
@@ -144,7 +164,7 @@ export function readGPX(data) {
   const returnObject = {
     name: nameOfPath,
     lngLat: lngLat,
-    elevations: elev.every( e => e === null) ? null : {source: 'gpx import', elevations: elev},
+    elev: elev.every( e => e === null) ? null : elev,
     time: time.every( t => t === null) ? null : time,
   };
 
@@ -163,6 +183,10 @@ export function readGPX(data) {
  * writeGpx
  *
  * Purpose is to write path data to gpx file
+ *
+ * TODO:
+ * !!!Only supports elevation (in addition to lng/lat)!!!
+ * !!!Assumes the intended output is a route not a track!!!
  *
  */
 

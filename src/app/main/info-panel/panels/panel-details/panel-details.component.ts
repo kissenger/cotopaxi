@@ -76,6 +76,8 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       let x = 0;
       geoJson.features.forEach( feature => {
         const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
+        console.log(feature.properties.params.elev);
+        console.log(Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)));
         this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
         x += feature.properties.params.elev.length - 1;
         this.colourArray.push(feature.properties.lineColour);

@@ -104,10 +104,9 @@ app.post('/save-created-route/', verifyToken, (req, res) => {
 
   debugMsg('save-created-route' );
 
-  const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
-  getRouteInstance(req.body.name, req.body.description, lngLats, req.body.elev)
+  getRouteInstance(req.body.name, req.body.description, req.body.coords, req.body.elev)
     .then( route => mongoModel('route').create( route.asMongoObject(req.userId, true) ))
-    .then( () => res.status(201).json( {pathId: doc._id} ))
+    .then( doc => res.status(201).json( {pathId: doc._id} ))
     .catch( (error) => res.status(500).json(error.toString()) );
 
 });
@@ -240,7 +239,7 @@ app.post('/get-path-from-points/', verifyToken, (req, res) => {
       hills: new GeoJSON().fromPath(route).toGeoHills(),
       basic: new GeoJSON().fromPath(route).toBasic()
     }))
-    .catch( (error) => res.status(500).json(error.toString()) );
+    .catch( (error) => res.status(500).json( error.toString() ));
 
 })
 

@@ -171,6 +171,9 @@ export function analyseElevations() {
   let ascent = 0;
   let descent = 0;
 
+  console.log(smoothedElevations);
+
+
   // loop through points to calculate ascent and descent, and to detect hills
   for (let i = 1; i < this.length; i++ ) {
 
@@ -192,12 +195,14 @@ export function analyseElevations() {
 
     // Calculates the start and end points of hills and stashes them in hills array
     // This block is similar to above but because we need to use a different threshold, we need a new loop
+    console.log(hillSum, de, hillsArr)
     if (Math.sign(hillSum) === Math.sign(de)) {
       // same direction, increment
       hillSum += de;
     } else {
       // direction change, check threshold and store hill if needed
       if (Math.abs(hillSum) > globals.HILL_THRESH) {
+        console.log('***', p0, i, hillSum)
         hillsArr.push([p0 - 1, i - 1]);
       }
       hillSum = de;
@@ -212,7 +217,8 @@ export function analyseElevations() {
     else { descent += dSum; }
   }
   if (Math.abs(hillSum) > globals.HILL_THRESH) {
-    hillsArr.push([p0 - 1, this.nPoints - 1]);
+    console.log('@@@', p0 - 1, this.length);
+    hillsArr.push([p0 - 1, this.length - 1]);
   }
 
   // get stats for each hill in the list

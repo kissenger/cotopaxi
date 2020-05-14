@@ -1,3 +1,4 @@
+
   import { TsCoordinate, TsFeatureCollection } from 'src/app/shared/interfaces';
   import { emptyGeoJson } from '../globals';
 

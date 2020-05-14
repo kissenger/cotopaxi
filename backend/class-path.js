@@ -62,13 +62,23 @@ export class PathWithStats extends Path{
 
     return new Promise( (resolve, reject) => {
 
-      const isElevationsProvided = lngLats.length === elev.length;
+      // check quality of elevations - for now dump elevations if there are any nulls
+      // TODO: In future fill in if there are minor gaps in elevation profile
+      if (elev) {
+        elev = elev.every(e => !!e) ? elev : null;
+      }
+
+      const isElevationsProvided = !!elev;
       const path = new Path(lngLats);
-      if (isElevationsProvided) { path.addParam('elev', elev); };
+      if (isElevationsProvided) {
+        path.addParam('elev', elev);
+      };
       path.simplify(2);
 
       if (path.length < globals.LONG_PATH_THRESHOLD) {
         if (!isElevationsProvided) {
+          console.log(path);
+          console.log(path.pointLikes);
           jael.getElevs( {points: path.pointLikes} )
             .then(elev => resolve( {lngLat: path.lngLats, elev: elev.map(e => e.elev)} ))
             .catch(error => reject(error))
