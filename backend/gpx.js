@@ -3,10 +3,10 @@
 /**
  * Module provides GPX file read/write functions
  * TODO: Refactor long overdue - look into npm library or writing one
+ * https://github.com/sports-alliance/sports-lib
  */
 
-import { writeFile, createWriteStream } from 'fs';
-import * as globals from './globals.js';
+import { createWriteStream } from 'fs';
 import { debugMsg } from './debugging.js';
 
 /**
@@ -16,19 +16,31 @@ import { debugMsg } from './debugging.js';
 * Parses track data from a provided GPX file.
 * Does not distiguish between a route and a track - it disguards this knowledge
 * and simplyy returns an object with supported parameters
+*
+*
+* For paramaters other than lngLat, the following behaviour is expected:
+*   > During the search, if a paramater is not found on a point it will store '' in the param array
+*   > If at the end of the search all array values are '', the paramater is set to null
+*   > If at the end of the search only some array values are '', those blank values are set to null
 */
 export function readGPX(data) {
   debugMsg('readGPX()');
 
   // declare function variables
   const MAX_LOOPS = 1000000;
-  var a = 0;                          // start of interesting feature
-  var b = data.indexOf("\r",a);       // end of interesting feature
-  var latValue, lngValue, eleValue, timeValue;
+  let a = 0;                          // start of interesting feature
+  let b = data.indexOf("\r",a);       // end of interesting feature
+  let c;
+  let latValue, lngValue, eleValue, timeValue;
   let lngLat = [];
   let time = [];
   let elev = [];
-  let nameOfPath = "";
+  let nameOfPath = '';
+  let lineData;
+  let typeOfPath;
+  let typeTag;
+  let ptStart, ptEnd, ptData;
+
 
   /**
    * Loop through each line until we find track or route start
@@ -36,6 +48,7 @@ export function readGPX(data) {
   for (let i = 0; i < MAX_LOOPS; i++) {
 
     lineData = data.slice(a,b)
+
     a = b + 2;
     b = data.indexOf("\r",a);
 
@@ -109,7 +122,7 @@ export function readGPX(data) {
       eleValue = parseFloat(ptData.slice(a,b).match(/[-0123456789.]/g).join(""));
       // isElev = true;
     }
-    elev.push(eleValue);
+    elev.push(eleValue === '' ? null : eleValue);
 
     // time
     timeValue = '';
@@ -119,13 +132,9 @@ export function readGPX(data) {
       timeValue = ptData.slice(a,b).match(/[-0123456789.TZ:]/g).join("");
       // isTime = true;
     }
-    time.push(timeValue);
+    time.push(timeValue === '' ? null : timeValue);
   }
 
-  // if elevation array is incomplete, then discard them - if necessary they'll get populated from DEM later
-  for (let i = 0, n = lngLat.length - 1; i < n; i++) {
-    elev = [];
-  }
 
   if (lngLat.length === 0) {
     throw new Error('Error reading .gpx file');
@@ -135,15 +144,15 @@ export function readGPX(data) {
   const returnObject = {
     name: nameOfPath,
     lngLat: lngLat,
-    elev: elev,
-    time: time,
+    elevations: elev.every( e => e === null) ? null : {source: 'gpx import', elevations: elev},
+    time: time.every( t => t === null) ? null : time,
   };
 
   // print to console and dump to file to support testing/debugging
-  if (globals.DEBUG) {
-    debugMsg('readGPX() finished!');
-    writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
-  };
+  // if (globals.DEBUG) {
+  //   debugMsg('readGPX() finished!');
+  //   writeFile("../gpx_dump.js", JSON.stringify(returnObject), (err) => {} );
+  // };
 
   return returnObject;
 }
@@ -207,5 +216,3 @@ export function writeGPX(path){
   })
 
 }
-
-

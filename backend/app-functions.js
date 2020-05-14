@@ -29,19 +29,19 @@ export function mongoModel(pathType) {
  */
 export function getPathDocFromId(pid, ptype, uid) {
 
-  return new Promise( resolve => {
-    mongoModel(ptype).find({_id: pid, userId: uid}).then( (path) => {
-      resolve(path[0]);
-    })
+  return new Promise( (resolve, reject) => {
+    mongoModel(ptype)
+      .find( {_id: pid, userId: uid} )
+      .then( path => resolve(path[0]) )
+      .catch( error => reject(error) )
   })
-
 }
 
 
 /**
 * Abstract model creation
 */
-export function createMongoModel(model, pathType) {
+export function createMongoModel(pathType, model) {
   return new Promise( (resolve, reject) => {
     mongoModel(pathType).create(model)
       .then( doc => resolve(doc) )
@@ -49,21 +49,6 @@ export function createMongoModel(model, pathType) {
   });
 }
 
-
-/**
-* Find a set of documents
-*/
-export function getFindFromMongo(condition, filter, sort, limit, offset) {
-  return new Promise( (resolve, reject) => {
-    mongoModel(req.params.pathType)
-      .find(condition, filter)
-      .sort(sort)
-      .limit(parseInt(limit))
-      .skip(limit*(offset))
-    .then( result => resolve(result) )
-    .catch( error => reject(error) )
-  })
-}
 
 
 /**
@@ -89,7 +74,7 @@ export function bbox2Polygon(bbox) {
   * Returns an object expected by the front end when a list query is made
   * Called by get-paths-list()
   */
-export export function getListData() {
+export function getListData(docs, count) {
 
   return docs.map( d => ({
     name: d.info.name,
@@ -102,7 +87,7 @@ export export function getListData() {
     isElevations: d.info.isElevations,
     isLong: d.info.isLong,
     pathId: d._id,
-    count: c
+    count
     })
   );
 
@@ -125,17 +110,6 @@ export function documentToGpx(document) {
       .catch( error => reject(error))
   })
 
-}
-
-
-export function returnObject(object) {
-  res.status(201).json( object );
-}
-
-
-export function returnError(error) {
-  res.status(500).json(err.toString());
-  debugMsg('ERROR:' + err);
 }
 
 

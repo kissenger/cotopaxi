@@ -14,17 +14,9 @@ import mongoose from 'mongoose';
 import { GeoJSON } from './class-geojson.js';
 import { readGPX } from './gpx.js';
 import { debugMsg } from './debugging.js';
-import {mongoModel, getPathDocFromId, createMongoModel, bbox2Polygon, getFindFromMongo} from './app-functions.js';
+import {mongoModel, getPathDocFromId, createMongoModel, bbox2Polygon} from './app-functions.js';
 import {getListData, documentToGpx, getRouteInstance} from './app-functions.js';
-import {returnError, returnObject} from './app-functions.js';
-
-
-/******************************************************************
- *
- * SETUP
- *
- ******************************************************************/
-
+import {writeFile} from 'fs';
 const app = express();
 
 app.use( (req, res, next) => {
@@ -59,28 +51,27 @@ const upload = multer({
   }
 });
 
-/******************************************************************
- *
- * ROUTES
- *
- ******************************************************************/
 
 
 /*****************************************************************
  * import a route from a gpx file
  ******************************************************************/
-
 app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) => {
 
   debugMsg('import-route');
 
+
   const pathFromGPX = readGPX(req.file.buffer.toString());
   getRouteInstance(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev)
     .then( route => createMongoModel('route', route.asMongoObject(req.userId, false)) )
-    .then( doc => returnObject( {hills: new GeoJSON().fromDocument(doc).toGeoHills()} ))
-    .catch( (err) => returnError(err) )
+    .then( doc => {
+      writeFile("./document_dump.js", JSON.stringify(doc), (err) => {} );
+      res.status(201).json( {hills: new GeoJSON().fromDocument(doc).toGeoHills()} )
+    })
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 });
+
 
 
 /*****************************************************************
@@ -88,7 +79,6 @@ app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) =>
  * database, all we are doing is updating some fields, and
  * changing isSaved flag to true; id of path is provided
  *****************************************************************/
-
 app.post('/save-imported-path/', verifyToken, (req, res) => {
 
   debugMsg('save-imported-path');
@@ -100,16 +90,16 @@ app.post('/save-imported-path/', verifyToken, (req, res) => {
   // query database, updating changed data and setting isSaved to true
   mongoModel(req.body.pathType)
     .updateOne(condition, {$set: filter}, {upsert: true, writeConcern: {j: true}})
-    .then( () => returnObject({pathId: req.body.pathId}) )
-    .catch( (err) => returnError(err) )
+    .then( () => res.status(201).json({pathId: req.body.pathId}) )
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 });
+
 
 
 /*****************************************************************
  * Save a user-created route to database; geoJSON is supplied in POST body
  *****************************************************************/
-
 app.post('/save-created-route/', verifyToken, (req, res) => {
 
   debugMsg('save-created-route' );
@@ -117,43 +107,30 @@ app.post('/save-created-route/', verifyToken, (req, res) => {
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
   getRouteInstance(req.body.name, req.body.description, lngLats, req.body.elev)
     .then( route => mongoModel('route').create( route.asMongoObject(req.userId, true) ))
-    .then( () => returnObject( {pathId: doc._id} ))
-    .catch( (err) => returnError(err) )
+    .then( () => res.status(201).json( {pathId: doc._id} ))
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 });
+
 
 
 /*****************************************************************
  *  Retrieve a single path from database
  *  id of required path is supplied
  *****************************************************************/
-
 app.get('/get-path-by-id/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('get-path-by-id');
 
   getPathDocFromId(req.params.id, req.params.type, req.userId)
-    .then( doc => returnObject({
+    .then( doc => {
+      res.status(201).json({
       hills: new GeoJSON().fromDocument(doc).toGeoHills(),
       basic: new GeoJSON().fromDocument(doc).toBasic()
-    }) )
-    .catch( (err) => returnError(err) )
+    }) })
+    .catch( (error) => res.status(500).json( error.toString()) );
 })
 
-
-/*****************************************************************
- * Flush database of all unsaved entries
- * note we are only flushing routes at the moment
- *****************************************************************/
-app.post('/flush/', verifyToken, (req, res) => {
-
-  debugMsg('flush db');
-
-  mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} )
-    .then( () => returnObject( {result: 'db flushed'} ))
-    .catch( (err) => returnError(err) )
-
-})
 
 
 /*****************************************************************
@@ -164,12 +141,10 @@ app.post('/flush/', verifyToken, (req, res) => {
  * pathType is the type of path (obvs)
  * offset is used by list to request chunks of x paths at a time
  *****************************************************************/
-
 app.get('/get-paths-list/:pathType/:offset/:limit', verifyToken, (req, res) => {
 
   debugMsg('get-paths-list');
 
-  // setup query
   let condition = {isSaved: true, userId: req.userId};
   if (req.query.bbox !== '0') {
     const geometry = { type: 'Polygon', coordinates: bbox2Polygon(req.query.bbox) };
@@ -179,14 +154,17 @@ app.get('/get-paths-list/:pathType/:offset/:limit', verifyToken, (req, res) => {
   const sort = req.params.pathType === 'track' ? {startTime: -1} : {creationDate: -1};
   const limit = req.params.limit;
   const offset = req.params.offset
+  const pathType = req.params.pathType;
 
-  // the front end would like to know how many paths there are in total, so make that the first query
-  mongoModel(req.params.pathType).countDocuments(condition)
-    .then( count => getFindFromMongo(condition, filter, sort, limit, offset) )
-    .then( documents => returnObject(getListData(documents, count)))
-    .catch( (err) => returnError(err) )
+  mongoModel(pathType).countDocuments(condition)
+    .then( count => {
+      mongoModel(pathType).find(condition, filter).sort(sort).limit(parseInt(limit)).skip(limit*(offset))
+        .then( documents => res.status(201).json( getListData(documents, count) ))
+      })                          // this 'then' is nested rather than chained so it has access to 'count'
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 })
+
 
 
 /*****************************************************************
@@ -194,7 +172,6 @@ app.get('/get-paths-list/:pathType/:offset/:limit', verifyToken, (req, res) => {
  * id of path is provided - doesnt actually delete, just sets isSaved to false
  * and delete will occur at the next flush
  *****************************************************************/
-
 app.delete('/delete-path/:type/:id', verifyToken, (req, res) => {
 
   debugMsg('delete-path');
@@ -205,10 +182,11 @@ app.delete('/delete-path/:type/:id', verifyToken, (req, res) => {
 
   // query database, updating change data and setting isSaved to true
   mongoModel(req.params.type).updateOne(condition, {$set: filter})
-    .then( () => returnObject( {'result': 'delete ok'} ))
-    .catch( error => returnError(error) )
+    .then( () => res.status(201).json( {'result': 'delete ok'} ))
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 });
+
 
 
 /*****************************************************************
@@ -217,7 +195,6 @@ app.delete('/delete-path/:type/:id', verifyToken, (req, res) => {
  *    data to file, returning the filename
  * 2) download-file: allow the browser to download the file
  *****************************************************************/
-
  // Step 1, write the data to gpx file
 app.get('/write-path-to-gpx/:type/:id', verifyToken, (req, res) => {
 
@@ -226,10 +203,9 @@ app.get('/write-path-to-gpx/:type/:id', verifyToken, (req, res) => {
   mongoModel(req.params.type)
     .find({_id: req.params.id, userId: req.userId})
     .then( document => documentToGpx(document))
-    .then( fileName => returnObject( {fileName} ))
-    .catch( error => returnError(error))
+    .then( fileName => res.status(201).json( {fileName} ))
+    .catch( (error) => res.status(500).json(error.toString()) );
 })
-
 
 // Step 2, download the file to browser
 app.get('/download-file/:fname', verifyToken, (req, res) => {
@@ -247,30 +223,12 @@ app.get('/download-file/:fname', verifyToken, (req, res) => {
 })
 
 
-/*****************************************************************
- *  Simplify a path provided by the front end, and return it.
- *  Does this by simply creating a route object on the as this
- *  automatically invokes simplification algorithm
- *WILL NEED TO CHANGE AS SIMPLIFY IS MOVED TO GEOLIB AND INPUT IS ARRAY OF POINT INSTANCES
- *
- *****************************************************************/
-// app.post('/simplify-path/', (req, res) => {
-
-//   if (DEBUG) { console.log(timeStamp() + '>> simplify-path') };
-
-//   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
-//   const points = lngLats.map(coord => new Point([coord]))
-//   res.status(201).json( simplify(points) );
-
-// })
-
 
 /*****************************************************************
  * Recieves a set of points (lngLats array) from the front end and
  * creates a Path object in order to get elevations and statistics,
  * and returns it back to the front end
  *****************************************************************/
-
 app.post('/get-path-from-points/', verifyToken, (req, res) => {
 
   debugMsg('get-path-from-points')
@@ -278,13 +236,31 @@ app.post('/get-path-from-points/', verifyToken, (req, res) => {
   const lngLats = req.body.coords.map(coord => [coord.lng, coord.lat]);
 
   getRouteInstance(null, null, lngLats, null)
-    .then( route => returnObject({
+    .then( route => res.status(201).json({
       hills: new GeoJSON().fromPath(route).toGeoHills(),
       basic: new GeoJSON().fromPath(route).toBasic()
     }))
-    .catch( (err) => returnError(err) )
+    .catch( (error) => res.status(500).json(error.toString()) );
 
 })
+
+
+
+/*****************************************************************
+ * Flush database of all unsaved entries
+ * note we are only flushing routes at the moment
+ *****************************************************************/
+app.post('/flush/', verifyToken, (req, res) => {
+
+  debugMsg('flush db');
+
+  mongoModel('route').deleteMany( {'userId': userId, 'isSaved': false} )
+    .then( () => res.status(201).json( {result: 'db flushed'} ))
+    .catch( (error) => res.status(500).json(error.toString()) );
+
+})
+
+
 
 export default app;
 

@@ -32,14 +32,14 @@ jael.setPath('C:\\__FILES\\Gordon\\PROJECT\\Angular\\_ASTGTM');
 
 export class PathWithStats extends Path{
 
-  constructor(name, description, lngLat, elevs) {
+  constructor(name, description, lngLat, elev) {
 
     debugMsg('PathWithStats');
 
     super(lngLat);
 
-    if (elevs.length > 0) {
-      this.addParam('elev', elevs);
+    if (elev.length > 0) {
+      this.addParam('elev', elev);
       this._isElevations = true;
     } else {
       this._isElevations = false;
@@ -58,11 +58,11 @@ export class PathWithStats extends Path{
 
 
   // Perform pre-flight checks on provided points and elevations - get elevations from jael if needed
-  static preFlight(lngLats, elevs) {
+  static preFlight(lngLats, elev) {
 
     return new Promise( (resolve, reject) => {
 
-      const isElevationsProvided = lngLats.length === elevs.length;
+      const isElevationsProvided = lngLats.length === elev.length;
       const path = new Path(lngLats);
       if (isElevationsProvided) { path.addParam('elev', elev); };
       path.simplify(2);
@@ -70,7 +70,7 @@ export class PathWithStats extends Path{
       if (path.length < globals.LONG_PATH_THRESHOLD) {
         if (!isElevationsProvided) {
           jael.getElevs( {points: path.pointLikes} )
-            .then(elevs => resolve( {lngLat: path.lngLats, elev: elevs.map(e => e.elev)} ))
+            .then(elev => resolve( {lngLat: path.lngLats, elev: elev.map(e => e.elev)} ))
             .catch(error => reject(error))
         } else {
           resolve( {lngLat: path.lngLats, elev: path.getParam('elev')} );

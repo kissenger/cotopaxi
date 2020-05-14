@@ -51,7 +51,7 @@ export class GeoJSON {
 
   // returns a 'normal' geoJSON feature collection with a single feature
   toBasic() {
-    this._features = [this.feature(this.lngLats, this.elevs, globals.ROUTE_COLOUR)];
+    this._features = [this._feature(this.lngLats, this.elevs, globals.ROUTE_COLOUR)];
     return this._featureCollection();
   }
 
@@ -62,7 +62,7 @@ export class GeoJSON {
       this._getHillSegments().forEach( segment => {
         let coords = this._lngLats.slice(segment.start, segment.end + 1);
         let elevs = this._elevs.slice(segment.start, segment.end + 1);
-        this._features.push(this.feature(coords, elevs, segment.colour));
+        this._features.push(this._feature(coords, elevs, segment.colour));
       });
     } else {
       this._features.push(this._feature(this._lngLats, this._elevs, globals.ROUTE_COLOUR));
@@ -84,7 +84,7 @@ export class GeoJSON {
 
 
   _checkIsDocument(input) {
-    if ( !input.hasOwnProperty('geometry') || !input.hasOwnProperty('params')) {
+    if ( !input.geometry || !input.params ) {
       throw new Error('GeoJSON fromDocument() expects Mongo document as input');
     }
   }
@@ -104,17 +104,20 @@ export class GeoJSON {
     if (hills[0].startPoint !== 0 ) {
       segments.push({colour: globals.FLAT_COLOUR, start: 0, end: hills[0].startPoint})
     };
+
     // loop through the hills array
     for (let i = 0, iMax = hills.length - 1; i <= iMax; i++) {
+
       // push the current hill
       segments.push({colour: hills[i].aveGrad > 0 ? globals.UP_COLOUR : globals.DOWN_COLOUR, start: hills[i].startPoint, end: hills[i].endPoint});
+
       // push the next flat
       if (i !== iMax) {
         if (hills[i].endPoint !== hills[i+1].startPoint) {
           segments.push({colour: globals.FLAT_COLOUR, start: hills[i].endPoint, end: hills[i+1].startPoint});
         }
       } else {
-        if (hills[i].endPoint !== this.lngLats.length-1) {
+        if (hills[i].endPoint !== this._lngLats.length-1) {
           segments.push({colour: globals.FLAT_COLOUR, start: hills[i].endPoint, end: this._lngLats.length-1});
         }
       }

@@ -15,12 +15,10 @@ const pathSchema = mongoose.Schema({
 
   // params are the additional parameters from the recording devi
   params: {
-    elev: {type: [Number]},
-    time: {type: [Number]},
-    // heartRate: {type: [Number]},
-    // cadence: {type: [Number]},
+    elev: {type: [Number], default: null},
+    time: {type: [Number], default: null},
     cumDistance: {type: [Number]},
-    smoothedElev: {type: [Number]},
+    smoothedElev: {type: [Number], default: null},
     matchedPoints: {type: [[Number]]}
   },
 
@@ -28,24 +26,12 @@ const pathSchema = mongoose.Schema({
   info: {
     direction: {type: String},
     category: {type: String},
-    // nationalTrail: {type: Boolean},
-    // isFavourite: {type: Boolean},
     name: {type: String},
     description: {type: String},
     pathType: {type: String},           // 'route' or 'track'
-    // startTime: {type: String},
     isLong: {type: Boolean},
     isElevations: {type: Boolean}
   },
-
-  // listStats: {
-  //   name: {type: string},
-  //   category: {type: string},
-  //   startTime: {type: string},
-  //   distance: {type: number},
-  //   pathDuration: {type: number},
-  //   matchDistance: {type: number},
-  // },
 
   // statistics calculated from the device data
   stats: {
@@ -79,7 +65,6 @@ const pathSchema = mongoose.Schema({
     hills: {type: [
       { dHeight: {type: Number},
         dDist: {type: Number},
-        // startDist: {type: Number},
         startPoint: {type: Number},
         endPoint: {type: Number},
         maxGrad: {type: Number},
