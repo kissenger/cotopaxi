@@ -70,7 +70,7 @@ export class RoutesCreateComponent implements OnInit, OnDestroy {
       if (!this.overlaidPaths.includes(pathId)) {
         this.httpService.getPathById('route', pathId).subscribe( (result) => {
           this.mapCreateService.removeLayerFromMap(pathId);
-          this.mapCreateService.addLayerToMap(result.geoJson, globals.overlayLineStyle, this.overlayPlotOptions);
+          this.mapCreateService.addLayerToMap(result.basic, globals.overlayLineStyle, this.overlayPlotOptions);
           this.overlaidPaths.push(pathId);
         });
 

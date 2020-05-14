@@ -64,6 +64,7 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       this.isHills = this.pathStats.hills.length > 0;
 
       /**
+       * TODO: This should be in a subroutine
        * Calculate data to plot on chart - complex due to plotting hills in different colours
        * Need one array for cumulative distance, and one array each for each subsequent segment on the chart, eg
        *    [[x1, x2, x3, x4, x5, ....],
@@ -76,8 +77,6 @@ export class PanelRoutesCreateDetailsComponent implements OnInit, OnDestroy {
       let x = 0;
       geoJson.features.forEach( feature => {
         const y = geoJson.properties.params.cumDistance.length - feature.properties.params.elev.length - x;
-        console.log(feature.properties.params.elev);
-        console.log(Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)));
         this.chartData.push( Array(x).fill(null).concat(feature.properties.params.elev).concat(Array(y).fill(null)) );
         x += feature.properties.params.elev.length - 1;
         this.colourArray.push(feature.properties.lineColour);

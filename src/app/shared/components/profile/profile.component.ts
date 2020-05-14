@@ -67,7 +67,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onToggleClick() {
     this.isChanged = true;
-    console.log(this.isDistChecked, this.isElevChecked);
   }
 
   onSaveClick() {
@@ -78,11 +77,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       distance: this.isDistChecked ? 'km' : 'mi',
       elevation: this.isElevChecked ? 'ft' : 'm'
     };
-    console.log(this.isDistChecked, this.isElevChecked);
-    console.log(this.user.units.distance, this.user.units.elevation);
 
     this.httpSubscription = this.http.updateUserData(this.user).subscribe( (res) => {
-      console.log(res);
       this.auth.setUser(this.user);
       this.dataService.unitsUpdateEmitter.emit();
       this.close.next();

@@ -51,7 +51,7 @@ export class GeoJSON {
 
   // returns a 'normal' geoJSON feature collection with a single feature
   toBasic() {
-    this._features = [this._feature(this.lngLats, this.elevs, globals.ROUTE_COLOUR)];
+    this._features = [this._feature(this._lngLats, this._elevs, globals.ROUTE_COLOUR)];
     return this._featureCollection();
   }
 

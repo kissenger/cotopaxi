@@ -172,7 +172,7 @@ export class MapService {
    */
   removeLayerFromMap(pid: string) {
     // check that the path we think we are deleting exists on the map
-    console.log('delete layer', this.activeLayers);
+    // console.log('delete layer', this.activeLayers);
     if (this.tsMap.getLayer(pid)) {
       this.tsMap.removeLayer(pid);
       this.tsMap.removeSource(pid);
@@ -182,7 +182,6 @@ export class MapService {
 
     // if the pid exists then also delete any markers
     if (pid in this.activeLayers) {
-      // console.log('found pid', pid, this.activeLayers);
       this.removeMarkersFromPath(pid);
       delete this.activeLayers[pid];
     }

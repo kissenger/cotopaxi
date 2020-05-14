@@ -38,17 +38,14 @@ export class AppComponent implements OnInit {
    }
 
    ngOnInit() {
-     const pleadString =
-     '\n\n<promote-self>\n' +
+     const promoteString =
      'Looking for a full-stack developer with ' +
-     'Angular2+, NodeJS, Express, Mongo, Google Maps API ' +
-     'Mapbox API experience, and driven to develop projects ' +
-     'like this in his spare time?  \n' +
-     'Visit www.kissenger-codes.co.uk for portfolio and contact ' +
-     'details\n' +
-      '</promote-self>\n\n';
+     'Angular2+, NodeJS, Express, Mongo, Google Maps API, ' +
+     'Mapbox API, mochajs experience, and driven to develop ' +
+     'projects like this in their spare time?  \n' +
+     'Checkout my projects at https://github.com/kissenger';
 
-     console.log('%c' + pleadString, 'background: #FFFFFF; color: #bada55');
+     console.log('%c' + promoteString, 'background: #FFFFFF; color: #bada55');
   }
 
 
