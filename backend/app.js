@@ -12,11 +12,11 @@ import bodyParser from 'body-parser';
 import { authRoute, verifyToken } from './app-auth.js';
 import mongoose from 'mongoose';
 import { GeoJSON } from './class-geojson.js';
-import { readGPX } from './gpx.js';
+import { gpxRead, gpxWriteFromDocument } from './gpx.js';
 import { debugMsg } from './debugging.js';
-import {mongoModel, getPathDocFromId, createMongoModel, bbox2Polygon} from './app-functions.js';
-import {getListData, documentToGpx, getRouteInstance} from './app-functions.js';
-import {writeFile} from 'fs';
+import { mongoModel, getPathDocFromId, createMongoModel, bbox2Polygon } from './app-functions.js';
+import { getListData, getRouteInstance } from './app-functions.js';
+// import {writeFile} from 'fs';    //debugging
 const app = express();
 
 app.use( (req, res, next) => {
@@ -64,10 +64,7 @@ app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) =>
   const pathFromGPX = readGPX(req.file.buffer.toString());
   getRouteInstance(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev)
     .then( route => createMongoModel('route', route.asMongoObject(req.userId, false)) )
-    .then( doc => {
-      writeFile("./document_dump.js", JSON.stringify(doc), (err) => {} );
-      res.status(201).json( {hills: new GeoJSON().fromDocument(doc).toGeoHills()} )
-    })
+    .then( doc => res.status(201).json( {hills: new GeoJSON().fromDocument(doc).toGeoHills()} ))
     .catch( (error) => res.status(500).json(error.toString()) );
 
 });
@@ -201,7 +198,7 @@ app.get('/write-path-to-gpx/:type/:id', verifyToken, (req, res) => {
 
   mongoModel(req.params.type)
     .find({_id: req.params.id, userId: req.userId})
-    .then( document => documentToGpx(document))
+    .then( documents => gpxWriteFromDocument(documents[0]))
     .then( fileName => res.status(201).json( {fileName} ))
     .catch( (error) => res.status(500).json(error.toString()) );
 })

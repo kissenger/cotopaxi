@@ -6,7 +6,6 @@
  */
 
 import { Route } from './class-path.js';
-import { writeGPX } from './gpx.js';
 import { debugMsg } from './debugging.js';
 import { Routes, Tracks } from './models/path-models.js';
 
@@ -94,23 +93,6 @@ export function getListData(docs, count) {
 }
 
 
-export function documentToGpx(document) {
-
-  return new Promise( (resolve, reject) => {
-
-    const pathToExport = {
-      name: document[0].info.name,
-      description: document[0].info.description,
-      lngLat: document[0].geometry.coordinates,
-      elevs: document[0].params.elev
-    }
-
-    writeGPX(pathToExport)
-      .then( fileName => resolve(fileName))
-      .catch( error => reject(error))
-  })
-
-}
 
 
 /**

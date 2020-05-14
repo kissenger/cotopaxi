@@ -43,8 +43,8 @@ import { debugMsg } from './debugging.js';
 *   > If at the end of the search all array values are '', the paramater is set to null
 *   > If at the end of the search only some array values are '', those blank values are set to null
 */
-export function readGPX(data) {
-  debugMsg('readGPX()');
+export function gpxRead(data) {
+  debugMsg('gpxRead()');
 
   // declare function variables
   const MAX_LOOPS = 1000000;
@@ -178,6 +178,26 @@ export function readGPX(data) {
 }
 
 
+/**
+ * Converts the document data into a key/value object taken by gpxWrite
+ */
+export function gpxWriteFromDocument(document) {
+
+  return new Promise( (resolve, reject) => {
+
+    const pathToExport = {
+      name: !!document.info.name ? document.info.name : document.info.category + ' ' + document.info.pathType,
+      description: document.info.description,
+      lngLat: document.geometry.coordinates,
+      elevs: document.params.elev
+    }
+
+    gpxWrite(pathToExport)
+      .then( fileName => resolve(fileName))
+      .catch( error => reject(error))
+  })
+
+}
 
 /**
  * writeGpx
@@ -188,9 +208,10 @@ export function readGPX(data) {
  * !!!Only supports elevation (in addition to lng/lat)!!!
  * !!!Assumes the intended output is a route not a track!!!
  *
+ * @returns Name of the file
  */
 
-export function writeGPX(path){
+export function gpxWrite(writeObject){
 
   debugMsg('writeGPX()');
 
@@ -199,7 +220,7 @@ export function writeGPX(path){
     const creator = 'Trailscape https://kissenger.github.io/trailscape/';
     const xmlns = 'http://www.topografix.com/GPX/1/0';
 
-    const fileName = path.name !== "" ? path.name : path.category + ' ' + path.pathType;
+    const fileName = writeObject.name;
     const file = createWriteStream('../' + fileName + '.gpx');
     const s = '   ';
     const eol = '\r\n'
@@ -211,14 +232,14 @@ export function writeGPX(path){
       file.write(s.repeat(0) + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + eol);
       file.write(s.repeat(0) + "<gpx version=\"1.1\" creator=\"" + creator + "\" xmlns=\"" + xmlns + "\">" + eol);
       file.write(s.repeat(1) + "<rte>" + eol);
-      file.write(s.repeat(2) + "<name>" + path.name + "</name>" + eol);
+      file.write(s.repeat(2) + "<name>" + writeObject.name + "</name>" + eol);
 
-      path.lngLat.forEach( (lngLat, i) => {
+      writeObject.lngLat.forEach( (lngLat, i) => {
 
-        if ( path.elevs[i] ) {
+        if ( writeObject.elevs[i] ) {
           // elevation data exists, use conventional tag
           file.write(s.repeat(2) + "<rtept lat=\"" + lngLat[1] + "\" lon=\"" + lngLat[0] + "\">" + eol);
-          file.write(s.repeat(3) + "<ele>" + path.elevs[i] + "</ele>" + eol);
+          file.write(s.repeat(3) + "<ele>" + writeObject.elevs[i] + "</ele>" + eol);
           file.write(s.repeat(2) + "</rtept>" + eol);
 
         } else {

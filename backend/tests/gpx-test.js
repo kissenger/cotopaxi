@@ -12,7 +12,7 @@ var reject = chai.reject;
 chai.use(chaiAsPromised);
 
 import { readFile } from 'fs';
-import { readGPX } from '../gpx.js';
+import { gpxRead } from '../gpx.js';
 
 const dir = './data/';
 
