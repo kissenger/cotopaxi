@@ -34,6 +34,8 @@ app.use(authRoute);
 // local connection
 // Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
 // mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb',
+// TODO: use .env file for these?
+// https://www.freecodecamp.org/news/heres-how-you-can-actually-use-node-environment-variables-8fdf98f53a0a/
 mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/trailscape?retryWrites=true',
   {useUnifiedTopology: true, useNewUrlParser: true });
 const db = mongoose.connection;
@@ -59,7 +61,6 @@ const upload = multer({
 app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) => {
 
   debugMsg('import-route');
-
 
   const pathFromGPX = readGPX(req.file.buffer.toString());
   getRouteInstance(pathFromGPX.nameOfPath, null, pathFromGPX.lngLat, pathFromGPX.elev)

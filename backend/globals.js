@@ -2,6 +2,8 @@
 
 /**
  * Module provides all the global paramaters used throughout the backend
+ * TODO: use .env file for these?
+ * https://www.freecodecamp.org/news/heres-how-you-can-actually-use-node-environment-variables-8fdf98f53a0a/
  */
 
 export const DEBUG = true;                   // if true prints debug messages to the backend terminal
