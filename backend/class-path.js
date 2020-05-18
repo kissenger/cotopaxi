@@ -20,10 +20,10 @@ import { debugMsg } from './debugging.js';
 import * as globals from './globals.js';
 
 import { getCategory, getDirection, getMatchedPoints, analyseElevations } from './class-path-functions.js';
-import geolib from 'geo-points-and-paths';
+import geolib from './test_node_modules/geo-points-and-paths';
 const {Point, Path, geoFunctions} = geolib;
 
-import jael from 'jael';
+import jael from './test_node_modules/jael';
 jael.setPath('C:\\__FILES\\Gordon\\PROJECT\\Angular\\_ASTGTM');
 
 /**

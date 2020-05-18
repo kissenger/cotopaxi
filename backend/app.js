@@ -12,13 +12,19 @@ import bodyParser from 'body-parser';
 import { authRoute, verifyToken } from './app-auth.js';
 import mongoose from 'mongoose';
 import { GeoJSON } from './class-geojson.js';
-import { gpxRead, gpxWriteFromDocument } from './gpx.js';
+import { gpxWriteFromDocument } from './gpx.js';
 import { debugMsg } from './debugging.js';
 import { mongoModel, getPathDocFromId, createMongoModel, bbox2Polygon } from './app-functions.js';
 import { getListData, getRouteInstance } from './app-functions.js';
-// import {writeFile} from 'fs';    //debugging
+import './test_node_modules/dotenv/config.js.js';
+
 const app = express();
 
+
+
+// apply middleware
+app.use(bodyParser.json());
+app.use(authRoute);
 app.use( (req, res, next) => {
   // inject a header into the response
   res.setHeader("Access-Control-Allow-Origin","*");
@@ -28,21 +34,16 @@ app.use( (req, res, next) => {
   next();
 });
 
-app.use(bodyParser.json());
-app.use(authRoute);
 
-// local connection
-// Mongoose setup ... mongo password: p6f8IS4aOGXQcKJN
-// mongoose.connect('mongodb://127.0.0.1:27017/trailscape?gssapiServiceName=mongodb',
-// TODO: use .env file for these?
-// https://www.freecodecamp.org/news/heres-how-you-can-actually-use-node-environment-variables-8fdf98f53a0a/
-mongoose.connect('mongodb+srv://root:p6f8IS4aOGXQcKJN@cluster0-gplhv.mongodb.net/trailscape?retryWrites=true',
+
+// mongo as a service
+mongoose.connect(`mongodb+srv://root:${process.env.MONGODB_PASSWORD}@cluster0-gplhv.mongodb.net/trailscape?retryWrites=true`,
   {useUnifiedTopology: true, useNewUrlParser: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-  debugMsg('MongoDB connected');
-});
+
+  mongoose.connection
+  .on('error', console.error.bind(console, 'connection error:'))
+  .on('close', () => console.log('MongoDB disconnected'))
+  .once('open', () => console.log('MongoDB connected') );
 
 // multer is used for file uploads, set-up options here
 const upload = multer({
@@ -51,6 +52,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024
   }
 });
+
 
 
 /*****************************************************************

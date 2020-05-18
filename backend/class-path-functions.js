@@ -6,7 +6,7 @@
 
 import { debugMsg } from './debugging.js';
 import * as globals from './globals.js';
-import geolib from 'geo-points-and-paths';
+import geolib from './test_node_modules/geo-points-and-paths';
 const {Point, Path, geoFunctions} = geolib;
 
 

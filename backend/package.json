@@ -9,6 +9,7 @@
     "mocha": "^7.1.2"
   },
   "dependencies": {
+    "dotenv": "^8.2.0",
     "geo-points-and-paths": "^1.4.0",
     "jael": "^1.0.2"
   }
