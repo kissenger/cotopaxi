@@ -45,14 +45,12 @@ db.once('open', function() {
 });
 
 // multer is used for file uploads, set-up options here
-const storageOptions = multer.memoryStorage();
 const upload = multer({
-  storage: storageOptions,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024
   }
 });
-
 
 
 /*****************************************************************
@@ -76,6 +74,7 @@ app.post('/import-route/', verifyToken, upload.single('filename'), (req, res) =>
  * Save a path to database - path has already been saved to the
  * database, all we are doing is updating some fields, and
  * changing isSaved flag to true; id of path is provided
+ * TODO: use findByIdAndUpdate()? condition does not need to include userId as _id is unique
  *****************************************************************/
 app.post('/save-imported-path/', verifyToken, (req, res) => {
 

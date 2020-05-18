@@ -15,16 +15,18 @@ import { Routes, Tracks } from './models/path-models.js';
 */
 export function mongoModel(pathType) {
   switch(pathType) {
-    case 'challenge': return MongoChallenges.Challenges;
+    // case 'challenge': return MongoChallenges.Challenges;
     case 'route': return Routes;
-    case 'track': return Tracks;
-    case 'match': return MongoMatch.Match;
+    // case 'track': return Tracks;
+    // case 'match': return MongoMatch.Match;
   }
 }
 
 
 /**
  * get a mongo db entry from a provided path id
+ * TODO: use .findById() method.  _id is unique so dont need to search for uid as well
+ * https://mongoosejs.com/docs/api.html#model_Model.findById
  */
 export function getPathDocFromId(pid, ptype, uid) {
 
