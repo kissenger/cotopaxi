@@ -1,3 +1,5 @@
 export const environment = {
-  production: true
+  production: true,
+  BACKEND_HOST: 'localhost',
+  BACKEND_PORT: 8080,
 };
